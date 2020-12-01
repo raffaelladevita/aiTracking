@@ -22,6 +22,7 @@ public class Track implements Comparable<Track>{
     private int trackStatus = 0 ;
     private double trackChi2 = 0;
     private int trackNDF = 0;
+    private Vector3 r3 = null;
     private int[] trackClusters = new int[6];
     private boolean trackMatch = false;
     
@@ -132,6 +133,18 @@ public class Track implements Comparable<Track>{
         return this.trackVertex.z();
     }
     
+    public Vector3 r3() {
+        return r3;
+    }
+
+    public void r3(Vector3 p) {
+        this.r3 = new Vector3(p);
+    }
+
+    public void r3(double x, double y, double z) {
+        this.r3 = new Vector3(x,y,z);
+    }
+
     public void setVector(int charge, Vector3 nvect, Vector3 nvert) {
         trackVector.setVectM(nvect, 0);
         trackVertex.setXYZ(nvert.x(), nvert.y(), nvert.z());
@@ -264,7 +277,7 @@ public class Track implements Comparable<Track>{
     
     public boolean isValid() {
         boolean value = false;
-        if(Math.abs(this.vz())<15) value=true;
+        if(Math.abs(this.vz()+5)<15 && this.chi2()<15) value=true;
         return value;
     }
     

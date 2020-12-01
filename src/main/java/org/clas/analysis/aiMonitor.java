@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFrame;
 import org.jlab.groot.data.TDirectory;
+import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
+import org.jlab.groot.graphics.EmbeddedPad;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.hipo.HipoDataSource;
@@ -58,17 +60,26 @@ public class aiMonitor {
         canvas = new EmbeddedCanvasTabbed("negatives","positives","negative resolution","positive resolution","negative difference","positive difference");
         canvas.getCanvas("negatives").draw(trNeg);
         canvas.getCanvas("negatives").draw(aiNeg);
-        canvas.getCanvas("negatives").draw(trNegM);
-        canvas.getCanvas("negatives").draw(aiNegM);
+//        canvas.getCanvas("negatives").draw(trNegM);
+//        canvas.getCanvas("negatives").draw(aiNegM);
         canvas.getCanvas("positives").draw(trPos);
         canvas.getCanvas("positives").draw(aiPos);
-        canvas.getCanvas("positives").draw(trPosM);
-        canvas.getCanvas("positives").draw(aiPosM);
+//        canvas.getCanvas("positives").draw(trPosM);
+//        canvas.getCanvas("positives").draw(aiPosM);
         canvas.getCanvas("negative resolution").draw(negRes);
         canvas.getCanvas("positive resolution").draw(posRes);
-        canvas.getCanvas("negative difference").draw(trNeg.diff(aiNeg));
-        canvas.getCanvas("positive difference").draw(trPos.diff(aiPos));
-        
+        canvas.getCanvas("negative difference").draw(aiNeg.diff(trNeg));
+        canvas.getCanvas("positive difference").draw(aiPos.diff(trPos));
+        this.setRange(canvas.getCanvas("negative difference"), 0.1);
+        this.setRange(canvas.getCanvas("positive difference"), 0.1);
+    }
+    
+    public void setRange(EmbeddedCanvas canvas, double range) {
+        int nx = canvas.getNColumns();
+        int ny = canvas.getNRows();
+        for(EmbeddedPad pad : canvas.getCanvasPads()) {
+            pad.getAxisZ().setRange(1-range, 1+range);
+        }
     }
     
     public void processEvent(DataEvent event) {
@@ -128,6 +139,7 @@ public class aiMonitor {
                                         bank.getFloat("Vtx0_z", loop));
                 track.NDF(bank.getShort("ndf", loop));
                 track.chi2(bank.getFloat("chi2", loop)/bank.getShort("ndf", loop));
+                track.r3(bank.getFloat("c3_x", loop),bank.getFloat("c3_y", loop),bank.getFloat("p0_x", loop));
                 track.clusters(bank.getShort("Cluster1_ID", loop),
                                bank.getShort("Cluster2_ID", loop),
                                bank.getShort("Cluster3_ID", loop),
@@ -194,10 +206,10 @@ public class aiMonitor {
         aiMonitor analysis = new aiMonitor(tr,ai);
         
         ProgressPrintout  progress = new ProgressPrintout();
-        HipoDataSource reader = new HipoDataSource();
         
         int counter=-1;
         for(String inputFile : inputList){
+            HipoDataSource reader = new HipoDataSource();
             reader.open(inputFile);
             
             while (reader.hasEvent()) {
