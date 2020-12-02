@@ -2,5 +2,5 @@
 
 SCRIPT_DIR=`dirname $0`
 
-java -Dsun.java2d.pmoffscreen=false -Xmx2048m -Xms1024m -cp "$SCRIPT_DIR/../target/aiTracking-0.9-jar-with-dependencies.jar" org.clas.analysis.aiMonitor $*
+java -Dsun.java2d.pmoffscreen=false -Xmx2048m -Xms1024m -cp "$SCRIPT_DIR/../target/aiTracking-0.9-jar-with-dependencies.jar" org.clas.analysis.AImonitor $*
 

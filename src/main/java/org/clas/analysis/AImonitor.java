@@ -22,7 +22,7 @@ import org.jlab.utils.options.OptionParser;
  *
  * @author devita
  */
-public class aiMonitor {    
+public class AImonitor {    
     
     private EmbeddedCanvasTabbed   canvas  = null;
     
@@ -43,7 +43,7 @@ public class aiMonitor {
     private String aiBank = null;
     
     
-    public aiMonitor(String tr, String ai){
+    public AImonitor(String tr, String ai){
         trBank = tr;
         aiBank = ai;
         this.createHistos();
@@ -203,7 +203,7 @@ public class aiMonitor {
 //        inputList.add("/Users/devita/out_clas_005038.1231.ai.hipo");
 //        int maxEvents = -1;
         
-        aiMonitor analysis = new aiMonitor(tr,ai);
+        AImonitor analysis = new AImonitor(tr,ai);
         
         ProgressPrintout  progress = new ProgressPrintout();
         
