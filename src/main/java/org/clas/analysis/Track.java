@@ -19,6 +19,7 @@ public class Track implements Comparable<Track>{
     private LorentzVector trackVector = new LorentzVector(0.0,0.0,0.0,0);
     private Vector3 trackVertex = new Vector3(0.0,0.0,0.0);
     private int trackCharge = 0;
+    private int trackSector = 0;
     private int trackStatus = 0 ;
     private double trackChi2 = 0;
     private int trackNDF = 0;
@@ -143,6 +144,14 @@ public class Track implements Comparable<Track>{
 
     public void r3(double x, double y, double z) {
         this.r3 = new Vector3(x,y,z);
+    }
+
+    public int sector() {
+        return trackSector;
+    }
+
+    public void sector(int sec) {
+        this.trackSector = sec;
     }
 
     public void setVector(int charge, Vector3 nvect, Vector3 nvert) {
@@ -277,7 +286,7 @@ public class Track implements Comparable<Track>{
     
     public boolean isValid() {
         boolean value = false;
-        if(Math.abs(this.vz()+5)<15 && this.chi2()<15) value=true;
+        if(Math.abs(this.vz()+5)<15 && this.chi2()<15 /*&& this.r3().mag()>3508*/) value=true;
         return value;
     }
     

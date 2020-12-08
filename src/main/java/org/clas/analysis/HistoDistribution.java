@@ -5,6 +5,7 @@
  */
 package org.clas.analysis;
 
+import java.util.HashMap;
 import java.util.List;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
@@ -16,12 +17,22 @@ import org.jlab.groot.group.DataGroup;
  *
  * @author devita
  */
-public class HistoDistribution extends DataGroup{
+public class HistoDistribution extends HashMap<String,DataGroup> {
     
+    private String name = null;
     
     public HistoDistribution(String str, int col) {
-        super(str, 3, 2);
+        super();
+        this.init(str);        
         this.create(col);
+    }
+    
+    private void init(String str) {
+        this.name = str;
+        this.put("summary",  new DataGroup("summary",3,2));
+        this.put("p",        new DataGroup("p",3,2));
+        this.put("theta",    new DataGroup("theta",3,2));
+        this.put("vz",       new DataGroup("vz",3,2));        
     }
     
     private void create(int col) {
@@ -49,51 +60,98 @@ public class HistoDistribution extends DataGroup{
         H2F hi_xy = new H2F("xy_" + name, "xy", 200, -500.0, 500.0, 200, -500.0, 500.0);   
         hi_xy.setTitleX("R3 x (cm)");
         hi_xy.setTitleY("R3 y (cm)");
-        this.addDataSet(hi_p,     0);
-        this.addDataSet(hi_theta, 1);
-        this.addDataSet(hi_phi,   2);
-        this.addDataSet(hi_chi2,  3);
-        this.addDataSet(hi_vz,    4);
-        this.addDataSet(hi_xy,    5);
+        this.get("summary").addDataSet(hi_p,     0);
+        this.get("summary").addDataSet(hi_theta, 1);
+        this.get("summary").addDataSet(hi_phi,   2);
+        this.get("summary").addDataSet(hi_chi2,  3);
+        this.get("summary").addDataSet(hi_vz,    4);
+        this.get("summary").addDataSet(hi_xy,    5);
+        for(int i=0; i<6; i++) {
+            int sector = i+1;
+            H1F hi_p_sec = new H1F("psec" + sector + "_" + name, "p", 100, 0.0, 8.0);     
+            hi_p_sec.setTitleX("p (GeV) - sector " + sector);
+            hi_p_sec.setTitleY("Counts");
+            hi_p_sec.setLineColor(col);
+            this.get("p").addDataSet(hi_p_sec, i);
+            H1F hi_theta_sec = new H1F("thetasec" + sector + "_" + name, "theta", 100, 0.0, 40.0);   
+            hi_theta_sec.setTitleX("#theta (deg) - sector " + sector);
+            hi_theta_sec.setTitleY("Counts");
+            hi_theta_sec.setLineColor(col);
+            this.get("theta").addDataSet(hi_theta_sec, i);
+            H1F hi_vz_sec = new H1F("vzsec" + sector + "_" + name, "vz", 180, -50.0, 40.0);    
+            hi_vz_sec.setTitleX("vz (cm) - sector " + sector);
+            hi_vz_sec.setTitleY("Counts");
+            hi_vz_sec.setLineColor(col);
+            this.get("vz").addDataSet(hi_vz_sec, i);
+        }
     }
     
     public void fill(Track track) {
+        int sector = track.sector();
         if(track.isValid()) {
-            this.getH1F("p_"     + this.getName()).fill(track.p());
-            this.getH1F("theta_" + this.getName()).fill(Math.toDegrees(track.theta()));
-            this.getH1F("phi_"   + this.getName()).fill(Math.toDegrees(track.phi()));
-            this.getH1F("chi2_"  + this.getName()).fill(track.chi2());
-            this.getH2F("xy_"    + this.getName()).fill(track.r3().x(),track.r3().y());
+            this.get("summary").getH1F("p_"     + this.getName()).fill(track.p());
+            this.get("summary").getH1F("theta_" + this.getName()).fill(Math.toDegrees(track.theta()));
+            this.get("summary").getH1F("phi_"   + this.getName()).fill(Math.toDegrees(track.phi()));
+            this.get("summary").getH1F("chi2_"  + this.getName()).fill(track.chi2());
+            this.get("summary").getH2F("xy_"    + this.getName()).fill(track.r3().x(),track.r3().y());
+            this.get("p").getH1F("psec"         + sector + "_" + this.getName()).fill(track.p());
+            this.get("theta").getH1F("thetasec" + sector + "_" +  this.getName()).fill(Math.toDegrees(track.theta()));
         }
-        this.getH1F("vz_" + this.getName()).fill(track.vz());
+        this.get("summary").getH1F("vz_" + this.getName()).fill(track.vz());
+        this.get("vz").getH1F("vzsec"    + sector + "_" +  this.getName()).fill(track.vz());
     }
 
-    public DataGroup diff(HistoDistribution histo) {
-        DataGroup dg = new DataGroup(this.getColumns(),this.getRows());
-        dg.addDataSet(this.diff(histo.getHisto1("p_")),     0);
-        dg.addDataSet(this.diff(histo.getHisto1("theta_")), 1);
-        dg.addDataSet(this.diff(histo.getHisto1("phi_")),   2);
-        dg.addDataSet(this.diff(histo.getHisto1("chi2_")),  3);
-        dg.addDataSet(this.diff(histo.getHisto1("vz_")),    4);
-        dg.addDataSet(this.diff(histo.getHisto2("xy_")),    5);
+    
+    public HashMap<String,DataGroup> diff(HistoDistribution histo) {
+        HashMap<String,DataGroup> diffs = new HashMap<String,DataGroup>();
+        for(String key : this.keySet()) {
+            diffs.put(key, this.diff(key,histo));
+        }
+        return diffs;
+    }
+    
+    private DataGroup diff(String key, HistoDistribution histo) {
+        DataGroup dg = new DataGroup(this.get(key).getColumns(),this.get(key).getRows());
+        int nrows = dg.getRows();
+        int ncols = dg.getColumns();
+        int nds   = nrows*ncols;
+        for(int i = 0; i < nds; i++){
+            List<IDataSet> dsList = histo.get(key).getData(i);
+            for(IDataSet ds : dsList){
+                dg.addDataSet(this.diff(key, ds),i);
+            }
+        }
         return dg;
     }
 
+    private IDataSet diff(String key, IDataSet ds) {
+        if(ds instanceof H1F) {
+            return this.diffH1(key, (H1F) ds);
+        }
+        else if(ds instanceof H2F) {
+            return this.diffH2(key, (H2F) ds);
+        }
+        else {
+            return null;
+        }
+    }    
    
-    private H1F diff(H1F histo) {
-        String hname = histo.getName().split("_")[0]+"_"+this.getName();
-        H1F h = this.getH1F(hname).histClone(hname);
-        h.sub(histo);
-        h.divide(histo);
-        h.setTitleY("(" + this.getName() + " - " + histo.getName().split("_")[1] + ")/" + histo.getName().split("_")[1]);
+    private H1F diffH1(String key ,H1F h1) {
+        String hname = this.getPrefix(h1) + "_" + this.getName();
+        int   icolor = this.get(key).getH1F(hname).getLineColor();
+        H1F h = this.get(key).getH1F(hname).histClone(hname);
+        h.sub(h1);
+        h.divide(h1);
+        h.setTitleY("(" + this.getName() + " - " + h1.getName().split("_")[1] + ")/" + h1.getName().split("_")[1]);
+        h.setLineColor(icolor);
         return h;
     }
 
-    private H2F diff(H2F histo) {
-        String hname = histo.getName().split("_")[0]+"_"+this.getName();
-        H2F h = this.getH2F(hname).histClone(hname);
-        h.setTitleX(this.getH2F(hname).getTitleX());
-        h.setTitleY(this.getH2F(hname).getTitleY());
+    private H2F diffH2(String key ,H2F histo) {
+        String hname = this.getPrefix(histo) + "_" + this.getName();
+        H2F h = this.get(key).getH2F(hname).histClone(hname);
+        h.setTitleX(this.get(key).getH2F(hname).getTitleX());
+        h.setTitleY(this.get(key).getH2F(hname).getTitleY());
         h.divide(histo);
 //        int nx = h.getDataSize(0);
 //        int ny = h.getDataSize(1);
@@ -112,28 +170,31 @@ public class HistoDistribution extends DataGroup{
         return h;
     }
 
-    private H1F getHisto1(String prefix) {
-        String hname = prefix + this.getName();
-        return this.getH1F(hname);
+    public String getName() {
+        return name;
     }
         
-    private H2F getHisto2(String prefix) {
-        String hname = prefix + this.getName();
-        return this.getH2F(hname);
+    private String getPrefix(IDataSet ds) {
+        String prefix = ds.getName().split("_")[0];
+        return prefix;
     }
-        
+    
     public void writeDataGroup(TDirectory dir) {
         String folder = "/" + this.getName();
         dir.mkdir(folder);
-        dir.cd(folder);
-        int nrows = this.getRows();
-        int ncols = this.getColumns();
-        int nds   = nrows*ncols;
-        for(int i = 0; i < nds; i++){
-            List<IDataSet> dsList = this.getData(i);
-            for(IDataSet ds : dsList){
-                System.out.println("\t --> " + ds.getName());
-                dir.addDataSet(ds);
+        for(String key : this.keySet()) {
+            String subfolder = folder + "/" + key;
+            dir.mkdir(subfolder);
+            dir.cd(subfolder);        
+            int nrows = this.get(key).getRows();
+            int ncols = this.get(key).getColumns();
+            int nds   = nrows*ncols;
+            for(int i = 0; i < nds; i++){
+                List<IDataSet> dsList = this.get(key).getData(i);
+                for(IDataSet ds : dsList){
+//                    System.out.println("\t --> " + ds.getName());
+                    dir.addDataSet(ds);
+                }
             }
         }
     }

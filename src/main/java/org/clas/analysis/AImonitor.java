@@ -5,7 +5,11 @@
  */
 package org.clas.analysis;
 
+import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JFrame;
 import org.jlab.groot.data.TDirectory;
@@ -24,57 +28,50 @@ import org.jlab.utils.options.OptionParser;
  */
 public class AImonitor {    
     
-    private EmbeddedCanvasTabbed   canvas  = null;
+    private EmbeddedCanvasTabbed canvas  = null;
     
-    // negative tracks
-    private HistoDistribution trNeg  = new HistoDistribution("trNeg",1);
-    private HistoDistribution aiNeg  = new HistoDistribution("aiNeg",2);
-    private HistoDistribution trNegM = new HistoDistribution("trNeg",3);
-    private HistoDistribution aiNegM = new HistoDistribution("aiNeg",4);
-    private HistoResolution   negRes = new HistoResolution("negRes",1);
-    // positive tracks
-    private HistoDistribution trPos  = new HistoDistribution("trPos",1);
-    private HistoDistribution aiPos  = new HistoDistribution("aiPos",2);
-    private HistoDistribution trPosM = new HistoDistribution("trPosM",3);
-    private HistoDistribution aiPosM = new HistoDistribution("aiPosM",4);
-    private HistoResolution   posRes = new HistoResolution("posRes",2);
+    private HistoDistribution[] tr          = {new HistoDistribution("trNeg",1),  new HistoDistribution("trPos",1)};
+    private HistoDistribution[] ai          = {new HistoDistribution("aiNeg",2),  new HistoDistribution("aiPos",2)};
+    private HistoDistribution[] trMatched   = {new HistoDistribution("trNegM",4), new HistoDistribution("trPosM",4)};
+    private HistoDistribution[] aiMatched   = {new HistoDistribution("aiNegM",4), new HistoDistribution("aiPosM",4)};
+    private HistoDistribution[] trUnmatched = {new HistoDistribution("trNegN",3), new HistoDistribution("trPosN",3)};
+    private HistoResolution[]   resol       = {new HistoResolution("negRes",1),   new HistoResolution("posRes",2)};
     
     private String trBank = null;
     private String aiBank = null;
     
+    private String[] charges = {"neg", "pos"};
+        
     
-    public AImonitor(String tr, String ai){
-        trBank = tr;
-        aiBank = ai;
-        this.createHistos();
-        
-    }
-
-    
-    private void createHistos() {
-        
-        
+    public AImonitor(String trb, String aib){
+        trBank = trb;
+        aiBank = aib;        
     }
     
     public void plotHistos() {
-        canvas = new EmbeddedCanvasTabbed("negatives","positives","negative resolution","positive resolution","negative difference","positive difference");
-        canvas.getCanvas("negatives").draw(trNeg);
-        canvas.getCanvas("negatives").draw(aiNeg);
-//        canvas.getCanvas("negatives").draw(trNegM);
-//        canvas.getCanvas("negatives").draw(aiNegM);
-        canvas.getCanvas("positives").draw(trPos);
-        canvas.getCanvas("positives").draw(aiPos);
-//        canvas.getCanvas("positives").draw(trPosM);
-//        canvas.getCanvas("positives").draw(aiPosM);
-        canvas.getCanvas("negative resolution").draw(negRes);
-        canvas.getCanvas("positive resolution").draw(posRes);
-        canvas.getCanvas("negative difference").draw(aiNeg.diff(trNeg));
-        canvas.getCanvas("positive difference").draw(aiPos.diff(trPos));
-        this.setRange(canvas.getCanvas("negative difference"), 0.1);
-        this.setRange(canvas.getCanvas("positive difference"), 0.1);
+        String cname = null;
+        for(int i=0; i<2; i++) {
+            for(String key : tr[i].keySet()) {
+                cname = charges[i] + " " + key;
+                if(canvas==null) canvas = new EmbeddedCanvasTabbed(cname);
+                else             canvas.addCanvas(cname);
+                canvas.getCanvas(cname).draw(tr[i].get(key));
+                canvas.getCanvas(cname).draw(ai[i].get(key));
+//                canvas.getCanvas(cname).draw(trMatched[i].get(key));
+//                canvas.getCanvas(cname).draw(trUnmatched[i].get(key));
+            }
+            cname = charges[i] + " resolution";
+            canvas.addCanvas(cname);
+            canvas.getCanvas(cname).draw(resol[i]);
+            cname = charges[i] + " differences";
+            canvas.addCanvas(cname);
+            canvas.getCanvas(cname).draw(ai[i].diff(tr[i]).get("summary"));
+//            canvas.getCanvas(cname).draw(aiMatched[i].diff(tr[i]).get("summary"));
+            this.setRange(canvas.getCanvas(cname), 0.1);
+        }
     }
     
-    public void setRange(EmbeddedCanvas canvas, double range) {
+    private void setRange(EmbeddedCanvas canvas, double range) {
         int nx = canvas.getNColumns();
         int ny = canvas.getNRows();
         for(EmbeddedPad pad : canvas.getCanvasPads()) {
@@ -88,15 +85,13 @@ public class AImonitor {
         if(event.hasBank(aiBank)) {
             aiTracks = this.read(event.getBank(aiBank));
             for(Track track: aiTracks) {
-                if(track.charge()<0) aiNeg.fill(track);
-                else                 aiPos.fill(track);
+                ai[(track.charge()+1)/2].fill(track);
             }
         }
         if(event.hasBank(trBank)) {
             trTracks = this.read(event.getBank(trBank));
             for(Track track: trTracks) {
-                if(track.charge()<0) trNeg.fill(track);
-                else                 trPos.fill(track);
+                tr[(track.charge()+1)/2].fill(track);
             }
         }
         if(trTracks!=null && aiTracks!=null) {
@@ -105,22 +100,23 @@ public class AImonitor {
                     if(tr.compareTo(ai)==0) {
                         tr.setMatch(true);
                         ai.setMatch(true);
-                        if(tr.charge()>0) posRes.fill(tr, ai);
-                        else              negRes.fill(tr, ai);
+                        resol[(tr.charge()+1)/2].fill(tr, ai);
                     }
                 }
             }
-            for(Track tr : trTracks) {
-                if(tr.isMatched()) {
-                    if(tr.charge()>0) trPosM.fill(tr);
-                    else              trNegM.fill(tr);
+            for(Track track : trTracks) {
+                if(track.isMatched()) {
+                    trMatched[(track.charge()+1)/2].fill(track);
+                }
+                else {
+                    trUnmatched[(track.charge()+1)/2].fill(track);
+                    
                 }
             }
-            for(Track ai : aiTracks) {
-                if(ai.isMatched()) {
-                    if(ai.charge()>0) aiPosM.fill(ai);
-                    else              aiNegM.fill(ai);
-                }                
+            for(Track track : aiTracks) {
+                if(track.isMatched()) {
+                    aiMatched[(track.charge()+1)/2].fill(track);
+                }
             }
         }
     }
@@ -137,6 +133,7 @@ public class AImonitor {
                                         bank.getFloat("Vtx0_x", loop),
                                         bank.getFloat("Vtx0_y", loop),
                                         bank.getFloat("Vtx0_z", loop));
+                track.sector(bank.getByte("sector", loop));
                 track.NDF(bank.getShort("ndf", loop));
                 track.chi2(bank.getFloat("chi2", loop)/bank.getShort("ndf", loop));
                 track.r3(bank.getFloat("c3_x", loop),bank.getFloat("c3_y", loop),bank.getFloat("p0_x", loop));
@@ -158,18 +155,43 @@ public class AImonitor {
     
     public void saveHistos(String fileName) {
         TDirectory dir = new TDirectory();
-        trNeg.writeDataGroup(dir);
-        trPos.writeDataGroup(dir);
-        aiNeg.writeDataGroup(dir);
-        aiPos.writeDataGroup(dir);
-//        trNegM.writeDataGroup(dir);
-//        trPosM.writeDataGroup(dir);
-//        aiNegM.writeDataGroup(dir);
-//        aiPosM.writeDataGroup(dir);
+        for(int i=0; i<2; i++) {
+            tr[i].writeDataGroup(dir);
+            ai[i].writeDataGroup(dir);
+            trMatched[i].writeDataGroup(dir);
+            trUnmatched[i].writeDataGroup(dir);
+            aiMatched[i].writeDataGroup(dir);
+        }
         System.out.println("Saving histograms to file " + fileName);
         dir.writeFile(fileName);
     }    
  
+    public void printHistos() {
+        String figures = "plots"; 
+        File theDir = new File(figures);
+        // if the directory does not exist, create it
+        if (!theDir.exists()) {
+            boolean result = false;
+            try{
+                theDir.mkdir();
+                result = true;
+            } 
+            catch(SecurityException se){
+                //handle it
+            }        
+            if(result) {    
+            System.out.println("Created directory: " + figures);
+            }
+        }
+        for(int i=0; i<2; i++) {
+            String cname = charges[i] + " differences";
+            this.canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
+            for(String key : tr[i].keySet()) {
+                cname = charges[i] + " " + key;
+                this.canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
+            }
+        }
+    }
     
     public static void main(String[] args){
 
@@ -229,6 +251,7 @@ public class AImonitor {
         }    
         analysis.plotHistos();
         analysis.saveHistos(fileName);
+        analysis.printHistos();
         
         JFrame frame = new JFrame(type);
         frame.setSize(1200, 800);
