@@ -6,16 +6,14 @@
 package org.clas.analysis;
 
 import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import javax.swing.JFrame;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.graphics.EmbeddedPad;
+import org.jlab.groot.graphics.Histogram2DPlotter;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.hipo.HipoDataSource;
@@ -75,7 +73,8 @@ public class AImonitor {
         int nx = canvas.getNColumns();
         int ny = canvas.getNRows();
         for(EmbeddedPad pad : canvas.getCanvasPads()) {
-            pad.getAxisZ().setRange(1-range, 1+range);
+            if(pad.getDatasetPlotters().get(0) instanceof Histogram2DPlotter) pad.getAxisZ().setRange(1-range, 1+range);
+            else                                                              pad.getAxisY().setRange( -range,  +range);
         }
     }
     
