@@ -183,7 +183,7 @@ public class HistoDistribution extends HashMap<String,DataGroup> {
         String folder = "/" + this.getName();
         dir.mkdir(folder);
         for(String key : this.keySet()) {
-            String subfolder = folder + "/" + key;
+            String subfolder = folder + "_" + key;
             dir.mkdir(subfolder);
             dir.cd(subfolder);        
             int nrows = this.get(key).getRows();

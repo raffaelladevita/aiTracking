@@ -14,9 +14,11 @@ import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.graphics.EmbeddedPad;
 import org.jlab.groot.graphics.Histogram2DPlotter;
-import org.jlab.io.base.DataBank;
-import org.jlab.io.base.DataEvent;
-import org.jlab.io.hipo.HipoDataSource;
+import org.jlab.jnp.hipo4.data.Bank;
+import org.jlab.jnp.hipo4.data.Event;
+import org.jlab.jnp.hipo4.data.SchemaFactory;
+import org.jlab.jnp.hipo4.io.HipoReader;
+import org.jlab.jnp.hipo4.io.HipoWriterSorted;
 import org.jlab.utils.benchmark.ProgressPrintout;
 import org.jlab.utils.options.OptionParser;
 
@@ -35,13 +37,13 @@ public class AImonitor {
     private HistoDistribution[] trUnmatched = {new HistoDistribution("trNegN",3), new HistoDistribution("trPosN",3)};
     private HistoResolution[]   resol       = {new HistoResolution("negRes",1),   new HistoResolution("posRes",2)};
     
-    private String trBank = null;
-    private String aiBank = null;
+    private Bank trBank = null;
+    private Bank aiBank = null;
     
     private String[] charges = {"neg", "pos"};
         
     
-    public AImonitor(String trb, String aib){
+    public AImonitor(Bank trb, Bank aib){
         trBank = trb;
         aiBank = aib;        
     }
@@ -55,8 +57,8 @@ public class AImonitor {
                 else             canvas.addCanvas(cname);
                 canvas.getCanvas(cname).draw(tr[i].get(key));
                 canvas.getCanvas(cname).draw(ai[i].get(key));
-//                canvas.getCanvas(cname).draw(trMatched[i].get(key));
-//                canvas.getCanvas(cname).draw(trUnmatched[i].get(key));
+                canvas.getCanvas(cname).draw(trMatched[i].get(key));
+                canvas.getCanvas(cname).draw(trUnmatched[i].get(key));
             }
             cname = charges[i] + " resolution";
             canvas.addCanvas(cname);
@@ -64,7 +66,7 @@ public class AImonitor {
             cname = charges[i] + " differences";
             canvas.addCanvas(cname);
             canvas.getCanvas(cname).draw(ai[i].diff(tr[i]).get("summary"));
-//            canvas.getCanvas(cname).draw(aiMatched[i].diff(tr[i]).get("summary"));
+            canvas.getCanvas(cname).draw(aiMatched[i].diff(tr[i]).get("summary"));
             this.setRange(canvas.getCanvas(cname), 0.1);
         }
     }
@@ -77,22 +79,16 @@ public class AImonitor {
             else                                                              pad.getAxisY().setRange( -range,  +range);
         }
     }
-    
-    public void processEvent(DataEvent event) {
+        
+    public EventStatus processEvent(Event event) {
+        EventStatus status = new EventStatus();
         ArrayList<Track> aiTracks = null;
         ArrayList<Track> trTracks = null;
-        if(event.hasBank(aiBank)) {
-            aiTracks = this.read(event.getBank(aiBank));
-            for(Track track: aiTracks) {
-                ai[(track.charge()+1)/2].fill(track);
-            }
-        }
-        if(event.hasBank(trBank)) {
-            trTracks = this.read(event.getBank(trBank));
-            for(Track track: trTracks) {
-                tr[(track.charge()+1)/2].fill(track);
-            }
-        }
+        event.read(trBank);
+        event.read(aiBank);
+        trTracks = this.read(trBank);            
+        aiTracks = this.read(aiBank);
+        
         if(trTracks!=null && aiTracks!=null) {
             for(Track tr : trTracks) {
                 for(Track ai : aiTracks) {
@@ -103,28 +99,38 @@ public class AImonitor {
                     }
                 }
             }
+        }
+        if(trTracks!=null) {
             for(Track track : trTracks) {
+                tr[(track.charge()+1)/2].fill(track);
                 if(track.isMatched()) {
                     trMatched[(track.charge()+1)/2].fill(track);
                 }
                 else {
                     trUnmatched[(track.charge()+1)/2].fill(track);
-                    
-                }
-            }
-            for(Track track : aiTracks) {
-                if(track.isMatched()) {
-                    aiMatched[(track.charge()+1)/2].fill(track);
+                    if(track.isValid()) status.setAiMissing();
                 }
             }
         }
+        if(aiTracks!=null) {
+            for(Track track : aiTracks) {
+                ai[(track.charge()+1)/2].fill(track);
+                if(track.isMatched()) {
+                    aiMatched[(track.charge()+1)/2].fill(track);
+                }
+                else {
+                    if(track.isValid()) status.setCvMissing();
+                }
+            }
+        }
+        return status;
     }
         
-    public ArrayList<Track> read(DataBank bank) {
+    public ArrayList<Track> read(Bank bank) {
         ArrayList<Track> tracks = null;
-        if(bank.rows()>0) {
+        if(bank.getRows()>0) {
             tracks = new ArrayList();
-            for(int loop = 0; loop < bank.rows(); loop++){
+            for(int loop = 0; loop < bank.getRows(); loop++){
                 Track track = new Track(bank.getByte("q", loop),
                                         bank.getFloat("p0_x", loop),
                                         bank.getFloat("p0_y", loop),
@@ -192,11 +198,42 @@ public class AImonitor {
         }
     }
     
+    public static void setWriter(HipoWriterSorted writer, SchemaFactory schema, String filename) {
+        System.out.println("\nOpening output file: " + filename);
+        writer.getSchemaFactory().copy(schema);
+        writer.setCompressionType(2);
+        writer.open(filename);    
+    }
+        
+    public class EventStatus {
+        private boolean aiMissing=false;
+        private boolean cvMissing=false;
+
+        public EventStatus() {
+        }
+
+        public boolean isAiMissing() {
+            return aiMissing;
+        }
+
+        public void setAiMissing() {
+            this.aiMissing = true;
+        }
+
+        public boolean isCvMissing() {
+            return cvMissing;
+        }
+
+        public void setCvMissing() {
+            this.cvMissing = true;
+        }      
+    }
+    
     public static void main(String[] args){
 
         OptionParser parser = new OptionParser("aiTracking");
         parser.setRequiresInputList(false);
-        parser.addOption("-o"    ,"histo.hipo", "output histogram file name");
+        parser.addOption("-o"    ,"",   "output file name prefix");
         parser.addOption("-n"    ,"-1", "maximum number of events to process");
         parser.addOption("-b"    ,"TB", "tracking level: TB or HB");
         parser.parse(args);
@@ -208,37 +245,60 @@ public class AImonitor {
             System.exit(0);
         }
 
-        int     maxEvents  = parser.getOption("-n").intValue();
+        int   maxEvents  = parser.getOption("-n").intValue();
 
-        String fileName = parser.getOption("-o").stringValue();
-        
-        String  type  = parser.getOption("-b").stringValue();
-        String tr = "TimeBasedTrkg::TBTracks";
-        String ai = "TimeBasedTrkg::AITracks";
-        if(type.equals("HB")) {
-            tr = "HitBasedTrkg::HBTracks";
-            ai = "HitBasedTrkg::AITracks";
+        String namePrefix  = parser.getOption("-o").stringValue();        
+        String histoName  = "histo.hipo";
+        String eventName1 = "missing_ai.hipo";
+        String eventName2 = "missing_cv.hipo";
+        if(!namePrefix.isEmpty()) {
+            histoName  = namePrefix + "_" + histoName;
+            eventName1 = namePrefix + "_" + eventName1;
+            eventName2 = namePrefix + "_" + eventName2;
         }
         
-//        List<String> inputList = new ArrayList<String>();
-//        inputList.add("/Users/devita/out_clas_005038.1231.ai.hipo");
-//        int maxEvents = -1;
+        String  type  = parser.getOption("-b").stringValue();
         
-        AImonitor analysis = new AImonitor(tr,ai);
+        SchemaFactory schema = null;           
         
-        ProgressPrintout  progress = new ProgressPrintout();
+        AImonitor analysis = null;
+        
+        HipoWriterSorted writer1 = new HipoWriterSorted();
+        HipoWriterSorted writer2 = new HipoWriterSorted();
+
+        ProgressPrintout progress = new ProgressPrintout();
         
         int counter=-1;
+        Event event = new Event();
+        
         for(String inputFile : inputList){
-            HipoDataSource reader = new HipoDataSource();
+            HipoReader reader = new HipoReader();
             reader.open(inputFile);
             
-            while (reader.hasEvent()) {
+            if(schema==null) {
+                schema = reader.getSchemaFactory();
+                AImonitor.setWriter(writer1, schema, eventName1);
+                AImonitor.setWriter(writer2, schema, eventName2);
+                
+                Bank tr = new Bank(schema.getSchema("TimeBasedTrkg::TBTracks"));
+                Bank ai = new Bank(schema.getSchema("TimeBasedTrkg::AITracks"));
+                if(type.equals("HB")) {
+                    tr = new Bank(schema.getSchema("HitBasedTrkg::HBTracks"));
+                    ai = new Bank(schema.getSchema("HitBasedTrkg::AITracks"));
+                }
+                analysis = new AImonitor(tr,ai);
+            }
+            
+            while (reader.hasNext()) {
 
                 counter++;
 
-                DataEvent event = reader.getNextEvent();
-                analysis.processEvent(event);
+                reader.nextEvent(event);
+                
+                EventStatus status = analysis.processEvent(event);
+                
+                if(status.isAiMissing()) writer1.addEvent(event);
+                if(status.isCvMissing()) writer2.addEvent(event);
             
                 progress.updateStatus();
                 if(maxEvents>0){
@@ -248,8 +308,12 @@ public class AImonitor {
             progress.showStatus();
             reader.close();
         }    
+        
+        writer1.close();
+        writer2.close();
+        
         analysis.plotHistos();
-        analysis.saveHistos(fileName);
+        analysis.saveHistos(histoName);
         analysis.printHistos();
         
         JFrame frame = new JFrame(type);
