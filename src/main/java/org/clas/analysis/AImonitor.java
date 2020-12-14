@@ -27,9 +27,7 @@ import org.jlab.utils.options.OptionParser;
  * @author devita
  */
 public class AImonitor {    
-    
-    private EmbeddedCanvasTabbed canvas  = null;
-    
+        
     private HistoDistribution[] tr          = {new HistoDistribution("trNeg",1),  new HistoDistribution("trPos",1)};
     private HistoDistribution[] ai          = {new HistoDistribution("aiNeg",2),  new HistoDistribution("aiPos",2)};
     private HistoDistribution[] trMatched   = {new HistoDistribution("trNegM",4), new HistoDistribution("trPosM",4)};
@@ -52,7 +50,8 @@ public class AImonitor {
         aiBank = aib;        
     }
 
-    public void plotHistos() {
+    public EmbeddedCanvasTabbed plotHistos() {
+        EmbeddedCanvasTabbed canvas  = null;
         String cname = null;
         for(int i=0; i<2; i++) {
             for(String key : tr[i].keySet()) {
@@ -73,6 +72,7 @@ public class AImonitor {
             canvas.getCanvas(cname).draw(aiMatched[i].diff(tr[i]).get("summary"));
             this.setRange(canvas.getCanvas(cname), 0.1);
         }
+        return canvas;
     }
     
     private void setRange(EmbeddedCanvas canvas, double range) {
@@ -158,10 +158,6 @@ public class AImonitor {
         return tracks;
     }
 
-    public EmbeddedCanvasTabbed getCanvas() {
-        return canvas;
-    }
-    
     public void readHistos(String fileName) {
         // TXT table summary FILE //
         System.out.println("Opening file: " + fileName);
@@ -194,7 +190,7 @@ public class AImonitor {
         dir.writeFile(fileName);
     }    
  
-    public void printHistos() {
+    public void printHistos(EmbeddedCanvasTabbed canvas) {
         String figures = "plots"; 
         File theDir = new File(figures);
         // if the directory does not exist, create it
@@ -213,10 +209,10 @@ public class AImonitor {
         }
         for(int i=0; i<2; i++) {
             String cname = charges[i] + " differences";
-            this.canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
+            canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
             for(String key : tr[i].keySet()) {
                 cname = charges[i] + " " + key;
-                this.canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
+                canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
             }
         }
     }
@@ -256,10 +252,11 @@ public class AImonitor {
 
         OptionParser parser = new OptionParser("aiTracking");
         parser.setRequiresInputList(false);
-        parser.addOption("-o"    ,"",   "output file name prefix");
-        parser.addOption("-n"    ,"-1", "maximum number of events to process");
-        parser.addOption("-b"    ,"TB", "tracking level: TB or HB");
-        parser.addOption("-r"    ,"",   "histogram file to be read");
+        parser.addOption("-o"    ,"",     "output file name prefix");
+        parser.addOption("-n"    ,"-1",   "maximum number of events to process");
+        parser.addOption("-b"    ,"TB",   "tracking level: TB or HB");
+        parser.addOption("-r"    ,"",     "histogram file to be read");
+        parser.addOption("-w"    ,"true", "display histograms");
         parser.parse(args);
         
         int   maxEvents  = parser.getOption("-n").intValue();
@@ -272,12 +269,13 @@ public class AImonitor {
             histoName  = namePrefix + "_" + histoName;
             eventName1 = namePrefix + "_" + eventName1;
             eventName2 = namePrefix + "_" + eventName2;
-        }
+        }        
+        String type     = parser.getOption("-b").stringValue();        
+        String readName = parser.getOption("-r").stringValue();        
+        boolean window  = Boolean.parseBoolean(parser.getOption("-w").stringValue());
         
-        String  type  = parser.getOption("-b").stringValue();
+        if(!window) System.setProperty("java.awt.headless", "true");
         
-        String readName  = parser.getOption("-r").stringValue();        
-
         SchemaFactory schema = null;           
         
         AImonitor analysis = new AImonitor();
@@ -345,15 +343,15 @@ public class AImonitor {
             analysis.readHistos(readName);
         }
         
-        analysis.plotHistos();
-        analysis.printHistos();
-        
-        JFrame frame = new JFrame(type);
-        frame.setSize(1200, 800);
-        frame.add(analysis.getCanvas());
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        
+        if(window) {
+            JFrame frame = new JFrame(type);
+            frame.setSize(1200, 800);
+            EmbeddedCanvasTabbed canvas = analysis.plotHistos();
+            frame.add(canvas);
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+            analysis.printHistos(canvas);
+        }
     }
     
 }
