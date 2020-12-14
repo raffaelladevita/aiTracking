@@ -5,7 +5,10 @@
  */
 package org.clas.analysis;
 
+import java.util.List;
 import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.IDataSet;
+import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.group.DataGroup;
 
 /**
@@ -14,6 +17,10 @@ import org.jlab.groot.group.DataGroup;
  */
 public class HistoResolution extends DataGroup{
     
+    
+    public HistoResolution(String str) {
+        super(str, 3 ,2);
+    }
     
     public HistoResolution(String str, int col) {
         super(str, 3 ,2);
@@ -56,5 +63,38 @@ public class HistoResolution extends DataGroup{
         this.getH1F("chi2_"  + this.getName()).fill(track1.chi2()-track2.chi2());
         this.getH1F("vz_"    + this.getName()).fill(track1.vz()-track2.vz());
     }
+
     
+    public HistoResolution readDataGroup(TDirectory dir) {
+        String folder = this.getName();
+        int nrows = this.getRows();
+        int ncols = this.getColumns();
+        int nds   = nrows*ncols;
+        HistoResolution newGroup = new HistoResolution(this.getName());
+        for(int i = 0; i < nds; i++){
+            List<IDataSet> dsList = this.getData(i);
+            for(IDataSet ds : dsList){
+                System.out.println("\t --> " + ds.getName());
+                newGroup.addDataSet(dir.getObject(folder, ds.getName()),i);
+            }
+        }
+        return newGroup;
+    }
+
+    public void writeDataGroup(TDirectory dir) {
+        String folder = "/" + this.getName();
+        dir.mkdir(folder);
+        dir.cd(folder);        
+        int nrows = this.getRows();
+        int ncols = this.getColumns();
+        int nds   = nrows*ncols;
+        for(int i = 0; i < nds; i++){
+            List<IDataSet> dsList = this.getData(i);
+            for(IDataSet ds : dsList){
+//                    System.out.println("\t --> " + ds.getName());
+                dir.addDataSet(ds);
+            }          
+        }
+    }
+ 
 }

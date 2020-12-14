@@ -7,6 +7,7 @@ package org.clas.analysis;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
@@ -179,6 +180,25 @@ public class HistoDistribution extends HashMap<String,DataGroup> {
         return prefix;
     }
     
+    public void readDataGroup(TDirectory dir) {
+        String folder = this.getName();
+        for(String key : this.keySet()) {
+            String subfolder = folder + "_" + key;
+            int nrows = this.get(key).getRows();
+            int ncols = this.get(key).getColumns();
+            int nds   = nrows*ncols;
+            DataGroup newGroup = new DataGroup(ncols,nrows);
+            for(int i = 0; i < nds; i++){
+                List<IDataSet> dsList = this.get(key).getData(i);
+                for(IDataSet ds : dsList){
+//                    System.out.println("\t --> " + ds.getName());
+                    newGroup.addDataSet(dir.getObject(subfolder, ds.getName()),i);
+                }
+            }
+            this.replace(key, newGroup);
+        }
+    }
+
     public void writeDataGroup(TDirectory dir) {
         String folder = "/" + this.getName();
         dir.mkdir(folder);

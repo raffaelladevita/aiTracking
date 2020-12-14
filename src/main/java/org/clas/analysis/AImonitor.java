@@ -43,11 +43,15 @@ public class AImonitor {
     private String[] charges = {"neg", "pos"};
         
     
-    public AImonitor(Bank trb, Bank aib){
+    public AImonitor(){
+    }
+    
+    
+    public void initBanks(Bank trb, Bank aib){
         trBank = trb;
         aiBank = aib;        
     }
-    
+
     public void plotHistos() {
         String cname = null;
         for(int i=0; i<2; i++) {
@@ -158,6 +162,24 @@ public class AImonitor {
         return canvas;
     }
     
+    public void readHistos(String fileName) {
+        // TXT table summary FILE //
+        System.out.println("Opening file: " + fileName);
+        TDirectory dir = new TDirectory();
+        dir.readFile(fileName);
+        System.out.println(dir.getDirectoryList());
+        dir.cd();
+        dir.pwd();
+        for(int i=0; i<2; i++) {
+            tr[i].readDataGroup(dir);
+            ai[i].readDataGroup(dir);
+            trMatched[i].readDataGroup(dir);
+            trUnmatched[i].readDataGroup(dir);
+            aiMatched[i].readDataGroup(dir);
+            resol[i]=resol[i].readDataGroup(dir);
+        }
+    }
+
     public void saveHistos(String fileName) {
         TDirectory dir = new TDirectory();
         for(int i=0; i<2; i++) {
@@ -166,6 +188,7 @@ public class AImonitor {
             trMatched[i].writeDataGroup(dir);
             trUnmatched[i].writeDataGroup(dir);
             aiMatched[i].writeDataGroup(dir);
+            resol[i].writeDataGroup(dir);
         }
         System.out.println("Saving histograms to file " + fileName);
         dir.writeFile(fileName);
@@ -236,15 +259,9 @@ public class AImonitor {
         parser.addOption("-o"    ,"",   "output file name prefix");
         parser.addOption("-n"    ,"-1", "maximum number of events to process");
         parser.addOption("-b"    ,"TB", "tracking level: TB or HB");
+        parser.addOption("-r"    ,"",   "histogram file to be read");
         parser.parse(args);
         
-        List<String> inputList = parser.getInputList();
-        if(inputList.isEmpty()==true){
-            parser.printUsage();
-            System.out.println("\n >>>> error: no input file is specified....\n");
-            System.exit(0);
-        }
-
         int   maxEvents  = parser.getOption("-n").intValue();
 
         String namePrefix  = parser.getOption("-o").stringValue();        
@@ -259,61 +276,76 @@ public class AImonitor {
         
         String  type  = parser.getOption("-b").stringValue();
         
+        String readName  = parser.getOption("-r").stringValue();        
+
         SchemaFactory schema = null;           
         
-        AImonitor analysis = null;
+        AImonitor analysis = new AImonitor();
         
         HipoWriterSorted writer1 = new HipoWriterSorted();
         HipoWriterSorted writer2 = new HipoWriterSorted();
 
-        ProgressPrintout progress = new ProgressPrintout();
-        
-        int counter=-1;
-        Event event = new Event();
-        
-        for(String inputFile : inputList){
-            HipoReader reader = new HipoReader();
-            reader.open(inputFile);
+        if(readName.isEmpty()) {
             
-            if(schema==null) {
-                schema = reader.getSchemaFactory();
-                AImonitor.setWriter(writer1, schema, eventName1);
-                AImonitor.setWriter(writer2, schema, eventName2);
-                
-                Bank tr = new Bank(schema.getSchema("TimeBasedTrkg::TBTracks"));
-                Bank ai = new Bank(schema.getSchema("TimeBasedTrkg::AITracks"));
-                if(type.equals("HB")) {
-                    tr = new Bank(schema.getSchema("HitBasedTrkg::HBTracks"));
-                    ai = new Bank(schema.getSchema("HitBasedTrkg::AITracks"));
-                }
-                analysis = new AImonitor(tr,ai);
+            List<String> inputList = parser.getInputList();
+            if(inputList.isEmpty()==true){
+                parser.printUsage();
+                System.out.println("\n >>>> error: no input file is specified....\n");
+                System.exit(0);
             }
-            
-            while (reader.hasNext()) {
 
-                counter++;
-
-                reader.nextEvent(event);
-                
-                EventStatus status = analysis.processEvent(event);
-                
-                if(status.isAiMissing()) writer1.addEvent(event);
-                if(status.isCvMissing()) writer2.addEvent(event);
-            
-                progress.updateStatus();
-                if(maxEvents>0){
-                    if(counter>=maxEvents) break;
-                }
-            }
-            progress.showStatus();
-            reader.close();
-        }    
+            ProgressPrintout progress = new ProgressPrintout();
         
-        writer1.close();
-        writer2.close();
+            int counter=-1;
+            Event event = new Event();
+
+            for(String inputFile : inputList){
+                HipoReader reader = new HipoReader();
+                reader.open(inputFile);
+
+                if(schema==null) {
+                    schema = reader.getSchemaFactory();
+                    AImonitor.setWriter(writer1, schema, eventName1);
+                    AImonitor.setWriter(writer2, schema, eventName2);
+
+                    Bank tr = new Bank(schema.getSchema("TimeBasedTrkg::TBTracks"));
+                    Bank ai = new Bank(schema.getSchema("TimeBasedTrkg::AITracks"));
+                    if(type.equals("HB")) {
+                        tr = new Bank(schema.getSchema("HitBasedTrkg::HBTracks"));
+                        ai = new Bank(schema.getSchema("HitBasedTrkg::AITracks"));
+                    }
+                    analysis.initBanks(tr,ai);
+                }
+
+                while (reader.hasNext()) {
+
+                    counter++;
+
+                    reader.nextEvent(event);
+
+                    EventStatus status = analysis.processEvent(event);
+
+                    if(status.isAiMissing()) writer1.addEvent(event);
+                    if(status.isCvMissing()) writer2.addEvent(event);
+
+                    progress.updateStatus();
+                    if(maxEvents>0){
+                        if(counter>=maxEvents) break;
+                    }
+                }
+                progress.showStatus();
+                reader.close();
+            }    
+
+            writer1.close();
+            writer2.close();
+            analysis.saveHistos(histoName);
+        }
+        else{
+            analysis.readHistos(readName);
+        }
         
         analysis.plotHistos();
-        analysis.saveHistos(histoName);
         analysis.printHistos();
         
         JFrame frame = new JFrame(type);
