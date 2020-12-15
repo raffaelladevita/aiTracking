@@ -290,6 +290,16 @@ public class Track implements Comparable<Track>{
         return value;
     }
     
+    
+    private int compareClusters(Track t) {
+        int nmatch = 0;
+        for(int i=0; i<6; i++) {
+            if(this.clusters()[i]==t.clusters()[i]) nmatch++;            
+        }
+        return nmatch;
+    }
+    
+    
     public void show(){
         System.out.println(this.toString());
     }
@@ -336,12 +346,7 @@ public class Track implements Comparable<Track>{
          * of their momentum.
          */
         if(this.charge()==o.charge()){
-            if(o.clusters()[0]==this.clusters()[0] &&
-               o.clusters()[1]==this.clusters()[1] &&
-               o.clusters()[2]==this.clusters()[2] &&
-               o.clusters()[3]==this.clusters()[3] &&
-               o.clusters()[4]==this.clusters()[4] &&
-               o.clusters()[5]==this.clusters()[5]) return 0;
+            if(this.compareClusters(o)==6) return 0;
             return (o.p()>this.p())?-1:1;
         }
         return 0;

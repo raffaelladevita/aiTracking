@@ -210,6 +210,8 @@ public class AImonitor {
         for(int i=0; i<2; i++) {
             String cname = charges[i] + " differences";
             canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
+            cname = charges[i] + " resolution";
+            canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
             for(String key : tr[i].keySet()) {
                 cname = charges[i] + " " + key;
                 canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
