@@ -299,6 +299,13 @@ public class Track implements Comparable<Track>{
         return nmatch;
     }
     
+    public boolean diff(Track t) {
+        if(Math.abs(this.p()-t.p())>0.001) return true;
+        if(Math.abs(this.theta()-t.theta())>0.01) return true;
+        if(Math.abs(this.phi()-t.phi())>0.05) return true;
+        return false;
+    }
+    
     
     public void show(){
         System.out.println(this.toString());

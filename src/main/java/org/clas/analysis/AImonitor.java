@@ -1,14 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.clas.analysis;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFrame;
+import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
@@ -33,6 +29,7 @@ public class AImonitor {
     private HistoDistribution[] trMatched   = {new HistoDistribution("trNegM",4), new HistoDistribution("trPosM",4)};
     private HistoDistribution[] aiMatched   = {new HistoDistribution("aiNegM",4), new HistoDistribution("aiPosM",4)};
     private HistoDistribution[] trUnmatched = {new HistoDistribution("trNegN",3), new HistoDistribution("trPosN",3)};
+    private HistoDistribution[] aiUnmatched = {new HistoDistribution("aiNegN",3), new HistoDistribution("aiPosN",3)};
     private HistoResolution[]   resol       = {new HistoResolution("negRes",1),   new HistoResolution("posRes",2)};
     
     private Bank trBank = null;
@@ -51,6 +48,22 @@ public class AImonitor {
     }
 
     public EmbeddedCanvasTabbed plotHistos() {
+        
+//        GStyle.getH1FAttributes().setOptStat("1111");
+        GStyle.getAxisAttributesX().setTitleFontSize(24);
+        GStyle.getAxisAttributesX().setLabelFontSize(18);
+        GStyle.getAxisAttributesY().setTitleFontSize(24);
+        GStyle.getAxisAttributesY().setLabelFontSize(18);
+        GStyle.getAxisAttributesZ().setLabelFontSize(14);
+        GStyle.getAxisAttributesX().setLabelFontName("Arial");
+        GStyle.getAxisAttributesY().setLabelFontName("Arial");
+        GStyle.getAxisAttributesZ().setLabelFontName("Arial");
+        GStyle.getAxisAttributesX().setTitleFontName("Arial");
+        GStyle.getAxisAttributesY().setTitleFontName("Arial");
+        GStyle.getAxisAttributesZ().setTitleFontName("Arial");
+        GStyle.setGraphicsFrameLineWidth(1);
+        GStyle.getH1FAttributes().setLineWidth(2);
+
         EmbeddedCanvasTabbed canvas  = null;
         String cname = null;
         for(int i=0; i<2; i++) {
@@ -123,6 +136,7 @@ public class AImonitor {
                     aiMatched[(track.charge()+1)/2].fill(track);
                 }
                 else {
+                    aiUnmatched[(track.charge()+1)/2].fill(track);
                     if(track.isValid()) status.setCvMissing();
                 }
             }
