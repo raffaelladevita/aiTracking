@@ -7,6 +7,7 @@ package org.clas.analysis;
 
 import org.jlab.clas.physics.LorentzVector;
 import org.jlab.clas.physics.Vector3;
+import org.jlab.detector.base.DetectorType;
 
 /**
  *
@@ -15,16 +16,23 @@ import org.jlab.clas.physics.Vector3;
 
 public class Track implements Comparable<Track>{
 
-    
+    // from tracking bank
     private LorentzVector trackVector = new LorentzVector(0.0,0.0,0.0,0);
     private Vector3 trackVertex = new Vector3(0.0,0.0,0.0);
     private int trackCharge = 0;
     private int trackSector = 0;
-    private int trackStatus = 0 ;
     private double trackChi2 = 0;
     private int trackNDF = 0;
-    private Vector3 r3 = null;
     private int[] trackClusters = new int[6];
+    
+    // from particlle bank
+    private int    trackStatus  = 0;
+    private double trackChi2pid = 0;
+    private int    trackPid = 0;
+    
+    // from trajectory bank
+    private Vector3[] trackTrajectory = new Vector3[9]; // size set to contain 3 DC reegions, 3 FTOF and ECAL layers
+    
     private boolean trackMatch = false;
     
     public Track() {
@@ -86,14 +94,6 @@ public class Track implements Comparable<Track>{
         
     }
     
-    public void status(int status){
-        this.trackStatus = status;
-    }
-    
-    public int  status(){
-        return this.trackStatus;
-    }
-    
     public double px() {
         return this.vector().px();
     }
@@ -134,18 +134,6 @@ public class Track implements Comparable<Track>{
         return this.trackVertex.z();
     }
     
-    public Vector3 r3() {
-        return r3;
-    }
-
-    public void r3(Vector3 p) {
-        this.r3 = new Vector3(p);
-    }
-
-    public void r3(double x, double y, double z) {
-        this.r3 = new Vector3(x,y,z);
-    }
-
     public int sector() {
         return trackSector;
     }
@@ -217,6 +205,55 @@ public class Track implements Comparable<Track>{
         this.trackClusters[5] = i6;
     }    
 
+    public void status(int status){
+        this.trackStatus = status;
+    }
+    
+    public int  status(){
+        return this.trackStatus;
+    }
+    
+    public void chi2pid(double chi2pid) {
+        this.trackChi2pid = chi2pid;
+    }
+    
+    public double chi2pid() {
+        return this.trackChi2pid;
+    }
+    
+    public void pid(int pid) {
+        this.trackPid = pid;
+    }
+    
+    public int pid() {
+        return this.trackPid;
+    }
+    
+    public void trajectory(double x, double y, double z, int detector, int layer) {
+        int i = this.trajIndex(detector, layer);
+        if(i>=0) this.trackTrajectory[i] = new Vector3(x, y, z);
+    }
+    
+    public Vector3 trajectory(int detector, int layer) {
+        int i = this.trajIndex(detector, layer);
+        if(i>=0) return this.trackTrajectory[i];
+        else     return null;
+    }
+    
+    private int trajIndex(int detector, int layer) {
+        int i=-1;
+        if(detector == DetectorType.DC.getDetectorId()) {
+            i = ((int) (layer-1)/12);
+        }
+        else if(detector == DetectorType.FTOF.getDetectorId()) {
+            i = layer-1 + 3;
+        }
+        else if(detector == DetectorType.ECAL.getDetectorId()) {
+            i = ((int) (layer-1)/3) + 6;
+        }
+        return i;
+    }
+    
     public void setMatch(boolean match) {
         this.trackMatch = match;
     }
@@ -286,7 +323,11 @@ public class Track implements Comparable<Track>{
     
     public boolean isValid() {
         boolean value = false;
-        if(Math.abs(this.vz()+5)<15 && this.chi2()<15 /*&& this.r3().mag()>3508*/) value=true;
+        if(Math.abs(this.vz()+5)<15 && 
+           this.chi2()<15 && 
+//           ((int) (Math.abs(this.status())/10))%10>0 &&
+           Math.abs(this.chi2pid())<5
+          ) value=true;
         return value;
     }
     
@@ -322,11 +363,19 @@ public class Track implements Comparable<Track>{
         str.append(String.format("\tvx: %9.5f",   this.vy()));
         str.append(String.format("\tvz: %9.5f\n", this.vz()));
         str.append("\t");
-        for(int i=0; i<6; i++) str.append(String.format("clus%1d: %4d  ", (i+1), this.clusters()[i]));
+        for(int i=0; i<6; i++) str.append(String.format("clus%1d:%3d\t", (i+1), this.clusters()[i]));
         str.append("\n");
-        str.append(String.format("\tchi2: %9.3f",  this.chi2()));
-        str.append(String.format("\tNDF: %4d",      this.NDF()));            
+        str.append(String.format("\tchi2: %7.3f",   this.chi2()));
+        str.append(String.format("\tNDF:  %4d\n",   this.NDF()));            
+        str.append(String.format("\tpid: %4d",      this.pid()));            
+        str.append(String.format("\tchi2pid: %.1f", this.chi2pid()));            
         str.append(String.format("\tstatus: %4d\n", this.status()));            
+        for(int i=0; i<9; i++) {
+        str.append("\t");
+            str.append(String.format("traj%1d: ", (i+1)));
+            str.append(this.trackTrajectory[i].toString());
+            str.append("\n");
+        }
         return str.toString();
     }
     

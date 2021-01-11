@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFrame;
+import org.jlab.detector.base.DetectorType;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.graphics.EmbeddedCanvas;
@@ -31,20 +32,22 @@ public class AImonitor {
     private HistoDistribution[] trUnmatched = {new HistoDistribution("trNegN",3), new HistoDistribution("trPosN",3)};
     private HistoDistribution[] aiUnmatched = {new HistoDistribution("aiNegN",3), new HistoDistribution("aiPosN",3)};
     private HistoResolution[]   resol       = {new HistoResolution("negRes",1),   new HistoResolution("posRes",2)};
-    
-    private Bank trBank = null;
-    private Bank aiBank = null;
+    private HistoEvent          trEvent     = null;
+    private HistoEvent          aiEvent     = new HistoEvent("ai",2,10.604,2212);
+     
+    private Banks banks = null;
     
     private String[] charges = {"neg", "pos"};
         
     
-    public AImonitor(){
+    public AImonitor(double beamEnergy, int targetPDG){
+        trEvent = new HistoEvent("tr", 1, beamEnergy, targetPDG);
+        aiEvent = new HistoEvent("ai", 2, beamEnergy, targetPDG);
     }
     
     
-    public void initBanks(Bank trb, Bank aib){
-        trBank = trb;
-        aiBank = aib;        
+    public void initBanks(Banks banks){
+        this.banks = banks;        
     }
 
     public EmbeddedCanvasTabbed plotHistos() {
@@ -85,6 +88,10 @@ public class AImonitor {
             canvas.getCanvas(cname).draw(aiMatched[i].diff(tr[i]).get("summary"));
             this.setRange(canvas.getCanvas(cname), 0.1);
         }
+        cname = "2pi";
+        canvas.addCanvas(cname);
+        canvas.getCanvas(cname).draw(trEvent.get("2pi"));
+        canvas.getCanvas(cname).draw(aiEvent.get("2pi"));                    
         return canvas;
     }
     
@@ -101,10 +108,8 @@ public class AImonitor {
         EventStatus status = new EventStatus();
         ArrayList<Track> aiTracks = null;
         ArrayList<Track> trTracks = null;
-        event.read(trBank);
-        event.read(aiBank);
-        trTracks = this.read(trBank);            
-        aiTracks = this.read(aiBank);
+        trTracks = this.read(0, event);            
+        aiTracks = this.read(1, event);
         
         if(trTracks!=null && aiTracks!=null) {
             for(Track tr : trTracks) {
@@ -128,6 +133,7 @@ public class AImonitor {
                     if(track.isValid()) status.setAiMissing();
                 }
             }
+            trEvent.fill(trTracks);
         }
         if(aiTracks!=null) {
             for(Track track : aiTracks) {
@@ -140,35 +146,83 @@ public class AImonitor {
                     if(track.isValid()) status.setCvMissing();
                 }
             }
+            aiEvent.fill(aiTracks);
         }
         return status;
     }
         
-    public ArrayList<Track> read(Bank bank) {
+    public ArrayList<Track> read(int type, Event event) {
         ArrayList<Track> tracks = null;
-        if(bank.getRows()>0) {
+        Bank particleBank   = banks.getRecParticleBank(type);
+        Bank trajectoryBank = banks.getRecTrajectoryBank(type);
+        Bank trackBank      = banks.getRecTrackBank(type);
+        Bank trackingBank   = banks.getTrackingBank(type);
+        if(particleBank!=null)   event.read(particleBank);
+        if(trajectoryBank!=null) event.read(trajectoryBank);
+        if(trackBank!=null)      event.read(trackBank);
+        if(trackingBank!=null)   event.read(trackingBank);
+        if(trackingBank!=null && trackingBank.getRows()>0) {
+            // create tracks list from track bank
             tracks = new ArrayList();
-            for(int loop = 0; loop < bank.getRows(); loop++){
-                Track track = new Track(bank.getByte("q", loop),
-                                        bank.getFloat("p0_x", loop),
-                                        bank.getFloat("p0_y", loop),
-                                        bank.getFloat("p0_z", loop),
-                                        bank.getFloat("Vtx0_x", loop),
-                                        bank.getFloat("Vtx0_y", loop),
-                                        bank.getFloat("Vtx0_z", loop));
-                track.sector(bank.getByte("sector", loop));
-                track.NDF(bank.getShort("ndf", loop));
-                track.chi2(bank.getFloat("chi2", loop)/bank.getShort("ndf", loop));
-                track.r3(bank.getFloat("c3_x", loop),bank.getFloat("c3_y", loop),bank.getFloat("p0_x", loop));
-                track.clusters(bank.getShort("Cluster1_ID", loop),
-                               bank.getShort("Cluster2_ID", loop),
-                               bank.getShort("Cluster3_ID", loop),
-                               bank.getShort("Cluster4_ID", loop),
-                               bank.getShort("Cluster5_ID", loop),
-                               bank.getShort("Cluster6_ID", loop));
+            for(int loop = 0; loop < trackingBank.getRows(); loop++){
+                Track track = new Track(trackingBank.getByte("q", loop),
+                                        trackingBank.getFloat("p0_x", loop),
+                                        trackingBank.getFloat("p0_y", loop),
+                                        trackingBank.getFloat("p0_z", loop),
+                                        trackingBank.getFloat("Vtx0_x", loop),
+                                        trackingBank.getFloat("Vtx0_y", loop),
+                                        trackingBank.getFloat("Vtx0_z", loop));
+                track.sector(trackingBank.getByte("sector", loop));
+                track.NDF(trackingBank.getShort("ndf", loop));
+                track.chi2(trackingBank.getFloat("chi2", loop)/trackingBank.getShort("ndf", loop));
+                for(int i=0; i<2; i++) {
+                    track.trajectory(trackingBank.getFloat("c" + (i*2+1) + "_x", loop),
+                                     trackingBank.getFloat("c" + (i*2+1) + "_y", loop),
+                                     trackingBank.getFloat("c" + (i*2+1) + "_z", loop),
+                                     DetectorType.DC.getDetectorId(),12+24*i);
+                }
+                track.clusters(trackingBank.getShort("Cluster1_ID", loop),
+                               trackingBank.getShort("Cluster2_ID", loop),
+                               trackingBank.getShort("Cluster3_ID", loop),
+                               trackingBank.getShort("Cluster4_ID", loop),
+                               trackingBank.getShort("Cluster5_ID", loop),
+                               trackingBank.getShort("Cluster6_ID", loop));
                 tracks.add(track);
             }
+            // add information from particle bank
+            if(trackBank!=null && particleBank!=null) {
+                for(int loop = 0; loop < trackBank.getRows(); loop++){
+                    int pindex = trackBank.getShort("pindex", loop);
+                    int status = particleBank.getShort("status", pindex);
+                    // Forward Detector only
+                    if(((int) Math.abs(status)/1000)==2) { 
+                        int index = trackBank.getShort("index", loop);
+                        Track track  = tracks.get(index); 
+                        track.status(status);
+                        track.pid(particleBank.getInt("pid", pindex));                
+                        track.chi2pid(particleBank.getFloat("chi2pid", pindex));                
+                    }
+                }
+            }
+            // add information from trajectory bank
+            if(trajectoryBank!=null) {
+                for(int loop = 0; loop < trajectoryBank.getRows(); loop++){
+                    int pindex = trajectoryBank.getShort("pindex", loop);
+                    int status = particleBank.getShort("status", pindex);
+                    // Forward Detector only
+                    if(((int) Math.abs(status)/1000)==2) { 
+                        int index = trajectoryBank.getShort("index", loop);
+                        Track track  = tracks.get(index); 
+                        track.trajectory(trajectoryBank.getFloat("x", loop),
+                                         trajectoryBank.getFloat("y", loop),
+                                         trajectoryBank.getFloat("z", loop),
+                                         trajectoryBank.getByte("detector", loop),
+                                         trajectoryBank.getByte("layer", loop));
+                    }
+                }
+            }
         }
+        
         return tracks;
     }
 
@@ -188,6 +242,8 @@ public class AImonitor {
             aiMatched[i].readDataGroup(dir);
             resol[i]=resol[i].readDataGroup(dir);
         }
+        trEvent.readDataGroup(dir);
+        aiEvent.readDataGroup(dir);
     }
 
     public void saveHistos(String fileName) {
@@ -200,6 +256,8 @@ public class AImonitor {
             aiMatched[i].writeDataGroup(dir);
             resol[i].writeDataGroup(dir);
         }
+        trEvent.writeDataGroup(dir);
+        aiEvent.writeDataGroup(dir);
         System.out.println("Saving histograms to file " + fileName);
         dir.writeFile(fileName);
     }    
@@ -273,28 +331,32 @@ public class AImonitor {
         parser.addOption("-b"    ,"TB",   "tracking level: TB or HB");
         parser.addOption("-r"    ,"",     "histogram file to be read");
         parser.addOption("-w"    ,"true", "display histograms");
+        parser.addOption("-b"    ,"10.6", "beam enregy");
+        parser.addOption("-t"    ,"2212", "target PDG");
         parser.parse(args);
         
         int   maxEvents  = parser.getOption("-n").intValue();
 
         String namePrefix  = parser.getOption("-o").stringValue();        
-        String histoName  = "histo.hipo";
-        String eventName1 = "missing_ai.hipo";
-        String eventName2 = "missing_cv.hipo";
+        String histoName   = "histo.hipo";
+        String eventName1  = "missing_ai.hipo";
+        String eventName2  = "missing_cv.hipo";
         if(!namePrefix.isEmpty()) {
             histoName  = namePrefix + "_" + histoName;
             eventName1 = namePrefix + "_" + eventName1;
             eventName2 = namePrefix + "_" + eventName2;
         }        
-        String type     = parser.getOption("-b").stringValue();        
-        String readName = parser.getOption("-r").stringValue();        
-        boolean window  = Boolean.parseBoolean(parser.getOption("-w").stringValue());
+        String  type     = parser.getOption("-b").stringValue();        
+        String  readName = parser.getOption("-r").stringValue();        
+        boolean window   = Boolean.parseBoolean(parser.getOption("-w").stringValue());
+        double  beam     = parser.getOption("-b").doubleValue();
+        int     target   = parser.getOption("-t").intValue();
         
         if(!window) System.setProperty("java.awt.headless", "true");
         
         SchemaFactory schema = null;           
         
-        AImonitor analysis = new AImonitor();
+        AImonitor analysis = new AImonitor(beam,target);
         
         HipoWriterSorted writer1 = new HipoWriterSorted();
         HipoWriterSorted writer2 = new HipoWriterSorted();
@@ -322,13 +384,8 @@ public class AImonitor {
                     AImonitor.setWriter(writer1, schema, eventName1);
                     AImonitor.setWriter(writer2, schema, eventName2);
 
-                    Bank tr = new Bank(schema.getSchema("TimeBasedTrkg::TBTracks"));
-                    Bank ai = new Bank(schema.getSchema("TimeBasedTrkg::AITracks"));
-                    if(type.equals("HB")) {
-                        tr = new Bank(schema.getSchema("HitBasedTrkg::HBTracks"));
-                        ai = new Bank(schema.getSchema("HitBasedTrkg::AITracks"));
-                    }
-                    analysis.initBanks(tr,ai);
+                    Banks banks = new Banks(type,schema);
+                    analysis.initBanks(banks);
                 }
 
                 while (reader.hasNext()) {
