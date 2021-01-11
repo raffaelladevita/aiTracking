@@ -331,7 +331,7 @@ public class AImonitor {
         parser.addOption("-b"    ,"TB",   "tracking level: TB or HB");
         parser.addOption("-r"    ,"",     "histogram file to be read");
         parser.addOption("-w"    ,"true", "display histograms");
-        parser.addOption("-b"    ,"10.6", "beam enregy");
+        parser.addOption("-e"    ,"10.6", "beam energy");
         parser.addOption("-t"    ,"2212", "target PDG");
         parser.parse(args);
         
@@ -349,7 +349,7 @@ public class AImonitor {
         String  type     = parser.getOption("-b").stringValue();        
         String  readName = parser.getOption("-r").stringValue();        
         boolean window   = Boolean.parseBoolean(parser.getOption("-w").stringValue());
-        double  beam     = parser.getOption("-b").doubleValue();
+        double  beam     = parser.getOption("-e").doubleValue();
         int     target   = parser.getOption("-t").intValue();
         
         if(!window) System.setProperty("java.awt.headless", "true");
