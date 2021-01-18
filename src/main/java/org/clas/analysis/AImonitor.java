@@ -18,7 +18,6 @@ import org.jlab.jnp.hipo4.io.HipoReader;
 import org.jlab.jnp.hipo4.io.HipoWriterSorted;
 import org.jlab.utils.benchmark.ProgressPrintout;
 import org.jlab.utils.options.OptionParser;
-
 /**
  *
  * @author devita
@@ -105,12 +104,12 @@ public class AImonitor {
     }
         
     public EventStatus processEvent(Event event) {
-        EventStatus status = new EventStatus();
+	EventStatus status = new EventStatus();
         ArrayList<Track> aiTracks = null;
         ArrayList<Track> trTracks = null;
         trTracks = this.read(0, event);            
         aiTracks = this.read(1, event);
-        
+
         if(trTracks!=null && aiTracks!=null) {
             for(Track tr : trTracks) {
                 for(Track ai : aiTracks) {
@@ -122,6 +121,7 @@ public class AImonitor {
                 }
             }
         }
+
         if(trTracks!=null) {
             for(Track track : trTracks) {
                 tr[(track.charge()+1)/2].fill(track);
@@ -130,7 +130,7 @@ public class AImonitor {
                 }
                 else {
                     trUnmatched[(track.charge()+1)/2].fill(track);
-                    if(track.isValid()) status.setAiMissing();
+		    if(track.isValid() && passDCFiducial(track)) status.setAiMissing();
                 }
             }
             trEvent.fill(trTracks);
@@ -143,21 +143,49 @@ public class AImonitor {
                 }
                 else {
                     aiUnmatched[(track.charge()+1)/2].fill(track);
-                    if(track.isValid()) status.setCvMissing();
+                    if(track.isValid() && passDCFiducial(track)) status.setCvMissing();
                 }
             }
             aiEvent.fill(aiTracks);
         }
         return status;
     }
-        
-    public ArrayList<Track> read(int type, Event event) {
+
+
+    /*    public boolean isinbending(Bank conf) {
+
+	if(conf.getFloat("torus",0) < 0) {
+	    return true;
+	}
+	else {
+	    return false;
+	}
+    }
+    */
+    public boolean passDCFiducial(Track track) {
+
+	if(track.pid()==11){
+	    eleDCFiducial fiducial = new eleDCFiducial();
+
+	    return fiducial.DC_fiducial_cut_XY(track.sector(), 1, track.x(0), track.y(0), track.pid(), false) && fiducial.DC_fiducial_cut_XY(track.sector(), 2, track.x(1), track.y(1), track.pid(), false) && fiducial.DC_fiducial_cut_XY(track.sector(), 3, track.x(2), track.y(2), track.pid(), false);
+
+	} else if (track.pid()==2212 || track.pid() == 211 || track.pid() == -211 || track.pid()==321 || track.pid()==-321){
+	    hadronDCFiducial fiducial = new hadronDCFiducial();
+
+       	    return fiducial.DC_fiducial_cut_theta_phi(track.sector(), 1, track.x(0), track.y(0), track.z(0), track.pid(), false) && fiducial.DC_fiducial_cut_theta_phi(track.sector(), 2, track.x(1), track.y(1), track.z(1), track.pid(), false) && fiducial.DC_fiducial_cut_theta_phi(track.sector(), 3, track.x(2), track.y(2), track.z(2), track.pid(), false);
+
+	} else {
+	    return true;
+	}
+    }
+
+    public ArrayList<Track> read(int type, Event event) {	
         ArrayList<Track> tracks = null;
         Bank particleBank   = banks.getRecParticleBank(type);
         Bank trajectoryBank = banks.getRecTrajectoryBank(type);
         Bank trackBank      = banks.getRecTrackBank(type);
         Bank trackingBank   = banks.getTrackingBank(type);
-        if(particleBank!=null)   event.read(particleBank);
+	if(particleBank!=null)   event.read(particleBank);
         if(trajectoryBank!=null) event.read(trajectoryBank);
         if(trackBank!=null)      event.read(trackBank);
         if(trackingBank!=null)   event.read(trackingBank);
@@ -393,6 +421,7 @@ public class AImonitor {
                     counter++;
 
                     reader.nextEvent(event);
+		    //		    Bank conf = new Bank(reader.getSchemaFactory().getSchema("RUN::config"));
 
                     EventStatus status = analysis.processEvent(event);
 

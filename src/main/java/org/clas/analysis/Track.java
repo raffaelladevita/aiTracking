@@ -142,6 +142,18 @@ public class Track implements Comparable<Track>{
         this.trackSector = sec;
     }
 
+    public double x(int layer) {
+        return this.trackTrajectory[layer].x();
+    }
+
+    public double y(int layer) {
+        return this.trackTrajectory[layer].y();
+    }
+
+    public double z(int layer) {
+        return this.trackTrajectory[layer].z();
+    }
+
     public void setVector(int charge, Vector3 nvect, Vector3 nvert) {
         trackVector.setVectM(nvect, 0);
         trackVertex.setXYZ(nvert.x(), nvert.y(), nvert.z());
