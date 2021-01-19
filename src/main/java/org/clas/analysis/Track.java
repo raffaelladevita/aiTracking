@@ -21,6 +21,7 @@ public class Track implements Comparable<Track>{
     private Vector3 trackVertex = new Vector3(0.0,0.0,0.0);
     private int trackCharge = 0;
     private int trackSector = 0;
+    private double trackPolarity = 0;
     private double trackChi2 = 0;
     private int trackNDF = 0;
     private int[] trackClusters = new int[6];
@@ -142,16 +143,19 @@ public class Track implements Comparable<Track>{
         this.trackSector = sec;
     }
 
-    public double x(int layer) {
-        return this.trackTrajectory[layer].x();
+    public double x(int detector, int layer) {
+	int i = this.trajIndex(detector, layer);
+        return this.trackTrajectory[i].x();
     }
 
-    public double y(int layer) {
-        return this.trackTrajectory[layer].y();
+    public double y(int detector, int layer) {
+        int i = this.trajIndex(detector, layer);
+	return this.trackTrajectory[i].y();
     }
 
-    public double z(int layer) {
-        return this.trackTrajectory[layer].z();
+    public double z(int detector, int layer) {
+        int i = this.trajIndex(detector, layer);
+	return this.trackTrajectory[i].z();
     }
 
     public void setVector(int charge, Vector3 nvect, Vector3 nvert) {
@@ -217,11 +221,19 @@ public class Track implements Comparable<Track>{
         this.trackClusters[5] = i6;
     }    
 
+    public void polarity(double polarity){
+	this.trackPolarity = polarity;
+    }
+
+    public double polarity(){
+	return this.trackPolarity;
+    }
+
     public void status(int status){
         this.trackStatus = status;
     }
     
-    public int  status(){
+    public int status(){
         return this.trackStatus;
     }
     
@@ -333,15 +345,45 @@ public class Track implements Comparable<Track>{
         return (Math.abs(Math.toDegrees(trackVector.phi())-mean) < sigma);
     }
     
+    public boolean isinbending() {
+
+        if(this.polarity() < 0) {
+            return true;
+	}
+        else {
+            return false;
+        }
+    }
+
+
     public boolean isValid() {
         boolean value = false;
         if(Math.abs(this.vz()+5)<15 && 
-           this.chi2()<15 && 
-//           ((int) (Math.abs(this.status())/10))%10>0 &&
-           Math.abs(this.chi2pid())<5
-          ) value=true;
+           this.chi2()<15  
+//         && ((int) (Math.abs(this.status())/10))%10>0
+	   && Math.abs(this.chi2pid())<5
+	   && this.passDCFiducial()
+	   ) value=true;
         return value;
     }
+
+    public boolean passDCFiducial() {
+
+        if(this.pid()==11){
+            EleDCFiducial fiducial = new EleDCFiducial();
+
+            return fiducial.DC_fiducial_cut_XY(this.sector(), 1, this.x(DetectorType.DC.getDetectorId(),12), this.y(DetectorType.DC.getDetectorId(), 12), this.pid(), this.isinbending()) && fiducial.DC_fiducial_cut_XY(this.sector(), 2, this.x(DetectorType.DC.getDetectorId(),24), this.y(DetectorType.DC.getDetectorId(),24), this.pid(), this.isinbending()) && fiducial.DC_fiducial_cut_XY(this.sector(), 3, this.x(DetectorType.DC.getDetectorId(),36), this.y(DetectorType.DC.getDetectorId(),36), this.pid(), this.isinbending());
+
+        } else if (this.pid()==2212 || this.pid() == 211 || this.pid() == -211 || this.pid()==321 || this.pid()==-321){
+            HadronDCFiducial fiducial = new HadronDCFiducial();
+
+            return fiducial.DC_fiducial_cut_theta_phi(this.sector(), 1, this.x(DetectorType.DC.getDetectorId(), 12), this.y(DetectorType.DC.getDetectorId(), 12), this.z(DetectorType.DC.getDetectorId(), 12), this.pid(), this.isinbending()) && fiducial.DC_fiducial_cut_theta_phi(this.sector(), 2, this.x(DetectorType.DC.getDetectorId(),24), this.y(DetectorType.DC.getDetectorId(),24), this.z(DetectorType.DC.getDetectorId(),24), this.pid(), this.isinbending()) && fiducial.DC_fiducial_cut_theta_phi(this.sector(), 3, this.x(DetectorType.DC.getDetectorId(),36), this.y(DetectorType.DC.getDetectorId(),36), this.z(DetectorType.DC.getDetectorId(),36), this.pid(), this.isinbending());
+
+        } else {
+            return true;
+        }
+    }
+
     
     
     private int compareClusters(Track t) {

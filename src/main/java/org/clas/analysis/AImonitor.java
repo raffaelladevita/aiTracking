@@ -130,7 +130,7 @@ public class AImonitor {
                 }
                 else {
                     trUnmatched[(track.charge()+1)/2].fill(track);
-		    if(track.isValid() && passDCFiducial(track)) status.setAiMissing();
+		    if(track.isValid()) status.setAiMissing();
                 }
             }
             trEvent.fill(trTracks);
@@ -143,7 +143,7 @@ public class AImonitor {
                 }
                 else {
                     aiUnmatched[(track.charge()+1)/2].fill(track);
-                    if(track.isValid() && passDCFiducial(track)) status.setCvMissing();
+                    if(track.isValid()) status.setCvMissing();
                 }
             }
             aiEvent.fill(aiTracks);
@@ -152,39 +152,14 @@ public class AImonitor {
     }
 
 
-    /*    public boolean isinbending(Bank conf) {
-
-	if(conf.getFloat("torus",0) < 0) {
-	    return true;
-	}
-	else {
-	    return false;
-	}
-    }
-    */
-    public boolean passDCFiducial(Track track) {
-
-	if(track.pid()==11){
-	    eleDCFiducial fiducial = new eleDCFiducial();
-
-	    return fiducial.DC_fiducial_cut_XY(track.sector(), 1, track.x(0), track.y(0), track.pid(), false) && fiducial.DC_fiducial_cut_XY(track.sector(), 2, track.x(1), track.y(1), track.pid(), false) && fiducial.DC_fiducial_cut_XY(track.sector(), 3, track.x(2), track.y(2), track.pid(), false);
-
-	} else if (track.pid()==2212 || track.pid() == 211 || track.pid() == -211 || track.pid()==321 || track.pid()==-321){
-	    hadronDCFiducial fiducial = new hadronDCFiducial();
-
-       	    return fiducial.DC_fiducial_cut_theta_phi(track.sector(), 1, track.x(0), track.y(0), track.z(0), track.pid(), false) && fiducial.DC_fiducial_cut_theta_phi(track.sector(), 2, track.x(1), track.y(1), track.z(1), track.pid(), false) && fiducial.DC_fiducial_cut_theta_phi(track.sector(), 3, track.x(2), track.y(2), track.z(2), track.pid(), false);
-
-	} else {
-	    return true;
-	}
-    }
-
     public ArrayList<Track> read(int type, Event event) {	
         ArrayList<Track> tracks = null;
+	Bank runConfig = banks.getRunConfig();
         Bank particleBank   = banks.getRecParticleBank(type);
         Bank trajectoryBank = banks.getRecTrajectoryBank(type);
         Bank trackBank      = banks.getRecTrackBank(type);
         Bank trackingBank   = banks.getTrackingBank(type);
+	if(runConfig!=null) event.read(runConfig);
 	if(particleBank!=null)   event.read(particleBank);
         if(trajectoryBank!=null) event.read(trajectoryBank);
         if(trackBank!=null)      event.read(trackBank);
@@ -217,6 +192,19 @@ public class AImonitor {
                                trackingBank.getShort("Cluster6_ID", loop));
                 tracks.add(track);
             }
+	    //add information from run config bank
+	    if(trackingBank!=null && runConfig!=null) {
+		for(int loop = 0; loop < trackingBank.getRows(); loop++){
+		    //		    int index = trackingBank.getShort("index", loop);
+		    //		    System.out.println("number of track bank rows = " + trackBank.getRows());
+		    //		    //		    System.out.println("number of tracking bank rows = " + trackingBank.getRows());
+		    //		    System.out.println("size = " + tracks.size());
+		    //		    System.out.println("index = " + index);
+		    //		    System.out.println("loop = " + loop);
+		    Track track  = tracks.get(loop);
+		    track.polarity(runConfig.getFloat("torus",0));
+		}
+	    }
             // add information from particle bank
             if(trackBank!=null && particleBank!=null) {
                 for(int loop = 0; loop < trackBank.getRows(); loop++){
