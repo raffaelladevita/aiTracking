@@ -1,6 +1,6 @@
 package org.clas.analysis;
 
-public class eleDCFiducial {
+public class EleDCFiducial {
 
     /**
      * @param dc_sector sector of hits in DC

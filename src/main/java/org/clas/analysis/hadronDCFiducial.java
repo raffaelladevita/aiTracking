@@ -1,6 +1,6 @@
 package org.clas.analysis;
 
-public class hadronDCFiducial {
+public class HadronDCFiducial {
 
     /**
      * DC fiducial cut for hadrons
