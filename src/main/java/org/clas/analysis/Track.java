@@ -372,19 +372,20 @@ public class Track implements Comparable<Track>{
         if(this.pid()==11){
             EleDCFiducial fiducial = new EleDCFiducial();
 
-            return fiducial.DC_fiducial_cut_XY(this.sector(), 1, this.x(DetectorType.DC.getDetectorId(),12), this.y(DetectorType.DC.getDetectorId(), 12), this.pid(), this.isinbending()) && fiducial.DC_fiducial_cut_XY(this.sector(), 2, this.x(DetectorType.DC.getDetectorId(),24), this.y(DetectorType.DC.getDetectorId(),24), this.pid(), this.isinbending()) && fiducial.DC_fiducial_cut_XY(this.sector(), 3, this.x(DetectorType.DC.getDetectorId(),36), this.y(DetectorType.DC.getDetectorId(),36), this.pid(), this.isinbending());
+            return fiducial.DC_fiducial_cut_XY(this.sector(), 1, this.x(DetectorType.DC.getDetectorId(),12), this.y(DetectorType.DC.getDetectorId(),12), this.pid(), this.isinbending()) 
+		&& fiducial.DC_fiducial_cut_XY(this.sector(), 2, this.x(DetectorType.DC.getDetectorId(),24), this.y(DetectorType.DC.getDetectorId(),24), this.pid(), this.isinbending()) 
+		&& fiducial.DC_fiducial_cut_XY(this.sector(), 3, this.x(DetectorType.DC.getDetectorId(),36), this.y(DetectorType.DC.getDetectorId(),36), this.pid(), this.isinbending());
 
         } else if (this.pid()==2212 || this.pid() == 211 || this.pid() == -211 || this.pid()==321 || this.pid()==-321){
             HadronDCFiducial fiducial = new HadronDCFiducial();
 
-            return fiducial.DC_fiducial_cut_theta_phi(this.sector(), 1, this.x(DetectorType.DC.getDetectorId(), 12), this.y(DetectorType.DC.getDetectorId(), 12), this.z(DetectorType.DC.getDetectorId(), 12), this.pid(), this.isinbending()) && fiducial.DC_fiducial_cut_theta_phi(this.sector(), 2, this.x(DetectorType.DC.getDetectorId(),24), this.y(DetectorType.DC.getDetectorId(),24), this.z(DetectorType.DC.getDetectorId(),24), this.pid(), this.isinbending()) && fiducial.DC_fiducial_cut_theta_phi(this.sector(), 3, this.x(DetectorType.DC.getDetectorId(),36), this.y(DetectorType.DC.getDetectorId(),36), this.z(DetectorType.DC.getDetectorId(),36), this.pid(), this.isinbending());
-
+            return fiducial.DC_fiducial_cut_theta_phi(this.sector(), 1, this.x(DetectorType.DC.getDetectorId(),12), this.y(DetectorType.DC.getDetectorId(),12), this.z(DetectorType.DC.getDetectorId(),12), this.pid(), this.isinbending()) 
+		&& fiducial.DC_fiducial_cut_theta_phi(this.sector(), 2, this.x(DetectorType.DC.getDetectorId(),24), this.y(DetectorType.DC.getDetectorId(),24), this.z(DetectorType.DC.getDetectorId(),24), this.pid(), this.isinbending()) 
+		&& fiducial.DC_fiducial_cut_theta_phi(this.sector(), 3, this.x(DetectorType.DC.getDetectorId(),36), this.y(DetectorType.DC.getDetectorId(),36), this.z(DetectorType.DC.getDetectorId(),36), this.pid(), this.isinbending());
         } else {
             return true;
         }
     }
-
-    
     
     private int compareClusters(Track t) {
         int nmatch = 0;

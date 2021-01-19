@@ -121,7 +121,6 @@ public class AImonitor {
                 }
             }
         }
-
         if(trTracks!=null) {
             for(Track track : trTracks) {
                 tr[(track.charge()+1)/2].fill(track);
@@ -195,12 +194,6 @@ public class AImonitor {
 	    //add information from run config bank
 	    if(trackingBank!=null && runConfig!=null) {
 		for(int loop = 0; loop < trackingBank.getRows(); loop++){
-		    //		    int index = trackingBank.getShort("index", loop);
-		    //		    System.out.println("number of track bank rows = " + trackBank.getRows());
-		    //		    //		    System.out.println("number of tracking bank rows = " + trackingBank.getRows());
-		    //		    System.out.println("size = " + tracks.size());
-		    //		    System.out.println("index = " + index);
-		    //		    System.out.println("loop = " + loop);
 		    Track track  = tracks.get(loop);
 		    track.polarity(runConfig.getFloat("torus",0));
 		}
@@ -409,7 +402,6 @@ public class AImonitor {
                     counter++;
 
                     reader.nextEvent(event);
-		    //		    Bank conf = new Bank(reader.getSchemaFactory().getSchema("RUN::config"));
 
                     EventStatus status = analysis.processEvent(event);
 
