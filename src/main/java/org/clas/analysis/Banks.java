@@ -22,7 +22,7 @@ public class Banks {
     private Bank aiTrackingBank;
 
     public Banks(String mode, SchemaFactory schema) {
-	this.runConfig = new Bank(schema.getSchema("RUN::config"));
+	this.runConfig        = new Bank(schema.getSchema("RUN::config"));
         this.cvParticleBank   = new Bank(schema.getSchema("REC::Particle"));
         this.cvTrajectoryBank = new Bank(schema.getSchema("REC::Traj"));;
         this.cvTrackBank      = new Bank(schema.getSchema("REC::Track"));;

@@ -1,18 +1,17 @@
-package org.clas.analysis;
+package org.clas.fiducials;
+
+import javax.swing.JFrame;
+import org.jlab.detector.base.DetectorType;
+import org.jlab.groot.data.H2F;
+import org.jlab.groot.graphics.EmbeddedCanvas;
+import org.jlab.groot.group.DataGroup;
+import org.jlab.jnp.hipo4.data.Bank;
+import org.jlab.jnp.hipo4.data.Event;
+import org.jlab.jnp.hipo4.data.SchemaFactory;
+import org.jlab.jnp.hipo4.io.HipoReader;
 
 public class HadronDCFiducial {
 
-    /**
-     * DC fiducial cut for hadrons
-     * @param dc_sector sector of hits in DC
-     * @param region specify fiducial cuts for which region to use
-     * @param trajx x for region 1 or 2 or 3 from REC::Traj
-     * @param trajy y for region 1 or 2 or 3 from REC::Traj
-     * @param trajz z for region 1 or 2 or 3 from REC::Traj
-     * @param partpid pid assigned to particle candidate
-     * @param isinbending True if magnetic field is inbending
-     */
-    public static boolean DC_fiducial_cut_theta_phi(int dc_sector, int region, double trajx, double trajy, double trajz, int partpid, boolean isinbending) {
 
 	// new cut parameters for the polynomial cut based on the local theta and phi coordinates (inbending field):
 	// replace it in the function: bool DC_fiducial_cut_theta_phi(int j, int region)
@@ -202,6 +201,18 @@ public class HadronDCFiducial {
             }
         };
 
+    /**
+     * DC fiducial cut for hadrons
+     * @param dc_sector sector of hits in DC
+     * @param region specify fiducial cuts for which region to use
+     * @param trajx x for region 1 or 2 or 3 from REC::Traj
+     * @param trajy y for region 1 or 2 or 3 from REC::Traj
+     * @param trajz z for region 1 or 2 or 3 from REC::Traj
+     * @param partpid pid assigned to particle candidate
+     * @param isinbending True if magnetic field is inbending
+     */
+    public boolean DC_fiducial_cut_theta_phi(int dc_sector, int region, double trajx, double trajy, double trajz, int partpid, int charge, boolean isinbending) {
+
         double[][][][] minparams = isinbending ? minparams_in : minparams_out;
         double[][][][] maxparams = isinbending ? maxparams_in : maxparams_out;
 
@@ -221,7 +232,7 @@ public class HadronDCFiducial {
         if (dc_sector == 6) phi_DCr = phi_DCr_raw + 60;
 
         int pid = 0;
-
+        
         switch (partpid)
 	    {
 	    case 11:
@@ -243,7 +254,7 @@ public class HadronDCFiducial {
 		pid = 5;
 		break;
 	    default:
-		return false;
+		pid = (charge>0) ? 2  : 3;
 	    }
 
         double calc_phi_min = minparams[pid][dc_sector-1][region-1][0] + minparams[pid][dc_sector-1][region-1][1] * Math.log(theta_DCr) + minparams[pid][dc_sector-1][region-1][2] * theta_DCr + minparams[pid][dc_sector-1][region-1][3] * theta_DCr * theta_DCr;
@@ -253,4 +264,69 @@ public class HadronDCFiducial {
         return (phi_DCr > calc_phi_min) && (phi_DCr < calc_phi_max);
     }
 
+        public static void main(String[] args){
+        DataGroup dg = new DataGroup(3,2);
+        for(int i=0; i<3; i++)  {
+            int region = i+1;
+            double range = 200+i*100;
+            H2F h2nocut = new H2F("h2nocut"+region,"h2nocut"+region, 200,-range,range,  200,-range,range);
+            H2F h2cut   = new H2F("h2cut"+region,  "h2cut"+region,   200,-range,range,  200,-range,range);
+            dg.addDataSet(h2nocut, i);
+            dg.addDataSet(h2cut,   i+3);
+        }
+        HadronDCFiducial fid = new HadronDCFiducial();
+        
+        HipoReader reader = new HipoReader();
+        reader.open("/Users/devita/ai_rec_clas_005038.small.hipo");
+        
+        SchemaFactory schema = reader.getSchemaFactory();
+                    
+        Bank particleBank   = new Bank(schema.getSchema("REC::Particle"));
+        Bank trajectoryBank = new Bank(schema.getSchema("REC::Traj"));
+        Bank trackBank      = new Bank(schema.getSchema("REC::Track"));
+        
+        int counter=-1;
+        Event event = new Event();
+        while (reader.hasNext()) {
+            counter++;
+            reader.nextEvent(event);
+            event.read(particleBank);
+            event.read(trajectoryBank);
+            event.read(trackBank);
+            
+            for(int loop = 0; loop < trajectoryBank.getRows(); loop++){
+                int pindex   = trajectoryBank.getShort("pindex", loop);
+                int detector = trajectoryBank.getByte("detector", loop);
+                int charge   = particleBank.getByte("charge", pindex);
+                
+                if((detector==DetectorType.DC.getDetectorId())) { 
+                    int layer = trajectoryBank.getByte("layer", loop);
+                    double x  = trajectoryBank.getFloat("x", loop);
+                    double y  = trajectoryBank.getFloat("y", loop);
+                    double z  = trajectoryBank.getFloat("z", loop);
+                    int region = ((int) (layer-1)/12) +1;
+                    int sector = 0;
+                    for(int j=0;j<trackBank.getRows(); j++) {
+                        if(pindex==trackBank.getShort("pindex", j)) sector = trackBank.getByte("sector", j);
+                    }
+                    boolean fiducial = fid.DC_fiducial_cut_theta_phi(sector, region, x, y, z, 211*charge, charge, true);
+                    dg.getH2F("h2nocut"+region).fill(x, y);
+                    if(fiducial) dg.getH2F("h2cut"+region).fill(x, y);
+                }
+            }
+        }
+        reader.close();
+        
+        for(int i=0; i<3; i++)  {
+            System.out.println(dg.getH2F("h2nocut"+(i+1)).getEntries() + " " + dg.getH2F("h2cut"+(i+1)).getEntries());
+        }
+        
+        EmbeddedCanvas canvas = new EmbeddedCanvas();
+        canvas.draw(dg);
+        JFrame frame = new JFrame("DC");
+        frame.setSize(1200, 1000);
+        frame.add(canvas);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
 }

@@ -1,5 +1,9 @@
 package org.clas.analysis;
 
+import org.clas.histograms.HistoResolution;
+import org.clas.histograms.HistoEvent;
+import org.clas.histograms.HistoDistribution;
+import org.clas.fiducials.Fiducial;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,15 +28,16 @@ import org.jlab.utils.options.OptionParser;
  */
 public class AImonitor {    
         
-    private HistoDistribution[] tr          = {new HistoDistribution("trNeg",1),  new HistoDistribution("trPos",1)};
-    private HistoDistribution[] ai          = {new HistoDistribution("aiNeg",2),  new HistoDistribution("aiPos",2)};
-    private HistoDistribution[] trMatched   = {new HistoDistribution("trNegM",4), new HistoDistribution("trPosM",4)};
-    private HistoDistribution[] aiMatched   = {new HistoDistribution("aiNegM",4), new HistoDistribution("aiPosM",4)};
-    private HistoDistribution[] trUnmatched = {new HistoDistribution("trNegN",3), new HistoDistribution("trPosN",3)};
-    private HistoDistribution[] aiUnmatched = {new HistoDistribution("aiNegN",3), new HistoDistribution("aiPosN",3)};
-    private HistoResolution[]   resol       = {new HistoResolution("negRes",1),   new HistoResolution("posRes",2)};
+    private Fiducial fiducial = new Fiducial();
+    private HistoDistribution[] tr          = new HistoDistribution[2];
+    private HistoDistribution[] ai          = new HistoDistribution[2];
+    private HistoDistribution[] trMatched   = new HistoDistribution[2];
+    private HistoDistribution[] aiMatched   = new HistoDistribution[2];
+    private HistoDistribution[] trUnmatched = new HistoDistribution[2];
+    private HistoDistribution[] aiUnmatched = new HistoDistribution[2];
+    private HistoResolution[]   resol       = new HistoResolution[2];
     private HistoEvent          trEvent     = null;
-    private HistoEvent          aiEvent     = new HistoEvent("ai",2,10.604,2212);
+    private HistoEvent          aiEvent     = null;
      
     private Banks banks = null;
     
@@ -40,8 +45,7 @@ public class AImonitor {
         
     
     public AImonitor(double beamEnergy, int targetPDG){
-        trEvent = new HistoEvent("tr", 1, beamEnergy, targetPDG);
-        aiEvent = new HistoEvent("ai", 2, beamEnergy, targetPDG);
+        this.createHistos(beamEnergy, targetPDG);
     }
     
     
@@ -49,9 +53,9 @@ public class AImonitor {
         this.banks = banks;        
     }
 
-    public EmbeddedCanvasTabbed plotHistos() {
+    private void createHistos(double beamEnergy, int targetPDG) {
         
-//        GStyle.getH1FAttributes().setOptStat("1111");
+        GStyle.getH1FAttributes().setOptStat("1111");
         GStyle.getAxisAttributesX().setTitleFontSize(24);
         GStyle.getAxisAttributesX().setLabelFontSize(18);
         GStyle.getAxisAttributesY().setTitleFontSize(24);
@@ -65,7 +69,22 @@ public class AImonitor {
         GStyle.getAxisAttributesZ().setTitleFontName("Arial");
         GStyle.setGraphicsFrameLineWidth(1);
         GStyle.getH1FAttributes().setLineWidth(2);
-
+        for(int i=0; i<2; i++) {
+            tr[i] = new HistoDistribution("tr"+charges[i],1);
+            ai[i] = new HistoDistribution("ai"+charges[i],2);
+            trMatched[i] = new HistoDistribution("tr"+charges[i]+"M",4);
+            aiMatched[i] = new HistoDistribution("ai"+charges[i]+"M",4);
+            trUnmatched[i] = new HistoDistribution("tr"+charges[i]+"N",3);
+            aiUnmatched[i] = new HistoDistribution("ai"+charges[i]+"N",3);
+            resol[i] = new HistoResolution(charges[i]+"Res",i+1);   
+        }
+        trEvent = new HistoEvent("tr", 1, beamEnergy, targetPDG);
+        aiEvent = new HistoEvent("ai", 2, beamEnergy, targetPDG);        
+    }
+    
+    
+    public EmbeddedCanvasTabbed plotHistos() {
+        
         EmbeddedCanvasTabbed canvas  = null;
         String cname = null;
         for(int i=0; i<2; i++) {
@@ -91,6 +110,10 @@ public class AImonitor {
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("2pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("2pi"));                    
+        cname = "1pi";
+        canvas.addCanvas(cname);
+        canvas.getCanvas(cname).draw(trEvent.get("1pi"));
+        canvas.getCanvas(cname).draw(aiEvent.get("1pi"));                    
         return canvas;
     }
     
@@ -153,12 +176,12 @@ public class AImonitor {
 
     public ArrayList<Track> read(int type, Event event) {	
         ArrayList<Track> tracks = null;
-	Bank runConfig = banks.getRunConfig();
+	Bank runConfig      = banks.getRunConfig();
         Bank particleBank   = banks.getRecParticleBank(type);
         Bank trajectoryBank = banks.getRecTrajectoryBank(type);
         Bank trackBank      = banks.getRecTrackBank(type);
         Bank trackingBank   = banks.getTrackingBank(type);
-	if(runConfig!=null) event.read(runConfig);
+	if(runConfig!=null)      event.read(runConfig);
 	if(particleBank!=null)   event.read(particleBank);
         if(trajectoryBank!=null) event.read(trajectoryBank);
         if(trackBank!=null)      event.read(trackBank);
@@ -189,15 +212,9 @@ public class AImonitor {
                                trackingBank.getShort("Cluster4_ID", loop),
                                trackingBank.getShort("Cluster5_ID", loop),
                                trackingBank.getShort("Cluster6_ID", loop));
+                if(runConfig!=null && runConfig.getRows()>0) track.polarity(runConfig.getFloat("torus",0));
                 tracks.add(track);
             }
-	    //add information from run config bank
-	    if(trackingBank!=null && runConfig!=null) {
-		for(int loop = 0; loop < trackingBank.getRows(); loop++){
-		    Track track  = tracks.get(loop);
-		    track.polarity(runConfig.getFloat("torus",0));
-		}
-	    }
             // add information from particle bank
             if(trackBank!=null && particleBank!=null) {
                 for(int loop = 0; loop < trackBank.getRows(); loop++){
@@ -229,6 +246,10 @@ public class AImonitor {
                                          trajectoryBank.getByte("layer", loop));
                     }
                 }
+            }
+            // add fiducial information
+            for(Track tr : tracks) {
+                tr.isInFiducial(fiducial.inFiducial(tr));
             }
         }
         

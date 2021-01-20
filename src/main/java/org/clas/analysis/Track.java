@@ -15,7 +15,7 @@ import org.jlab.detector.base.DetectorType;
  */
 
 public class Track implements Comparable<Track>{
-
+    
     // from tracking bank
     private LorentzVector trackVector = new LorentzVector(0.0,0.0,0.0,0);
     private Vector3 trackVertex = new Vector3(0.0,0.0,0.0);
@@ -33,7 +33,8 @@ public class Track implements Comparable<Track>{
     
     // from trajectory bank
     private Vector3[] trackTrajectory = new Vector3[9]; // size set to contain 3 DC reegions, 3 FTOF and ECAL layers
-    
+    private boolean inFiducial = true;
+            
     private boolean trackMatch = false;
     
     public Track() {
@@ -75,6 +76,9 @@ public class Track implements Comparable<Track>{
         this.trackCharge = charge;
         this.trackVector.setPxPyPzM(px, py, pz, 0);
         this.trackVertex.setXYZ(vx, vy, vz);
+        for(int i=0; i<this.trackTrajectory.length; i++) {
+            this.trackTrajectory[i] = new Vector3(0,0,0);
+        }
     }
     
     public void setP(double mom) {
@@ -277,6 +281,14 @@ public class Track implements Comparable<Track>{
         }
         return i;
     }
+
+    public boolean isInFiducial() {
+        return inFiducial;
+    }
+
+    public void isInFiducial(boolean inFiducial) {
+        this.inFiducial = inFiducial;
+    }
     
     public void setMatch(boolean match) {
         this.trackMatch = match;
@@ -362,31 +374,11 @@ public class Track implements Comparable<Track>{
            this.chi2()<15  
 //         && ((int) (Math.abs(this.status())/10))%10>0
 	   && Math.abs(this.chi2pid())<5
-	   && this.passDCFiducial()
+	   && this.isInFiducial()
 	   ) value=true;
         return value;
     }
 
-    public boolean passDCFiducial() {
-
-        if(this.pid()==11){
-            EleDCFiducial fiducial = new EleDCFiducial();
-
-            return fiducial.DC_fiducial_cut_XY(this.sector(), 1, this.x(DetectorType.DC.getDetectorId(),12), this.y(DetectorType.DC.getDetectorId(),12), this.pid(), this.isinbending()) 
-		&& fiducial.DC_fiducial_cut_XY(this.sector(), 2, this.x(DetectorType.DC.getDetectorId(),24), this.y(DetectorType.DC.getDetectorId(),24), this.pid(), this.isinbending()) 
-		&& fiducial.DC_fiducial_cut_XY(this.sector(), 3, this.x(DetectorType.DC.getDetectorId(),36), this.y(DetectorType.DC.getDetectorId(),36), this.pid(), this.isinbending());
-
-        } else if (this.pid()==2212 || this.pid() == 211 || this.pid() == -211 || this.pid()==321 || this.pid()==-321){
-            HadronDCFiducial fiducial = new HadronDCFiducial();
-
-            return fiducial.DC_fiducial_cut_theta_phi(this.sector(), 1, this.x(DetectorType.DC.getDetectorId(),12), this.y(DetectorType.DC.getDetectorId(),12), this.z(DetectorType.DC.getDetectorId(),12), this.pid(), this.isinbending()) 
-		&& fiducial.DC_fiducial_cut_theta_phi(this.sector(), 2, this.x(DetectorType.DC.getDetectorId(),24), this.y(DetectorType.DC.getDetectorId(),24), this.z(DetectorType.DC.getDetectorId(),24), this.pid(), this.isinbending()) 
-		&& fiducial.DC_fiducial_cut_theta_phi(this.sector(), 3, this.x(DetectorType.DC.getDetectorId(),36), this.y(DetectorType.DC.getDetectorId(),36), this.z(DetectorType.DC.getDetectorId(),36), this.pid(), this.isinbending());
-        } else {
-            return true;
-        }
-    }
-    
     private int compareClusters(Track t) {
         int nmatch = 0;
         for(int i=0; i<6; i++) {
@@ -418,17 +410,17 @@ public class Track implements Comparable<Track>{
         str.append(String.format("\tvx: %9.5f",   this.vy()));
         str.append(String.format("\tvz: %9.5f\n", this.vz()));
         str.append("\t");
-        for(int i=0; i<6; i++) str.append(String.format("clus%1d:%3d\t", (i+1), this.clusters()[i]));
+        for(int i=0; i<this.clusters().length; i++) str.append(String.format("clus%1d:%3d\t", (i+1), this.clusters()[i]));
         str.append("\n");
         str.append(String.format("\tchi2: %7.3f",   this.chi2()));
         str.append(String.format("\tNDF:  %4d\n",   this.NDF()));            
         str.append(String.format("\tpid: %4d",      this.pid()));            
         str.append(String.format("\tchi2pid: %.1f", this.chi2pid()));            
         str.append(String.format("\tstatus: %4d\n", this.status()));            
-        for(int i=0; i<9; i++) {
+        for(int i=0; i<this.trackTrajectory.length; i++) {
         str.append("\t");
             str.append(String.format("traj%1d: ", (i+1)));
-            str.append(this.trackTrajectory[i].toString());
+            if(this.trackTrajectory[i]!=null) str.append(this.trackTrajectory[i].toString());
             str.append("\n");
         }
         return str.toString();

@@ -3,11 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.clas.analysis;
+package org.clas.histograms;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import org.clas.analysis.Track;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
