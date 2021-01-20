@@ -125,6 +125,21 @@ public class Histos extends HashMap<String,DataGroup> {
         return prefix;
     }
     
+    public void setStats(String opts) {
+        for(String key : this.keySet()) {
+            DataGroup dg = this.get(key);
+            int nrows = dg.getRows();
+            int ncols = dg.getColumns();
+            int nds   = nrows*ncols;
+            for(int i = 0; i < nds; i++){
+                List<IDataSet> dsList = dg.getData(i);
+                for(IDataSet ds : dsList){
+                    if(ds instanceof H1F) ((H1F) ds).setOptStat(opts);
+                }
+            }
+        }
+    }
+    
     public void readDataGroup(TDirectory dir) {
         String folder = this.getName();
         for(String key : this.keySet()) {

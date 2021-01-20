@@ -42,9 +42,11 @@ public class AImonitor {
     private Banks banks = null;
     
     private String[] charges = {"neg", "pos"};
-        
+      
+    private String opts = "";
     
-    public AImonitor(double beamEnergy, int targetPDG){
+    public AImonitor(double beamEnergy, int targetPDG, String opts){
+        this.opts = opts;
         this.createHistos(beamEnergy, targetPDG);
     }
     
@@ -55,7 +57,7 @@ public class AImonitor {
 
     private void createHistos(double beamEnergy, int targetPDG) {
         
-        GStyle.getH1FAttributes().setOptStat("1111");
+        GStyle.getH1FAttributes().setOptStat(opts);
         GStyle.getAxisAttributesX().setTitleFontSize(24);
         GStyle.getAxisAttributesX().setLabelFontSize(18);
         GStyle.getAxisAttributesY().setTitleFontSize(24);
@@ -82,9 +84,22 @@ public class AImonitor {
         aiEvent = new HistoEvent("ai", 2, beamEnergy, targetPDG);        
     }
     
+    private void setHistoStats(String opts) {
+        GStyle.getH1FAttributes().setOptStat(opts);
+        for(int i=0; i<2; i++) {
+            tr[i].setStats(opts);
+            ai[i].setStats(opts);
+            trMatched[i].setStats(opts);
+            aiMatched[i].setStats(opts);
+            trUnmatched[i].setStats(opts);
+            aiUnmatched[i].setStats(opts);           
+        }  
+        trEvent.setStats(opts);
+        aiEvent.setStats(opts);
+    }
     
     public EmbeddedCanvasTabbed plotHistos() {
-        
+        this.setHistoStats(opts);
         EmbeddedCanvasTabbed canvas  = null;
         String cname = null;
         for(int i=0; i<2; i++) {
@@ -361,6 +376,7 @@ public class AImonitor {
         parser.addOption("-b"    ,"TB",   "tracking level: TB or HB");
         parser.addOption("-r"    ,"",     "histogram file to be read");
         parser.addOption("-w"    ,"true", "display histograms");
+        parser.addOption("-s"    ,"",     "histogram stat option");
         parser.addOption("-e"    ,"10.6", "beam energy");
         parser.addOption("-t"    ,"2212", "target PDG");
         parser.parse(args);
@@ -379,6 +395,7 @@ public class AImonitor {
         String  type     = parser.getOption("-b").stringValue();        
         String  readName = parser.getOption("-r").stringValue();        
         boolean window   = Boolean.parseBoolean(parser.getOption("-w").stringValue());
+        String  optStats = parser.getOption("-s").stringValue();        
         double  beam     = parser.getOption("-e").doubleValue();
         int     target   = parser.getOption("-t").intValue();
         
@@ -386,7 +403,7 @@ public class AImonitor {
         
         SchemaFactory schema = null;           
         
-        AImonitor analysis = new AImonitor(beam,target);
+        AImonitor analysis = new AImonitor(beam,target,optStats);
         
         HipoWriterSorted writer1 = new HipoWriterSorted();
         HipoWriterSorted writer2 = new HipoWriterSorted();
