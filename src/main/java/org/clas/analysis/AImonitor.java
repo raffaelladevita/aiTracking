@@ -167,7 +167,7 @@ public class AImonitor {
                 }
                 else {
                     trUnmatched[(track.charge()+1)/2].fill(track);
-		    if(track.isValid()) status.setAiMissing();
+		    if(trTracks.size()==1 && track.isValid()) status.setAiMissing();
                 }
             }
             trEvent.fill(trTracks);
@@ -180,7 +180,7 @@ public class AImonitor {
                 }
                 else {
                     aiUnmatched[(track.charge()+1)/2].fill(track);
-                    if(track.isValid()) status.setCvMissing();
+                    if(aiTracks.size()==1 && track.isValid()) status.setCvMissing();
                 }
             }
             aiEvent.fill(aiTracks);
@@ -373,6 +373,7 @@ public class AImonitor {
         parser.setRequiresInputList(false);
         parser.addOption("-o"    ,"",     "output file name prefix");
         parser.addOption("-n"    ,"-1",   "maximum number of events to process");
+        parser.addOption("-m"    ,"false","save events with missing tracks");
         parser.addOption("-b"    ,"TB",   "tracking level: TB or HB");
         parser.addOption("-r"    ,"",     "histogram file to be read");
         parser.addOption("-w"    ,"true", "display histograms");
@@ -392,6 +393,7 @@ public class AImonitor {
             eventName1 = namePrefix + "_" + eventName1;
             eventName2 = namePrefix + "_" + eventName2;
         }        
+        boolean write    = Boolean.parseBoolean(parser.getOption("-m").stringValue());
         String  type     = parser.getOption("-b").stringValue();        
         String  readName = parser.getOption("-r").stringValue();        
         boolean window   = Boolean.parseBoolean(parser.getOption("-w").stringValue());
@@ -428,9 +430,11 @@ public class AImonitor {
 
                 if(schema==null) {
                     schema = reader.getSchemaFactory();
-                    AImonitor.setWriter(writer1, schema, eventName1);
-                    AImonitor.setWriter(writer2, schema, eventName2);
-
+                    if(write) {
+                        AImonitor.setWriter(writer1, schema, eventName1);
+                        AImonitor.setWriter(writer2, schema, eventName2);
+                    }
+                    
                     Banks banks = new Banks(type,schema);
                     analysis.initBanks(banks);
                 }
@@ -443,8 +447,8 @@ public class AImonitor {
 
                     EventStatus status = analysis.processEvent(event);
 
-                    if(status.isAiMissing()) writer1.addEvent(event);
-                    if(status.isCvMissing()) writer2.addEvent(event);
+                    if(write && status.isAiMissing()) writer1.addEvent(event);
+                    if(write && status.isCvMissing()) writer2.addEvent(event);
 
                     progress.updateStatus();
                     if(maxEvents>0){
@@ -454,9 +458,10 @@ public class AImonitor {
                 progress.showStatus();
                 reader.close();
             }    
-
-            writer1.close();
-            writer2.close();
+            if(write) {
+                writer1.close();
+                writer2.close();
+            }
             analysis.saveHistos(histoName);
         }
         else{
