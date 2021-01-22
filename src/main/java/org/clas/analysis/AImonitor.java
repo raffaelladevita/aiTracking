@@ -10,6 +10,8 @@ import java.util.List;
 import javax.swing.JFrame;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.groot.base.GStyle;
+import org.jlab.groot.data.DataLine;
+import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
@@ -119,6 +121,7 @@ public class AImonitor {
             canvas.addCanvas(cname);
             canvas.getCanvas(cname).draw(ai[i].diff(tr[i]).get("summary"));
             canvas.getCanvas(cname).draw(aiMatched[i].diff(tr[i]).get("summary"));
+            this.drawZeroLines(canvas.getCanvas(cname));
             this.setRange(canvas.getCanvas(cname), 0.1);
         }
         cname = "2pi";
@@ -131,6 +134,18 @@ public class AImonitor {
         canvas.getCanvas(cname).draw(aiEvent.get("1pi"));                    
         return canvas;
     }
+    
+    private void drawZeroLines(EmbeddedCanvas canvas) {
+        for(EmbeddedPad pad : canvas.getCanvasPads()) {
+            if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H1F) {
+                H1F h1 = (H1F) pad.getDatasetPlotters().get(0).getDataSet();
+                DataLine line= new DataLine(h1.getXaxis().min(),0,h1.getXaxis().max(),0);
+                line.setLineWidth(1);
+                pad.draw(line);
+            }
+        }
+    }
+    
     
     private void setRange(EmbeddedCanvas canvas, double range) {
         int nx = canvas.getNColumns();
