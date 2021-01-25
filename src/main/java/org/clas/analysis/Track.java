@@ -417,6 +417,8 @@ public class Track implements Comparable<Track>{
         str.append(String.format("\tpid: %4d",      this.pid()));            
         str.append(String.format("\tchi2pid: %.1f", this.chi2pid()));            
         str.append(String.format("\tstatus: %4d\n", this.status()));            
+        str.append(String.format("\tmatch:  %b\t",  this.isMatched()));            
+        str.append(String.format("\tvalid:  %b\n",  this.isValid()));            
         for(int i=0; i<this.trackTrajectory.length; i++) {
         str.append("\t");
             str.append(String.format("traj%1d: ", (i+1)));

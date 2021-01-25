@@ -128,10 +128,16 @@ public class AImonitor {
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("2pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("2pi"));                    
+        cname = "2pidifferences";
+        canvas.addCanvas(cname);
+        canvas.getCanvas(cname).draw(aiEvent.diff(trEvent).get("2pi"));
         cname = "1pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("1pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("1pi"));                    
+        cname = "1pidifferences";
+        canvas.addCanvas(cname);
+        canvas.getCanvas(cname).draw(aiEvent.diff(trEvent).get("1pi"));
         return canvas;
     }
     
