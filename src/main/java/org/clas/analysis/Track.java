@@ -25,6 +25,7 @@ public class Track implements Comparable<Track>{
     private double trackChi2 = 0;
     private int trackNDF = 0;
     private int[] trackClusters = new int[6];
+    private boolean trackSL = true;
     
     // from particlle bank
     private int    trackStatus  = 0;
@@ -216,14 +217,19 @@ public class Track implements Comparable<Track>{
         return this.trackClusters;
     }
     
-    public void clusters(int i1, int i2, int i3, int i4, int i5, int i6) {
+    public void clusters(int superlayers, int i1, int i2, int i3, int i4, int i5, int i6) {
         this.trackClusters[0] = i1;
         this.trackClusters[1] = i2;
         this.trackClusters[2] = i3;
         this.trackClusters[3] = i4;
         this.trackClusters[4] = i5;
         this.trackClusters[5] = i6;
+        if(superlayers>0 && this.nClusters()!=superlayers) this.trackSL=false;
     }    
+
+    public boolean SL() {
+        return trackSL;
+    }
 
     public void polarity(double polarity){
 	this.trackPolarity = polarity;
@@ -373,6 +379,7 @@ public class Track implements Comparable<Track>{
         if(Math.abs(this.vz()+5)<15 && 
            this.chi2()<15  
 //         && ((int) (Math.abs(this.status())/10))%10>0
+           && this.SL()
 	   && Math.abs(this.chi2pid())<5
 	   && this.isInFiducial()
 	   ) value=true;
@@ -385,6 +392,14 @@ public class Track implements Comparable<Track>{
             if(this.clusters()[i]==t.clusters()[i]) nmatch++;            
         }
         return nmatch;
+    }
+    
+    private int nClusters() {
+        int nclus = 0;
+        for(int i=0; i<6; i++) {
+            if(this.clusters()[i]>=0) nclus++;            
+        }
+        return nclus;
     }
     
     public boolean diff(Track t) {

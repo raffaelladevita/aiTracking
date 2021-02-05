@@ -131,6 +131,8 @@ public class AImonitor {
         cname = "2pidifferences";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(aiEvent.diff(trEvent).get("2pi"));
+        this.drawZeroLines(canvas.getCanvas(cname));
+        this.setRange(canvas.getCanvas(cname), 0.1);
         cname = "1pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("1pi"));
@@ -138,6 +140,8 @@ public class AImonitor {
         cname = "1pidifferences";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(aiEvent.diff(trEvent).get("1pi"));
+        this.drawZeroLines(canvas.getCanvas(cname));
+        this.setRange(canvas.getCanvas(cname), 0.2);
         return canvas;
     }
     
@@ -162,12 +166,12 @@ public class AImonitor {
         }
     }
         
-    public EventStatus processEvent(Event event) {
+    public EventStatus processEvent(Event event, int superlayers) {
 	EventStatus status = new EventStatus();
         ArrayList<Track> aiTracks = null;
         ArrayList<Track> trTracks = null;
-        trTracks = this.read(0, event);            
-        aiTracks = this.read(1, event);
+        trTracks = this.read(0, superlayers, event);            
+        aiTracks = this.read(1, superlayers, event);
 
         if(trTracks!=null && aiTracks!=null) {
             for(Track tr : trTracks) {
@@ -210,7 +214,7 @@ public class AImonitor {
     }
 
 
-    public ArrayList<Track> read(int type, Event event) {	
+    public ArrayList<Track> read(int type, int superlayers, Event event) {	
         ArrayList<Track> tracks = null;
 	Bank runConfig      = banks.getRunConfig();
         Bank particleBank   = banks.getRecParticleBank(type);
@@ -242,7 +246,8 @@ public class AImonitor {
                                      trackingBank.getFloat("c" + (i*2+1) + "_z", loop),
                                      DetectorType.DC.getDetectorId(),12+24*i);
                 }
-                track.clusters(trackingBank.getShort("Cluster1_ID", loop),
+                track.clusters(superlayers,
+                               trackingBank.getShort("Cluster1_ID", loop),
                                trackingBank.getShort("Cluster2_ID", loop),
                                trackingBank.getShort("Cluster3_ID", loop),
                                trackingBank.getShort("Cluster4_ID", loop),
@@ -288,7 +293,6 @@ public class AImonitor {
                 tr.isInFiducial(fiducial.inFiducial(tr));
             }
         }
-        
         return tracks;
     }
 
@@ -396,6 +400,7 @@ public class AImonitor {
         parser.addOption("-n"    ,"-1",   "maximum number of events to process");
         parser.addOption("-m"    ,"false","save events with missing tracks");
         parser.addOption("-b"    ,"TB",   "tracking level: TB or HB");
+        parser.addOption("-l"    ,"0",    "number of superlayers: default 5 or 6");
         parser.addOption("-r"    ,"",     "histogram file to be read");
         parser.addOption("-w"    ,"true", "display histograms");
         parser.addOption("-s"    ,"",     "histogram stat option");
@@ -416,6 +421,7 @@ public class AImonitor {
         }        
         boolean write    = Boolean.parseBoolean(parser.getOption("-m").stringValue());
         String  type     = parser.getOption("-b").stringValue();        
+        int     slayers  = parser.getOption("-l").intValue();
         String  readName = parser.getOption("-r").stringValue();        
         boolean window   = Boolean.parseBoolean(parser.getOption("-w").stringValue());
         String  optStats = parser.getOption("-s").stringValue();        
@@ -466,7 +472,7 @@ public class AImonitor {
 
                     reader.nextEvent(event);
 
-                    EventStatus status = analysis.processEvent(event);
+                    EventStatus status = analysis.processEvent(event,slayers);
 
                     if(write && status.isAiMissing()) writer1.addEvent(event);
                     if(write && status.isCvMissing()) writer2.addEvent(event);
