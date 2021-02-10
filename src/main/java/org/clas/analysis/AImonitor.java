@@ -17,6 +17,7 @@ import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.graphics.EmbeddedPad;
 import org.jlab.groot.graphics.Histogram2DPlotter;
+import org.jlab.groot.graphics.IDataSetPlotter;
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
@@ -120,8 +121,12 @@ public class AImonitor {
             cname = charges[i] + " differences";
             canvas.addCanvas(cname);
             canvas.getCanvas(cname).draw(ai[i].diff(tr[i]).get("summary"));
-            canvas.getCanvas(cname).draw(aiMatched[i].diff(tr[i]).get("summary"));
-            this.drawZeroLines(canvas.getCanvas(cname));
+            canvas.getCanvas(cname).draw(trMatched[i].diff(tr[i]).get("summary"));
+            if(tr[i].getEntries()>0) {
+                System.out.println(cname + " gain =       " +  String.format("%6.4f", (double) ai[i].getEntries()/tr[i].getEntries()));
+                System.out.println(cname + " efficiency = " +  String.format("%6.4f", (double) trMatched[i].getEntries()/tr[i].getEntries()));
+            }
+            this.drawLines(canvas.getCanvas(cname));
             this.setRange(canvas.getCanvas(cname), 0.1);
         }
         cname = "2pi";
@@ -131,8 +136,9 @@ public class AImonitor {
         cname = "2pidifferences";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(aiEvent.diff(trEvent).get("2pi"));
-        this.drawZeroLines(canvas.getCanvas(cname));
-        this.setRange(canvas.getCanvas(cname), 0.1);
+        this.plotErrors(canvas.getCanvas(cname));
+        this.drawLines(canvas.getCanvas(cname));
+        this.setRange(canvas.getCanvas(cname), 0.2);
         cname = "1pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("1pi"));
@@ -140,29 +146,45 @@ public class AImonitor {
         cname = "1pidifferences";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(aiEvent.diff(trEvent).get("1pi"));
-        this.drawZeroLines(canvas.getCanvas(cname));
+        this.plotErrors(canvas.getCanvas(cname));
+        this.drawLines(canvas.getCanvas(cname));
         this.setRange(canvas.getCanvas(cname), 0.2);
         return canvas;
     }
     
-    private void drawZeroLines(EmbeddedCanvas canvas) {
+    private void drawLines(EmbeddedCanvas canvas) {
         for(EmbeddedPad pad : canvas.getCanvasPads()) {
             if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H1F) {
                 H1F h1 = (H1F) pad.getDatasetPlotters().get(0).getDataSet();
-                DataLine line= new DataLine(h1.getXaxis().min(),0,h1.getXaxis().max(),0);
+                DataLine line= new DataLine(h1.getXaxis().min(),1,h1.getXaxis().max(),1);
                 line.setLineWidth(1);
                 pad.draw(line);
             }
         }
     }
     
+    private void plotErrors(EmbeddedCanvas canvas) {
+        for(EmbeddedPad pad : canvas.getCanvasPads()) {
+            if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H1F) {
+                List<IDataSetPlotter> plots = pad.getDatasetPlotters();
+                for(int i=0; i<plots.size(); i++) {
+                    H1F h1 = (H1F) plots.get(i).getDataSet();
+                    if(i==0) pad.draw(h1,"E");
+                    else     pad.draw(h1, "Esame");
+                }
+            }
+        }
+    }
     
     private void setRange(EmbeddedCanvas canvas, double range) {
         int nx = canvas.getNColumns();
         int ny = canvas.getNRows();
         for(EmbeddedPad pad : canvas.getCanvasPads()) {
             if(pad.getDatasetPlotters().get(0) instanceof Histogram2DPlotter) pad.getAxisZ().setRange(1-range, 1+range);
-            else                                                              pad.getAxisY().setRange( -range,  +range);
+            else {
+                pad.getAxisY().setRange(1-range, 1+range);
+                pad.getAxisY().setTitle("Ratio");
+            }
         }
     }
         

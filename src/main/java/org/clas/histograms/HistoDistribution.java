@@ -97,4 +97,9 @@ public class HistoDistribution extends Histos {
         this.get("summary").getH1F("vz_" + this.getName()).fill(track.vz());
         this.get("vz").getH1F("vzsec"    + sector + "_" +  this.getName()).fill(track.vz());
     }    
+    
+    @Override
+    public int getEntries() {
+        return (int) this.get("summary").getH1F("phi_" + this.getName()).getIntegral();
+    }
 }

@@ -43,6 +43,9 @@ public class Histos extends HashMap<String,DataGroup> {
     public void fill(ArrayList<Track> tracks) {
     }
 
+    public int getEntries() {
+        return 0;
+    }
     
     public HashMap<String,DataGroup> diff(Histos histo) {
         HashMap<String,DataGroup> diffs = new HashMap<String,DataGroup>();
@@ -82,8 +85,18 @@ public class Histos extends HashMap<String,DataGroup> {
         String hname = this.getPrefix(h1) + "_" + this.getName();
         int   icolor = this.get(key).getH1F(hname).getLineColor();
         H1F h = this.get(key).getH1F(hname).histClone(hname);
-        h.sub(h1);
-        h.divide(h1);
+        for(int i=0; i< h.getDataSize(0); i++) {
+            double v1 = h.getBinContent(i);
+            double v2 = h1.getBinContent(i);
+            double ratio = 0;
+            double err   = 0;
+            if(v2>0) {
+                ratio = v1/v2;
+                err   = (v1/v2)*Math.sqrt(Math.abs(v1-v2)/v1/v2);
+            }
+            h.setBinContent(i, ratio);
+            h.setBinError(i, err);
+        }
         h.setTitleY("(" + this.getName() + " - " + h1.getName().split("_")[1] + ")/" + h1.getName().split("_")[1]);
         h.setLineColor(icolor);
         return h;
