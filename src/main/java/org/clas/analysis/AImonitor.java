@@ -180,7 +180,7 @@ public class AImonitor {
         int nx = canvas.getNColumns();
         int ny = canvas.getNRows();
         for(EmbeddedPad pad : canvas.getCanvasPads()) {
-            if(pad.getDatasetPlotters().get(0) instanceof Histogram2DPlotter) pad.getAxisZ().setRange(1-range, 1+range);
+            if(pad.getDatasetPlotters().get(0) instanceof Histogram2DPlotter) pad.getAxisZ().setRange(1-range, 1);
             else {
                 pad.getAxisY().setRange(1-range, 1+range);
                 pad.getAxisY().setTitle("Ratio");
