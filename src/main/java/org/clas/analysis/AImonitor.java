@@ -127,7 +127,7 @@ public class AImonitor {
                 System.out.println(cname + " efficiency = " +  String.format("%6.4f", (double) trMatched[i].getEntries()/tr[i].getEntries()));
             }
             this.drawLines(canvas.getCanvas(cname));
-            this.setRange(canvas.getCanvas(cname), 0.1);
+            this.setRange(canvas.getCanvas(cname), 0.2);
         }
         cname = "2pi";
         canvas.addCanvas(cname);
