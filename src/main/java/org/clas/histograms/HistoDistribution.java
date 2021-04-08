@@ -52,9 +52,9 @@ public class HistoDistribution extends Histos {
         hi_vz.setTitleX("Vz (cm)");
         hi_vz.setTitleY("Counts");
         hi_vz.setLineColor(col);
-        H2F hi_xy = new H2F("xy_" + name, "xy", 200, -500.0, 500.0, 200, -500.0, 500.0);   
-        hi_xy.setTitleX("R3 x (cm)");
-        hi_xy.setTitleY("R3 y (cm)");
+        H2F hi_xy = new H2F("xy_" + name, "xy", 200, -200.0, 200.0, 200, -200.0, 200.0);   
+        hi_xy.setTitleX("R1 x (cm)");
+        hi_xy.setTitleY("R1 y (cm)");
         this.get("summary").addDataSet(hi_p,     0);
         this.get("summary").addDataSet(hi_theta, 1);
         this.get("summary").addDataSet(hi_phi,   2);
@@ -89,8 +89,8 @@ public class HistoDistribution extends Histos {
             this.get("summary").getH1F("theta_" + this.getName()).fill(Math.toDegrees(track.theta()));
             this.get("summary").getH1F("phi_"   + this.getName()).fill(Math.toDegrees(track.phi()));
             this.get("summary").getH1F("chi2_"  + this.getName()).fill(track.chi2());
-            this.get("summary").getH2F("xy_"    + this.getName()).fill(track.trajectory(DetectorType.DC.getDetectorId(), 36).x()
-                                                                      ,track.trajectory(DetectorType.DC.getDetectorId(), 36).y());
+            this.get("summary").getH2F("xy_"    + this.getName()).fill(track.trajectory(DetectorType.DC.getDetectorId(), 6).x()
+                                                                      ,track.trajectory(DetectorType.DC.getDetectorId(), 6).y());
             this.get("p").getH1F("psec"         + sector + "_" + this.getName()).fill(track.p());
             this.get("theta").getH1F("thetasec" + sector + "_" +  this.getName()).fill(Math.toDegrees(track.theta()));
         }
