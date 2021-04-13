@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.clas.analysis.Track;
-import org.jlab.detector.base.DetectorType;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
@@ -44,6 +43,10 @@ public class Histos extends HashMap<String,DataGroup> {
     }
 
     public int getEntries() {
+        return 0;
+    }
+    
+    public int getEntries(String key) {
         return 0;
     }
     
@@ -160,15 +163,21 @@ public class Histos extends HashMap<String,DataGroup> {
             int nrows = this.get(key).getRows();
             int ncols = this.get(key).getColumns();
             int nds   = nrows*ncols;
+            boolean replace = true;
             DataGroup newGroup = new DataGroup(ncols,nrows);
             for(int i = 0; i < nds; i++){
                 List<IDataSet> dsList = this.get(key).getData(i);
                 for(IDataSet ds : dsList){
 //                    System.out.println("\t --> " + ds.getName());
-                    newGroup.addDataSet(dir.getObject(subfolder, ds.getName()),i);
+                    if(dir.getObject(subfolder, ds.getName())!=null) {
+                        newGroup.addDataSet(dir.getObject(subfolder, ds.getName()),i);
+                    }
+                    else {
+                        replace = false;
+                    }
                 }
             }
-            this.replace(key, newGroup);
+            if(replace) this.replace(key, newGroup);
         }
     }
 

@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFrame;
+import org.clas.histograms.Histos;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
@@ -18,6 +19,7 @@ import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
 import org.jlab.groot.graphics.EmbeddedPad;
 import org.jlab.groot.graphics.Histogram2DPlotter;
 import org.jlab.groot.graphics.IDataSetPlotter;
+import org.jlab.groot.group.DataGroup;
 import org.jlab.jnp.hipo4.data.Bank;
 import org.jlab.jnp.hipo4.data.Event;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
@@ -118,38 +120,55 @@ public class AImonitor {
             cname = charges[i] + " resolution";
             canvas.addCanvas(cname);
             canvas.getCanvas(cname).draw(resol[i]);
-            cname = charges[i] + " differences";
-            canvas.addCanvas(cname);
-            canvas.getCanvas(cname).draw(ai[i].diff(tr[i]).get("summary"));
-            canvas.getCanvas(cname).draw(trMatched[i].diff(tr[i]).get("summary"));
-            if(tr[i].getEntries()>0) {
-                System.out.println(cname + " gain =       " +  String.format("%6.4f", (double) ai[i].getEntries()/tr[i].getEntries()));
-                System.out.println(cname + " efficiency = " +  String.format("%6.4f", (double) trMatched[i].getEntries()/tr[i].getEntries()));
-            }
-            this.drawLines(canvas.getCanvas(cname));
-            this.setRange(canvas.getCanvas(cname), 0.2);
+            this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i]).get("summary"),        0.2, false);
+            this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i]).get("summary"), 0.2, false);
+            this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i]).get("6SL"),            0.2, false);
+            this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i]).get("6SL"),     0.2, false);
+            this.drawDifferences(canvas, charges[i] + " 5SL differences", ai[i].diff(tr[i]).get("5SL"),            0.2, false);
+            this.drawDifferences(canvas, charges[i] + " 5SL differences", trMatched[i].diff(tr[i]).get("5SL"),     0.2, false);
+            this.printStatistics(ai[i], tr[i], trMatched[i], charges[i]);
         }
         cname = "2pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("2pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("2pi"));                    
-        cname = "2pidifferences";
-        canvas.addCanvas(cname);
-        canvas.getCanvas(cname).draw(aiEvent.diff(trEvent).get("2pi"));
-        this.plotErrors(canvas.getCanvas(cname));
-        this.drawLines(canvas.getCanvas(cname));
-        this.setRange(canvas.getCanvas(cname), 0.2);
+        this.drawDifferences(canvas, "2pidifferences", aiEvent.diff(trEvent).get("2pi"), 0.2, true);
         cname = "1pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("1pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("1pi"));                    
-        cname = "1pidifferences";
-        canvas.addCanvas(cname);
-        canvas.getCanvas(cname).draw(aiEvent.diff(trEvent).get("1pi"));
-        this.plotErrors(canvas.getCanvas(cname));
-        this.drawLines(canvas.getCanvas(cname));
-        this.setRange(canvas.getCanvas(cname), 0.2);
+        this.drawDifferences(canvas, "1pidifferences", aiEvent.diff(trEvent).get("1pi"), 0.2, true);
         return canvas;
+    }
+
+    private void printStatistics(Histos ai, Histos tr, Histos trMatched, String charge) {
+        System.out.println("+-------------------------------------------------------------------------------------------------+");
+        System.out.println("|     charge |       type | conventional |           ai |      matched |       gain |  efficiency |");
+        System.out.println("+-------------------------------------------------------------------------------------------------+");
+        this.printStatistics(ai, tr, trMatched, "summary", charge);        
+        this.printStatistics(ai, tr, trMatched, "6SL", charge);        
+        this.printStatistics(ai, tr, trMatched, "5SL", charge);        
+        System.out.println("+-------------------------------------------------------------------------------------------------+");
+    }
+    
+    private void printStatistics(Histos ai, Histos tr, Histos trMatched, String dg, String charge) {
+        if(tr.getEntries(dg)>0) {
+            System.out.println(String.format("| %10s | %10s | %12d | % 12d | %12d | %10.4f |  %10.4f |", charge, dg 
+                                                                                                , tr.getEntries(dg) 
+                                                                                                , ai.getEntries(dg)
+                                                                                                , trMatched.getEntries(dg)
+                                                                                                , (double) ai.getEntries(dg)/tr.getEntries(dg)
+                                                                                                , (double) trMatched.getEntries(dg)/tr.getEntries(dg)));
+        }        
+    }
+    
+    private void drawDifferences(EmbeddedCanvasTabbed canvas, String cname, DataGroup dg, double range, boolean errors) {
+        if(canvas.getCanvas(cname)==null) canvas.addCanvas(cname);
+        canvas.getCanvas(cname).draw(dg);
+        canvas.getCanvas(cname).draw(dg);
+       if(errors) this.plotErrors(canvas.getCanvas(cname));
+        this.drawLines(canvas.getCanvas(cname));
+        this.setRange(canvas.getCanvas(cname), range);
     }
     
     private void drawLines(EmbeddedCanvas canvas) {
@@ -188,12 +207,12 @@ public class AImonitor {
         }
     }
         
-    public EventStatus processEvent(Event event, int superlayers) {
+    public EventStatus processEvent(Event event) {
 	EventStatus status = new EventStatus();
         ArrayList<Track> aiTracks = null;
         ArrayList<Track> trTracks = null;
-        trTracks = this.read(0, superlayers, event);            
-        aiTracks = this.read(1, superlayers, event);
+        trTracks = this.read(0, event);            
+        aiTracks = this.read(1, event);
 
         if(trTracks!=null && aiTracks!=null) {
             for(Track tr : trTracks) {
@@ -236,7 +255,7 @@ public class AImonitor {
     }
 
 
-    public ArrayList<Track> read(int type, int superlayers, Event event) {	
+    public ArrayList<Track> read(int type, Event event) {	
         ArrayList<Track> tracks = null;
 	Bank runConfig      = banks.getRunConfig();
         Bank particleBank   = banks.getRecParticleBank(type);
@@ -268,8 +287,7 @@ public class AImonitor {
                                      trackingBank.getFloat("c" + (i*2+1) + "_z", loop),
                                      DetectorType.DC.getDetectorId(),12+24*i);
                 }
-                track.clusters(superlayers,
-                               trackingBank.getShort("Cluster1_ID", loop),
+                track.clusters(trackingBank.getShort("Cluster1_ID", loop),
                                trackingBank.getShort("Cluster2_ID", loop),
                                trackingBank.getShort("Cluster3_ID", loop),
                                trackingBank.getShort("Cluster4_ID", loop),
@@ -422,7 +440,6 @@ public class AImonitor {
         parser.addOption("-n"    ,"-1",   "maximum number of events to process");
         parser.addOption("-m"    ,"false","save events with missing tracks");
         parser.addOption("-b"    ,"TB",   "tracking level: TB or HB");
-        parser.addOption("-l"    ,"0",    "number of superlayers: default 5 or 6");
         parser.addOption("-r"    ,"",     "histogram file to be read");
         parser.addOption("-w"    ,"true", "display histograms");
         parser.addOption("-s"    ,"",     "histogram stat option");
@@ -443,7 +460,6 @@ public class AImonitor {
         }        
         boolean write    = Boolean.parseBoolean(parser.getOption("-m").stringValue());
         String  type     = parser.getOption("-b").stringValue();        
-        int     slayers  = parser.getOption("-l").intValue();
         String  readName = parser.getOption("-r").stringValue();        
         boolean window   = Boolean.parseBoolean(parser.getOption("-w").stringValue());
         String  optStats = parser.getOption("-s").stringValue();        
@@ -494,7 +510,7 @@ public class AImonitor {
 
                     reader.nextEvent(event);
 
-                    EventStatus status = analysis.processEvent(event,slayers);
+                    EventStatus status = analysis.processEvent(event);
 
                     if(write && status.isAiMissing()) writer1.addEvent(event);
                     if(write && status.isCvMissing()) writer2.addEvent(event);
