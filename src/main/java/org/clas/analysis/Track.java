@@ -35,7 +35,10 @@ public class Track implements Comparable<Track>{
     // from trajectory bank
     private Vector3[] trackTrajectory = new Vector3[9]; // size set to contain 3 DC reegions, 3 FTOF and ECAL layers
     private boolean inFiducial = true;
-            
+    
+    // flag to select on number of superlayers
+    private int nSL = 0;
+    
     private boolean trackMatch = false;
     
     public Track() {
@@ -233,6 +236,15 @@ public class Track implements Comparable<Track>{
         return trackSL;
     }
 
+    public void SL(int n) {
+        this.nSL = n;
+    }
+
+    private boolean hasSL(){
+       if(this.nSL==0) return true;
+       else return (this.SL()==this.nSL);
+    }
+    
     public void polarity(double polarity){
 	this.trackPolarity = polarity;
     }
@@ -383,6 +395,7 @@ public class Track implements Comparable<Track>{
 //         && ((int) (Math.abs(this.status())/10))%10>0
             && Math.abs(this.chi2pid())<5
 	   && this.isInFiducial()
+            && this.hasSL()
 	   ) value=true;
         return value;
     }

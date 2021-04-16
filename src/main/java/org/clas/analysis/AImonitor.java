@@ -48,9 +48,12 @@ public class AImonitor {
     
     private String[] charges = {"neg", "pos"};
       
+    private int nsuperlayers = 0;
+    
     private String opts = "";
     
-    public AImonitor(double beamEnergy, int targetPDG, String opts){
+    public AImonitor(double beamEnergy, int targetPDG, int nSL, String opts){       
+        this.nsuperlayers = nSL;
         this.opts = opts;
         this.createHistos(beamEnergy, targetPDG);
     }
@@ -208,11 +211,11 @@ public class AImonitor {
     }
         
     public EventStatus processEvent(Event event) {
-	EventStatus status = new EventStatus();
+        EventStatus status = new EventStatus();
         ArrayList<Track> aiTracks = null;
         ArrayList<Track> trTracks = null;
-        trTracks = this.read(0, event);            
-        aiTracks = this.read(1, event);
+        trTracks = this.read(0, this.nsuperlayers, event);            
+        aiTracks = this.read(1, this.nsuperlayers, event);
 
         if(trTracks!=null && aiTracks!=null) {
             for(Track tr : trTracks) {
@@ -233,7 +236,7 @@ public class AImonitor {
                 }
                 else {
                     trUnmatched[(track.charge()+1)/2].fill(track);
-		    if(trTracks.size()==1 && track.isValid()) status.setAiMissing();
+		    if(trTracks.size()==1 && track.isValid() ) status.setAiMissing();
                 }
             }
             trEvent.fill(trTracks);
@@ -255,15 +258,15 @@ public class AImonitor {
     }
 
 
-    public ArrayList<Track> read(int type, Event event) {	
+    public ArrayList<Track> read(int type, int nsuperlayers, Event event) {	
         ArrayList<Track> tracks = null;
-	Bank runConfig      = banks.getRunConfig();
+        Bank runConfig      = banks.getRunConfig();
         Bank particleBank   = banks.getRecParticleBank(type);
         Bank trajectoryBank = banks.getRecTrajectoryBank(type);
         Bank trackBank      = banks.getRecTrackBank(type);
         Bank trackingBank   = banks.getTrackingBank(type);
-	if(runConfig!=null)      event.read(runConfig);
-	if(particleBank!=null)   event.read(particleBank);
+        if(runConfig!=null)      event.read(runConfig);
+        if(particleBank!=null)   event.read(particleBank);
         if(trajectoryBank!=null) event.read(trajectoryBank);
         if(trackBank!=null)      event.read(trackBank);
         if(trackingBank!=null)   event.read(trackingBank);
@@ -328,9 +331,10 @@ public class AImonitor {
                     }
                 }
             }
-            // add fiducial information
+            // add fiducial information and selection on number of superlayers
             for(Track tr : tracks) {
                 tr.isInFiducial(fiducial.inFiducial(tr));
+                tr.SL(nsuperlayers);
             }
         }
         return tracks;
@@ -443,6 +447,7 @@ public class AImonitor {
         parser.addOption("-r"    ,"",     "histogram file to be read");
         parser.addOption("-w"    ,"true", "display histograms");
         parser.addOption("-s"    ,"",     "histogram stat option");
+        parser.addOption("-l"    ,"0",    "number of superlayers (5 or 6, 0=any)");
         parser.addOption("-e"    ,"10.6", "beam energy");
         parser.addOption("-t"    ,"2212", "target PDG");
         parser.parse(args);
@@ -463,14 +468,17 @@ public class AImonitor {
         String  readName = parser.getOption("-r").stringValue();        
         boolean window   = Boolean.parseBoolean(parser.getOption("-w").stringValue());
         String  optStats = parser.getOption("-s").stringValue();        
+        int     layers   = parser.getOption("-l").intValue();
         double  beam     = parser.getOption("-e").doubleValue();
         int     target   = parser.getOption("-t").intValue();
         
+        if(layers!=0 && layers!=5 && layers!=6) layers=0;
+
         if(!window) System.setProperty("java.awt.headless", "true");
         
         SchemaFactory schema = null;           
         
-        AImonitor analysis = new AImonitor(beam,target,optStats);
+        AImonitor analysis = new AImonitor(beam,target,layers,optStats);
         
         HipoWriterSorted writer1 = new HipoWriterSorted();
         HipoWriterSorted writer2 = new HipoWriterSorted();
