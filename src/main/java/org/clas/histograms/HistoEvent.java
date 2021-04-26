@@ -31,6 +31,7 @@ public class HistoEvent extends Histos {
     public void init() {
         this.put("2pi",  new DataGroup("2pi",3,2));       
         this.put("1pi",  new DataGroup("1pi",2,2));       
+        this.put("eh",   new DataGroup("eh",3,1));       
     }
     
     @Override
@@ -70,6 +71,25 @@ public class HistoEvent extends Histos {
             this.get("1pi").addDataSet(hi_w,     i-1);
             this.get("1pi").addDataSet(hi_mmass, i+1);
         }
+        // eh+/-
+        String[] aehW = {"W(ep->e'X) (GeV)","W(ep->e'X) (GeV)","W(ep->e'h+X) (GeV)","W(ep->e'h-X) (GeV)"};
+        double rmin = 0.5;
+        double rmax = 4.0;
+        H1F hi_we = new H1F("We" + "_" + name, "", 100, rmin, rmax);     
+        hi_we.setTitleX("W(ep->e'X) (GeV)");
+        hi_we.setTitleY("Counts");
+        hi_we.setLineColor(col);
+        H1F hi_wehp = new H1F("Wehp" + "_" + name, "", 100, rmin, rmax);     
+        hi_wehp.setTitleX("W(ep->e'h+X) (GeV)");
+        hi_wehp.setTitleY("Counts");
+        hi_wehp.setLineColor(col);
+        H1F hi_wehm = new H1F("Wehm" + "_" + name, "", 100, rmin, rmax);     
+        hi_wehm.setTitleX("W(ep->e'h-X) (GeV)");
+        hi_wehm.setTitleY("Counts");
+        hi_wehm.setLineColor(col);
+        this.get("eh").addDataSet(hi_we,   0);
+        this.get("eh").addDataSet(hi_wehp, 1);
+        this.get("eh").addDataSet(hi_wehm, 2);
     }
     
     
@@ -79,9 +99,11 @@ public class HistoEvent extends Histos {
         Particle piplus   = null;
         Particle piminus  = null;  
         Particle proton   = null;  
+        Particle hadpos   = null;  
+        Particle hadneg   = null;  
         for(Track track : tracks) {
             if(!track.isValid()) continue;
-            if(electron==null && track.pid()==11 && track.status()<0 ) {
+            if(electron==null && track.pid()==11 && track.status()<0 && track.p()>2.5) {
                 electron= new Particle(11, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
             }
             else if(piplus==null && track.pid()==211)  {
@@ -92,6 +114,12 @@ public class HistoEvent extends Histos {
             }
             else if(proton==null && track.pid()==2212)  {
                 proton= new Particle(2212, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+            }
+            if(hadpos==null && track.charge()>0 && track.status()>0 && track.p()>0.4)  {
+                hadpos= new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+            }
+            if(hadneg==null && track.charge()<0 && track.status()>0 && track.p()>0.4)  {
+                hadneg= new Particle(-211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
             }
         }
         if(electron!=null && piplus!=null && piminus!=null) {
@@ -158,7 +186,16 @@ public class HistoEvent extends Histos {
             W.combine(electron, -1);
             this.get("1pi").getH1F("W2_" + this.getName()).fill(W.mass());
             this.get("1pi").getH1F("mxt2_" + this.getName()).fill(pizero.mass2());                    
-        }        
+        } 
+        if(electron!=null) {
+            Particle W = new Particle();
+            W.copy(target);
+            W.combine(beam, +1);
+            W.combine(electron, -1);
+            this.get("eh").getH1F("We_" + this.getName()).fill(W.mass());
+            if(hadpos!=null) this.get("eh").getH1F("Wehp_" + this.getName()).fill(W.mass());
+            if(hadneg!=null) this.get("eh").getH1F("Wehm_" + this.getName()).fill(W.mass());
+        }
     }
 
 }

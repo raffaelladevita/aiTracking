@@ -141,6 +141,11 @@ public class AImonitor {
         canvas.getCanvas(cname).draw(trEvent.get("1pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("1pi"));                    
         this.drawDifferences(canvas, "1pidifferences", aiEvent.diff(trEvent).get("1pi"), 0.2, true);
+        cname = "eh+/-";
+        canvas.addCanvas(cname);
+        canvas.getCanvas(cname).draw(trEvent.get("eh"));
+        canvas.getCanvas(cname).draw(aiEvent.get("eh"));                    
+        this.drawDifferences(canvas, "ehdifferences", aiEvent.diff(trEvent).get("eh"), 0.2, true);
         return canvas;
     }
 
