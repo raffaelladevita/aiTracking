@@ -99,8 +99,8 @@ public class HistoEvent extends Histos {
         Particle piplus   = null;
         Particle piminus  = null;  
         Particle proton   = null;  
-        Particle hadpos   = null;  
-        Particle hadneg   = null;  
+        ArrayList<Particle> hadpos   = new ArrayList<>();  
+        ArrayList<Particle> hadneg   = new ArrayList<>();  
         for(Track track : tracks) {
             if(!track.isValid()) continue;
             if(electron==null && track.pid()==11 && track.status()<0 && track.p()>2.5) {
@@ -115,11 +115,11 @@ public class HistoEvent extends Histos {
             else if(proton==null && track.pid()==2212)  {
                 proton= new Particle(2212, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
             }
-            if(hadpos==null && track.charge()>0 && track.status()>0 && track.p()>0.4)  {
-                hadpos= new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+            if(track.charge()>0 && track.status()>0 && track.p()>0.4)  {
+                hadpos.add(new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz()));
             }
-            if(hadneg==null && track.charge()<0 && track.status()>0 && track.p()>0.4)  {
-                hadneg= new Particle(-211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+            if(track.charge()<0 && track.status()>0 && track.p()>0.4)  {
+                hadneg.add(new Particle(-211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz()));
             }
         }
         if(electron!=null && piplus!=null && piminus!=null) {
@@ -193,9 +193,21 @@ public class HistoEvent extends Histos {
             W.combine(beam, +1);
             W.combine(electron, -1);
             this.get("eh").getH1F("We_" + this.getName()).fill(W.mass());
-            if(hadpos!=null) this.get("eh").getH1F("Wehp_" + this.getName()).fill(W.mass());
-            if(hadneg!=null) this.get("eh").getH1F("Wehm_" + this.getName()).fill(W.mass());
+            for(int i=0; i<hadpos.size(); i++) this.get("eh").getH1F("Wehp_" + this.getName()).fill(W.mass());
+            for(int i=0; i<hadneg.size(); i++) this.get("eh").getH1F("Wehm_" + this.getName()).fill(W.mass());
         }
+    }
+    
+    public int getNe() {
+        return (int) this.get("eh").getH1F("We_" + this.getName()).getIntegral();
+    }
+
+    public int getNehp() {
+        return (int) this.get("eh").getH1F("Wehp_" + this.getName()).getIntegral();
+    }
+
+    public int getNehm() {
+        return (int) this.get("eh").getH1F("Wehm_" + this.getName()).getIntegral();
     }
 
 }

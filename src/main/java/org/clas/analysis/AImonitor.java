@@ -146,6 +146,7 @@ public class AImonitor {
         canvas.getCanvas(cname).draw(trEvent.get("eh"));
         canvas.getCanvas(cname).draw(aiEvent.get("eh"));                    
         this.drawDifferences(canvas, "ehdifferences", aiEvent.diff(trEvent).get("eh"), 0.2, true);
+        this.printStatistics(aiEvent, trEvent);
         return canvas;
     }
 
@@ -168,6 +169,24 @@ public class AImonitor {
                                                                                                 , (double) ai.getEntries(dg)/tr.getEntries(dg)
                                                                                                 , (double) trMatched.getEntries(dg)/tr.getEntries(dg)));
         }        
+    }
+    
+    private void printStatistics(HistoEvent ai, HistoEvent tr) {
+        System.out.println("+--------------------------------------------------------------------------------------+");
+        System.out.println("|         type |           e |           eh+ |          eh- |      eh+/e |       eh-/e |");
+        System.out.println("+--------------------------------------------------------------------------------------+");
+        this.printStatistics(tr, "conventional");        
+        this.printStatistics(ai, "ai");        
+        System.out.println("+--------------------------------------------------------------------------------------+");
+    }
+    
+    private void printStatistics(HistoEvent he, String type) {
+        System.out.println(String.format("| %12s | %12d | % 12d | %12d | %10.4f |  %10.4f |", type 
+                                                                                            , he.getNe()
+                                                                                            , he.getNehp()
+                                                                                            , he.getNehm()
+                                                                                            , (double) he.getNehp()/he.getNe()
+                                                                                            , (double) he.getNehm()/he.getNe()));        
     }
     
     private void drawDifferences(EmbeddedCanvasTabbed canvas, String cname, DataGroup dg, double range, boolean errors) {
