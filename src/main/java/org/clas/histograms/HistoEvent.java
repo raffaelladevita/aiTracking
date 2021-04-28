@@ -102,8 +102,8 @@ public class HistoEvent extends Histos {
         ArrayList<Particle> hadpos   = new ArrayList<>();  
         ArrayList<Particle> hadneg   = new ArrayList<>();  
         for(Track track : tracks) {
-            if(!track.isValid(20000)) continue;
-            if(electron==null && track.pid()==11 && track.status()<0 && track.p()>2.5) {
+            if(!track.isForPhysics()) continue;
+            if(electron==null && track.pid()==11) {
                 electron= new Particle(11, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
             }
             else if(piplus==null && track.pid()==211)  {
@@ -115,10 +115,10 @@ public class HistoEvent extends Histos {
             else if(proton==null && track.pid()==2212)  {
                 proton= new Particle(2212, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
             }
-            if(track.charge()>0 && track.status()>0 && track.p()>0.4)  {
+            if(track.charge()>0 && track.pid()!=-11)  {
                 hadpos.add(new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz()));
             }
-            if(track.charge()<0 && track.status()>0 && track.p()>0.4)  {
+            if(track.charge()<0 && track.pid()!=11)  {
                 hadneg.add(new Particle(-211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz()));
             }
         }
