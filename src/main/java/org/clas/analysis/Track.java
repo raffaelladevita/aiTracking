@@ -400,8 +400,8 @@ public class Track implements Comparable<Track>{
 
      public boolean isForPhysics() {
         boolean value = false;
-        if(this.pid()==11) value = this.status()<0 && this.p()>2.5 && this.p()<5.2;
-        else               value = this.p()>0.4 && Math.abs(this.chi2pid())<3;
+        if(this.pid()==11 && this.status()<0) value = this.p()>2.5 && this.p()<5.2;
+        else                                  value = this.p()>0.4 && Math.abs(this.chi2pid())<3;
         return value;
     }
 
