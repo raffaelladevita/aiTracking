@@ -389,14 +389,17 @@ public class Track implements Comparable<Track>{
 
 
     public boolean isValid() {
+        return this.isValid(10);
+    }
+
+    public boolean isValid(double maxChi2) {
         boolean value = false;
-        if(Math.abs(this.vz()+5)<15 && 
-           this.chi2()<15  
-//         && ((int) (Math.abs(this.status())/10))%10>0
-            && Math.abs(this.chi2pid())<5
-	   && this.isInFiducial()
-            && this.hasSL()
-	   ) value=true;
+        if(Math.abs(this.vz()+5)<10 
+        &&  this.chi2()<maxChi2  
+        && Math.abs(this.chi2pid())<5
+        && this.isInFiducial()
+        && this.hasSL()
+        ) value=true;
         return value;
     }
 

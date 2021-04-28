@@ -102,7 +102,7 @@ public class HistoEvent extends Histos {
         ArrayList<Particle> hadpos   = new ArrayList<>();  
         ArrayList<Particle> hadneg   = new ArrayList<>();  
         for(Track track : tracks) {
-            if(!track.isValid()) continue;
+            if(!track.isValid(20000)) continue;
             if(electron==null && track.pid()==11 && track.status()<0 && track.p()>2.5) {
                 electron= new Particle(11, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
             }
