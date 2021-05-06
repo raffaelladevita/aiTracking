@@ -402,6 +402,7 @@ public class Track implements Comparable<Track>{
         boolean value = false;
         if(this.pid()==11 && this.status()<0) value = this.p()>2.5 && this.p()<5.2;
         else                                  value = this.p()>0.4 && Math.abs(this.chi2pid())<3;
+        value = value && Math.abs(this.vz()+5)<10 ;
         return value;
     }
 
@@ -433,6 +434,7 @@ public class Track implements Comparable<Track>{
         System.out.println(this.toString());
     }
     
+    @Override
     public String  toString(){
         StringBuilder str = new StringBuilder();
         

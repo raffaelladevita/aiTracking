@@ -106,6 +106,13 @@ public class AImonitor {
         aiEvent.setStats(opts);
     }
     
+    public void printStatistics() {
+        for(int i=0; i<2; i++) {
+            this.printStatistics(ai[i], tr[i], trMatched[i], charges[i]);
+        }
+        this.printStatistics(aiEvent, trEvent);
+    }
+    
     public EmbeddedCanvasTabbed plotHistos() {
         this.setHistoStats(opts);
         EmbeddedCanvasTabbed canvas  = null;
@@ -123,30 +130,28 @@ public class AImonitor {
             cname = charges[i] + " resolution";
             canvas.addCanvas(cname);
             canvas.getCanvas(cname).draw(resol[i]);
-            this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i]).get("summary"),        0.2, false);
-            this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i]).get("summary"), 0.2, false);
-            this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i]).get("6SL"),            0.2, false);
-            this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i]).get("6SL"),     0.2, false);
-            this.drawDifferences(canvas, charges[i] + " 5SL differences", ai[i].diff(tr[i]).get("5SL"),            0.2, false);
-            this.drawDifferences(canvas, charges[i] + " 5SL differences", trMatched[i].diff(tr[i]).get("5SL"),     0.2, false);
-            this.printStatistics(ai[i], tr[i], trMatched[i], charges[i]);
+            this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i]).get("summary"),        0.3, false);
+            this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i]).get("summary"), 0.3, false);
+            this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i]).get("6SL"),            0.3, false);
+            this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i]).get("6SL"),     0.3, false);
+            this.drawDifferences(canvas, charges[i] + " 5SL differences", ai[i].diff(tr[i]).get("5SL"),            0.8, false);
+            this.drawDifferences(canvas, charges[i] + " 5SL differences", trMatched[i].diff(tr[i]).get("5SL"),     0.8, false);
         }
         cname = "2pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("2pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("2pi"));                    
-        this.drawDifferences(canvas, "2pidifferences", aiEvent.diff(trEvent).get("2pi"), 0.2, true);
+        this.drawDifferences(canvas, "2pidifferences", aiEvent.diff(trEvent).get("2pi"), 0.7, true);
         cname = "1pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("1pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("1pi"));                    
-        this.drawDifferences(canvas, "1pidifferences", aiEvent.diff(trEvent).get("1pi"), 0.2, true);
+        this.drawDifferences(canvas, "1pidifferences", aiEvent.diff(trEvent).get("1pi"), 0.4, true);
         cname = "eh+/-";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("eh"));
         canvas.getCanvas(cname).draw(aiEvent.get("eh"));                    
-        this.drawDifferences(canvas, "ehdifferences", aiEvent.diff(trEvent).get("eh"), 0.2, true);
-        this.printStatistics(aiEvent, trEvent);
+        this.drawDifferences(canvas, "ehdifferences", aiEvent.diff(trEvent).get("eh"), 0.4, true);
         return canvas;
     }
 
@@ -173,7 +178,7 @@ public class AImonitor {
     
     private void printStatistics(HistoEvent ai, HistoEvent tr) {
         System.out.println("+--------------------------------------------------------------------------------------+");
-        System.out.println("|         type |           e |           eh+ |          eh- |      eh+/e |       eh-/e |");
+        System.out.println("|         type |            e |          eh+ |          eh- |      eh+/e |       eh-/e |");
         System.out.println("+--------------------------------------------------------------------------------------+");
         this.printStatistics(tr, "conventional");        
         this.printStatistics(ai, "ai");        
@@ -564,6 +569,7 @@ public class AImonitor {
         else{
             analysis.readHistos(readName);
         }
+        analysis.printStatistics();
         
         if(window) {
             JFrame frame = new JFrame(type);
