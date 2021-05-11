@@ -99,27 +99,34 @@ public class HistoEvent extends Histos {
         Particle piplus   = null;
         Particle piminus  = null;  
         Particle proton   = null;  
+        Particle trigger = null;
         ArrayList<Particle> hadpos   = new ArrayList<>();  
         ArrayList<Particle> hadneg   = new ArrayList<>();  
         for(Track track : tracks) {
-            if(!track.isForPhysics()) continue;
-            if(electron==null && track.pid()==11 && track.status()<0) {
-                electron= new Particle(11, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+            if(track.isValid()) {
+                if(electron==null && track.pid()==11 && track.status()<0) {
+                    electron= new Particle(11, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+                }
+                else if(piplus==null && track.pid()==211)  {
+                    piplus= new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+                }
+                else if(piminus==null && track.pid()==-211)  {
+                    piminus= new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+                }
+                else if(proton==null && track.pid()==2212)  {
+                    proton= new Particle(2212, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+                }
             }
-            else if(piplus==null && track.pid()==211)  {
-                piplus= new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
-            }
-            else if(piminus==null && track.pid()==-211)  {
-                piminus= new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
-            }
-            else if(proton==null && track.pid()==2212)  {
-                proton= new Particle(2212, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
-            }
-            if(track.charge()>0 && track.status()>0)  {
-                hadpos.add(new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz()));
-            }
-            if(track.charge()<0 && track.status()>0)  {
-                hadneg.add(new Particle(-211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz()));
+            if(track.isForLumiScan()) {
+                if(trigger==null && track.pid()==11 && track.status()<0) {
+                    trigger= new Particle(11, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+                }
+                if(track.charge()>0 && track.status()>0)  {
+                    hadpos.add(new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz()));
+                }
+                if(track.charge()<0 && track.status()>0)  {
+                    hadneg.add(new Particle(-211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz()));
+                }
             }
         }
         if(electron!=null && piplus!=null && piminus!=null) {
@@ -187,11 +194,11 @@ public class HistoEvent extends Histos {
             this.get("1pi").getH1F("W2_" + this.getName()).fill(W.mass());
             this.get("1pi").getH1F("mxt2_" + this.getName()).fill(pizero.mass2());                    
         } 
-        if(electron!=null) {
+        if(trigger!=null) {
             Particle W = new Particle();
             W.copy(target);
             W.combine(beam, +1);
-            W.combine(electron, -1);
+            W.combine(trigger, -1);
             this.get("eh").getH1F("We_" + this.getName()).fill(W.mass());
             for(int i=0; i<hadpos.size(); i++) this.get("eh").getH1F("Wehp_" + this.getName()).fill(W.mass());
             for(int i=0; i<hadneg.size(); i++) this.get("eh").getH1F("Wehm_" + this.getName()).fill(W.mass());

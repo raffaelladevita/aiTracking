@@ -398,7 +398,7 @@ public class Track implements Comparable<Track>{
         return value;
     }
 
-     public boolean isForPhysics() {
+     public boolean isForLumiScan() {
         boolean value = false;
         if(this.pid()==11 && this.status()<0) value = this.p()>2.5 && this.p()<5.2;
         else                                  value = this.p()>0.4 && Math.abs(this.chi2pid())<3;
