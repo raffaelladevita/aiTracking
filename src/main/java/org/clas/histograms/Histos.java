@@ -6,7 +6,7 @@
 package org.clas.histograms;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import org.clas.analysis.Track;
 import org.jlab.groot.data.H1F;
@@ -19,7 +19,7 @@ import org.jlab.groot.group.DataGroup;
  *
  * @author devita
  */
-public class Histos extends HashMap<String,DataGroup> {
+public class Histos extends LinkedHashMap<String,DataGroup> {
     
     private String name = null;
     
@@ -50,15 +50,15 @@ public class Histos extends HashMap<String,DataGroup> {
         return 0;
     }
     
-    public HashMap<String,DataGroup> diff(Histos histo) {
-        HashMap<String,DataGroup> diffs = new HashMap<String,DataGroup>();
+    public LinkedHashMap<String,DataGroup> diff(Histos histo, int minEntries) {
+        LinkedHashMap<String,DataGroup> diffs = new LinkedHashMap<String,DataGroup>();
         for(String key : this.keySet()) {
-            diffs.put(key, this.diff(key,histo));
+            diffs.put(key, this.diff(key,histo,minEntries));
         }
         return diffs;
     }
     
-    private DataGroup diff(String key, Histos histo) {
+    private DataGroup diff(String key, Histos histo, int minEntries) {
         DataGroup dg = new DataGroup(this.get(key).getColumns(),this.get(key).getRows());
         int nrows = dg.getRows();
         int ncols = dg.getColumns();
@@ -66,25 +66,25 @@ public class Histos extends HashMap<String,DataGroup> {
         for(int i = 0; i < nds; i++){
             List<IDataSet> dsList = histo.get(key).getData(i);
             for(IDataSet ds : dsList){
-                dg.addDataSet(this.diff(key, ds),i);
+                dg.addDataSet(this.diff(key, ds, minEntries),i);
             }
         }
         return dg;
     }
 
-    private IDataSet diff(String key, IDataSet ds) {
+    private IDataSet diff(String key, IDataSet ds, int minEntries) {
         if(ds instanceof H1F) {
-            return this.diffH1(key, (H1F) ds);
+            return this.diffH1(key, (H1F) ds, minEntries);
         }
         else if(ds instanceof H2F) {
-            return this.diffH2(key, (H2F) ds);
+            return this.diffH2(key, (H2F) ds, minEntries);
         }
         else {
             return null;
         }
     }    
    
-    private H1F diffH1(String key ,H1F h1) {
+    private H1F diffH1(String key ,H1F h1, int minEntries) {
         String hname = this.getPrefix(h1) + "_" + this.getName();
         int   icolor = this.get(key).getH1F(hname).getLineColor();
         H1F h = this.get(key).getH1F(hname).histClone(hname);
@@ -93,7 +93,7 @@ public class Histos extends HashMap<String,DataGroup> {
             double v2 = h1.getBinContent(i);
             double ratio = 0;
             double err   = 0;
-            if(v2>0) {
+            if(v2>minEntries && v1>minEntries) {
                 ratio = v1/v2;
                 err   = (v1/v2)*Math.sqrt(Math.abs(v1-v2)/v1/v2);
             }
@@ -105,26 +105,25 @@ public class Histos extends HashMap<String,DataGroup> {
         return h;
     }
 
-    private H2F diffH2(String key ,H2F histo) {
+    private H2F diffH2(String key ,H2F histo, int minEntries) {
         String hname = this.getPrefix(histo) + "_" + this.getName();
         H2F h = this.get(key).getH2F(hname).histClone(hname);
         h.setTitleX(this.get(key).getH2F(hname).getTitleX());
         h.setTitleY(this.get(key).getH2F(hname).getTitleY());
-        h.divide(histo);
-//        int nx = h.getDataSize(0);
-//        int ny = h.getDataSize(1);
-//        for(int ix=0; ix<nx; ix++) {
-//            for(int iy=0; iy<ny; iy++) {
-//                double h1 = h.getBinContent(ix, iy);
-//                double h2 = histo.getBinContent(ix, iy);
-//                if(h2>0) {
-//                    double w = (h1-h2)/h2;
-//                    if     (w> range) w =  range;
-//                    else if(w<-range) w = -range;
-//                    h.setBinContent(ix, iy, w);
-//                }
-//            }
-//        }
+//        h.divide(histo);
+        int nx = h.getDataSize(0);
+        int ny = h.getDataSize(1);
+        for(int ix=0; ix<nx; ix++) {
+            for(int iy=0; iy<ny; iy++) {
+                double h1 = h.getBinContent(ix, iy);
+                double h2 = histo.getBinContent(ix, iy);
+                double ratio = 0;
+                if(h2>minEntries && h1>minEntries) {
+                    ratio = h1/h2;
+                }
+                h.setBinContent(ix, iy, ratio);
+            }
+        }
         return h;
     }
 

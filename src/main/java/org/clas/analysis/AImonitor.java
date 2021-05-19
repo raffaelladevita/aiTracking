@@ -40,6 +40,7 @@ public class AImonitor {
     private HistoDistribution[] aiMatched   = new HistoDistribution[2];
     private HistoDistribution[] trUnmatched = new HistoDistribution[2];
     private HistoDistribution[] aiUnmatched = new HistoDistribution[2];
+    private HistoDistribution[] trCands     = new HistoDistribution[2];
     private HistoResolution[]   resol       = new HistoResolution[2];
     private HistoEvent          trEvent     = null;
     private HistoEvent          aiEvent     = null;
@@ -49,11 +50,12 @@ public class AImonitor {
     private String[] charges = {"neg", "pos"};
       
     private int nsuperlayers = 0;
-    
+    private int minentries = 0;
     private String opts = "";
     
-    public AImonitor(double beamEnergy, int targetPDG, int nSL, String opts){       
+    public AImonitor(double beamEnergy, int targetPDG, int nSL, int nMin, String opts){       
         this.nsuperlayers = nSL;
+        this.minentries = nMin;
         this.opts = opts;
         this.createHistos(beamEnergy, targetPDG);
     }
@@ -86,6 +88,7 @@ public class AImonitor {
             aiMatched[i] = new HistoDistribution("ai"+charges[i]+"M",4);
             trUnmatched[i] = new HistoDistribution("tr"+charges[i]+"N",3);
             aiUnmatched[i] = new HistoDistribution("ai"+charges[i]+"N",3);
+            trCands[i]     = new HistoDistribution("tr"+charges[i]+"C",5);
             resol[i] = new HistoResolution(charges[i]+"Res",i+1);   
         }
         trEvent = new HistoEvent("tr", 1, beamEnergy, targetPDG);
@@ -108,7 +111,7 @@ public class AImonitor {
     
     public void printStatistics() {
         for(int i=0; i<2; i++) {
-            this.printStatistics(ai[i], tr[i], trMatched[i], charges[i]);
+            this.printStatistics(ai[i], tr[i], trMatched[i], trCands[i], charges[i]);
         }
         this.printStatistics(aiEvent, trEvent);
     }
@@ -120,6 +123,7 @@ public class AImonitor {
         for(int i=0; i<2; i++) {
             for(String key : tr[i].keySet()) {
                 cname = charges[i] + " " + key;
+                if(charges[i].equals("pos") && key.equals("e-")) continue;
                 if(canvas==null) canvas = new EmbeddedCanvasTabbed(cname);
                 else             canvas.addCanvas(cname);
                 canvas.getCanvas(cname).draw(tr[i].get(key));
@@ -130,49 +134,56 @@ public class AImonitor {
             cname = charges[i] + " resolution";
             canvas.addCanvas(cname);
             canvas.getCanvas(cname).draw(resol[i]);
-            this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i]).get("summary"),        0.3, false);
-            this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i]).get("summary"), 0.3, false);
-            this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i]).get("6SL"),            0.3, false);
-            this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i]).get("6SL"),     0.3, false);
-            this.drawDifferences(canvas, charges[i] + " 5SL differences", ai[i].diff(tr[i]).get("5SL"),            0.8, false);
-            this.drawDifferences(canvas, charges[i] + " 5SL differences", trMatched[i].diff(tr[i]).get("5SL"),     0.8, false);
+            this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i],minentries).get("summary"),        0.3, false);
+            this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i],minentries).get("summary"), 0.3, false);
+            if(charges[i].equals("neg")) {
+                this.drawDifferences(canvas, charges[i] + " e- differences",  ai[i].diff(tr[i],minentries).get("e-"),         0.3, false);
+                this.drawDifferences(canvas, charges[i] + " e- differences",  trMatched[i].diff(tr[i],minentries).get("e-"),  0.3, false);
+            }
+            this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i],minentries).get("6SL"),            0.3, false);
+            this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i],minentries).get("6SL"),     0.3, false);
+            this.drawDifferences(canvas, charges[i] + " 5SL differences", ai[i].diff(tr[i],minentries).get("5SL"),            0.8, false);
+            this.drawDifferences(canvas, charges[i] + " 5SL differences", trMatched[i].diff(tr[i],minentries).get("5SL"),     0.8, false);
         }
         cname = "2pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("2pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("2pi"));                    
-        this.drawDifferences(canvas, "2pidifferences", aiEvent.diff(trEvent).get("2pi"), 0.7, true);
+        this.drawDifferences(canvas, "2pidifferences", aiEvent.diff(trEvent,minentries).get("2pi"), 0.7, true);
         cname = "1pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("1pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("1pi"));                    
-        this.drawDifferences(canvas, "1pidifferences", aiEvent.diff(trEvent).get("1pi"), 0.4, true);
+        this.drawDifferences(canvas, "1pidifferences", aiEvent.diff(trEvent,minentries).get("1pi"), 0.4, true);
         cname = "eh+/-";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("eh"));
         canvas.getCanvas(cname).draw(aiEvent.get("eh"));                    
-        this.drawDifferences(canvas, "ehdifferences", aiEvent.diff(trEvent).get("eh"), 0.4, true);
+        this.drawDifferences(canvas, "ehdifferences", aiEvent.diff(trEvent,minentries).get("eh"), 0.4, true);
         return canvas;
     }
 
-    private void printStatistics(Histos ai, Histos tr, Histos trMatched, String charge) {
-        System.out.println("+-------------------------------------------------------------------------------------------------+");
-        System.out.println("|     charge |       type | conventional |           ai |      matched |       gain |  efficiency |");
-        System.out.println("+-------------------------------------------------------------------------------------------------+");
-        this.printStatistics(ai, tr, trMatched, "summary", charge);        
-        this.printStatistics(ai, tr, trMatched, "6SL", charge);        
-        this.printStatistics(ai, tr, trMatched, "5SL", charge);        
-        System.out.println("+-------------------------------------------------------------------------------------------------+");
+    private void printStatistics(Histos ai, Histos tr, Histos trMatched, Histos trCands, String charge) {
+        System.out.println("+-------------------------------------------------------------------------------------------------------------------------------+");
+        System.out.println("|     charge |       type | conventional |           ai |       matched |    predicted |       gain |  efficiency |   inference |");
+        System.out.println("+-------------------------------------------------------------------------------------------------------------------------------+");
+        this.printStatistics(ai, tr, trMatched, trCands, "summary", charge);        
+        this.printStatistics(ai, tr, trMatched, trCands, "6SL", charge);        
+        this.printStatistics(ai, tr, trMatched, trCands, "5SL", charge);        
+        System.out.println("+-------------------------------------------------------------------------------------------------------------------------------+");
     }
     
-    private void printStatistics(Histos ai, Histos tr, Histos trMatched, String dg, String charge) {
+    private void printStatistics(Histos ai, Histos tr, Histos trMatched, Histos trCands, String dg, String charge) {
         if(tr.getEntries(dg)>0) {
-            System.out.println(String.format("| %10s | %10s | %12d | % 12d | %12d | %10.4f |  %10.4f |", charge, dg 
+            System.out.println(String.format("| %10s | %10s | %12d | % 12d | %12d  | %12d | %10.4f |  %10.4f |  %10.4f |"
+                                                                                                , charge, dg 
                                                                                                 , tr.getEntries(dg) 
                                                                                                 , ai.getEntries(dg)
                                                                                                 , trMatched.getEntries(dg)
+                                                                                                , trCands.getEntries(dg)
                                                                                                 , (double) ai.getEntries(dg)/tr.getEntries(dg)
-                                                                                                , (double) trMatched.getEntries(dg)/tr.getEntries(dg)));
+                                                                                                , (double) trMatched.getEntries(dg)/tr.getEntries(dg)
+                                                                                                , (double) trCands.getEntries(dg)/tr.getEntries(dg)));
         }        
     }
     
@@ -241,18 +252,25 @@ public class AImonitor {
         
     public EventStatus processEvent(Event event) {
         EventStatus status = new EventStatus();
+        ArrayList<Track> aiCands  = null;
         ArrayList<Track> aiTracks = null;
         ArrayList<Track> trTracks = null;
-        trTracks = this.read(0, this.nsuperlayers, event);            
-        aiTracks = this.read(1, this.nsuperlayers, event);
+        aiCands  = this.readCandidates(event);
+        trTracks = this.readTracks(0, this.nsuperlayers, event);            
+        aiTracks = this.readTracks(1, this.nsuperlayers, event);
 
         if(trTracks!=null && aiTracks!=null) {
             for(Track tr : trTracks) {
                 for(Track ai : aiTracks) {
-                    if(tr.compareTo(ai)==0) {
+                    if(tr.equals(ai)) {
                         tr.setMatch(true);
                         ai.setMatch(true);
                         resol[(tr.charge()+1)/2].fill(tr, ai);
+                    }
+                }
+                for(Track ai : aiCands) {
+                    if(tr.isContainedIn(ai)) {
+                        tr.setPrediction(true);
                     }
                 }
             }
@@ -267,6 +285,7 @@ public class AImonitor {
                     trUnmatched[(track.charge()+1)/2].fill(track);
 		    if(trTracks.size()==1 && track.isValid() ) status.setAiMissing();
                 }
+                if(track.isPredicted()) trCands[(track.charge()+1)/2].fill(track);
             }
             trEvent.fill(trTracks);
         }
@@ -287,7 +306,7 @@ public class AImonitor {
     }
 
 
-    public ArrayList<Track> read(int type, int nsuperlayers, Event event) {	
+    public ArrayList<Track> readTracks(int type, int nsuperlayers, Event event) {	
         ArrayList<Track> tracks = null;
         Bank runConfig      = banks.getRunConfig();
         Bank particleBank   = banks.getRecParticleBank(type);
@@ -369,6 +388,29 @@ public class AImonitor {
         return tracks;
     }
 
+    public ArrayList<Track> readCandidates(Event event) {	
+        ArrayList<Track> tracks = null;
+        Bank aiCandidateBank = banks.getAICandidateBank();
+        if(aiCandidateBank!=null) event.read(aiCandidateBank);
+        if(aiCandidateBank!=null && aiCandidateBank.getRows()>0) {
+            // create tracks list from track bank
+            tracks = new ArrayList();
+            for(int loop = 0; loop < aiCandidateBank.getRows(); loop++){
+                int charge = -1;
+                if(aiCandidateBank.getByte("charge", loop)==22) charge = 1;
+                Track track = new Track(charge,0,0,0,0,0,0);
+                track.clusters(aiCandidateBank.getShort("c1", loop),
+                               aiCandidateBank.getShort("c2", loop),
+                               aiCandidateBank.getShort("c3", loop),
+                               aiCandidateBank.getShort("c4", loop),
+                               aiCandidateBank.getShort("c5", loop),
+                               aiCandidateBank.getShort("c6", loop));
+                tracks.add(track);
+            }
+        }
+        return tracks;
+    }
+    
     public void readHistos(String fileName) {
         // TXT table summary FILE //
         System.out.println("Opening file: " + fileName);
@@ -429,6 +471,7 @@ public class AImonitor {
             canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
             for(String key : tr[i].keySet()) {
                 cname = charges[i] + " " + key;
+                if(charges[i].equals("pos") && key.equals("e-")) continue;
                 canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
             }
         }
@@ -476,6 +519,7 @@ public class AImonitor {
         parser.addOption("-r"    ,"",     "histogram file to be read");
         parser.addOption("-w"    ,"true", "display histograms");
         parser.addOption("-s"    ,"",     "histogram stat option");
+        parser.addOption("-d"    ,"0",    "minimum number of entries for histogram differences");
         parser.addOption("-l"    ,"0",    "number of superlayers (5 or 6, 0=any)");
         parser.addOption("-e"    ,"10.6", "beam energy");
         parser.addOption("-t"    ,"2212", "target PDG");
@@ -498,6 +542,7 @@ public class AImonitor {
         boolean window   = Boolean.parseBoolean(parser.getOption("-w").stringValue());
         String  optStats = parser.getOption("-s").stringValue();        
         int     layers   = parser.getOption("-l").intValue();
+        int     nmin     = parser.getOption("-d").intValue();
         double  beam     = parser.getOption("-e").doubleValue();
         int     target   = parser.getOption("-t").intValue();
         
@@ -507,7 +552,7 @@ public class AImonitor {
         
         SchemaFactory schema = null;           
         
-        AImonitor analysis = new AImonitor(beam,target,layers,optStats);
+        AImonitor analysis = new AImonitor(beam,target,layers,nmin,optStats);
         
         HipoWriterSorted writer1 = new HipoWriterSorted();
         HipoWriterSorted writer2 = new HipoWriterSorted();

@@ -14,7 +14,7 @@ import org.jlab.detector.base.DetectorType;
  * @author devita
  */
 
-public class Track implements Comparable<Track>{
+public class Track {
     
     // from tracking bank
     private LorentzVector trackVector = new LorentzVector(0.0,0.0,0.0,0);
@@ -39,7 +39,8 @@ public class Track implements Comparable<Track>{
     // flag to select on number of superlayers
     private int nSL = 0;
     
-    private boolean trackMatch = false;
+    private boolean trackMatch   = false;
+    private boolean trackPredict = false;
     
     public Track() {
         this.initTrack(0, 0., 0., 0., 0., 0., 0.);
@@ -228,7 +229,8 @@ public class Track implements Comparable<Track>{
         this.trackClusters[4] = i5;
         this.trackClusters[5] = i6;
         for(int i=0; i<6; i++) {
-            if(this.trackClusters[i]>0) this.trackSL++;
+            if(this.trackClusters[i]<=0) this.trackClusters[i]=-1; //change 0 to -1 to allow matching of candidates to tracks
+            if(this.trackClusters[i]>0)  this.trackSL++;
         }
     }    
 
@@ -316,6 +318,14 @@ public class Track implements Comparable<Track>{
     
     public boolean isMatched() {
         return trackMatch;
+    }
+    
+    public void setPrediction(boolean predict) {
+        this.trackPredict = predict;
+    }
+    
+    public boolean isPredicted() {
+        return trackPredict;
     }
     
     public final LorentzVector vector() {
@@ -406,7 +416,7 @@ public class Track implements Comparable<Track>{
         return value;
     }
 
-    private int compareClusters(Track t) {
+    private int matchedClusters(Track t) {
         int nmatch = 0;
         for(int i=0; i<6; i++) {
             if(this.clusters()[i]==t.clusters()[i]) nmatch++;            
@@ -463,34 +473,18 @@ public class Track implements Comparable<Track>{
         }
         return str.toString();
     }
+        
+    public boolean equals(Track o) {
+        if(this.matchedClusters(o)==6) return true;
+        else return false;
+    }
     
-    /**
-     * Compares two particles complying with Comparable interface.
-     * The priority is given to charged particles over neutral.
-     * In case of two particles have same momentum priority is given
-     * to one with higher momentum.
-     * a negative int - if this lt that
-     * 0              - if this == that
-     * a positive int - if this gt that
-     * @param o object that this class is being compared to
-     * @return -1,0,1 depending how the object are compared
-     */
-    @Override
-    public int compareTo(Track o) {
-        /**
-         * Always make sure that electron is set in the first position
-         */
-        if(this.charge()==-1 && o.charge()!=-1) return -1;
-        if(o.charge()==-1 && this.charge()!=-1) return  1;
-        /**
-         * For particles with same PID, sorting will happen on the basis
-         * of their momentum.
-         */
-        if(this.charge()==o.charge()){
-            if(this.compareClusters(o)==6) return 0;
-            return (o.p()>this.p())?-1:1;
+    public boolean isContainedIn(Track o) {
+        boolean value = true;
+        for(int i=0; i<6; i++) {
+            if(this.clusters()[i]!=-1 && this.clusters()[i]!=o.clusters()[i]) value=false;           
         }
-        return 0;
+        return value;
     }
     
 }

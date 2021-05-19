@@ -5,7 +5,7 @@
  */
 package org.clas.histograms;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import org.clas.analysis.Track;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.groot.data.H1F;
@@ -18,7 +18,7 @@ import org.jlab.groot.group.DataGroup;
  */
 public class HistoDistribution extends Histos {
     
-    private HashMap<String,String> summaries;
+    private LinkedHashMap<String,String> summaries;
                     
     public HistoDistribution(String str, int col) {
         super(str,col);
@@ -26,8 +26,9 @@ public class HistoDistribution extends Histos {
     
     @Override
     public void init() {
-        this.summaries = new HashMap<>();
+        this.summaries = new LinkedHashMap<>();
         this.summaries.put("summary", "");
+        this.summaries.put("e-",      "e-");
         this.summaries.put("6SL",     "6SL");
         this.summaries.put("5SL",     "5SL");
         for(String key :this.summaries.keySet()) this.put(key, new DataGroup(key,3,2));
@@ -95,10 +96,10 @@ public class HistoDistribution extends Histos {
     
     @Override
     public void fill(Track track) {
-        int sl     = track.SL();
         this.fillSummaries(track, "summary");
         if(track.SL()==6)      this.fillSummaries(track, "6SL");
         else if(track.SL()==5) this.fillSummaries(track, "5SL");
+        if(track.pid()==11)    this.fillSummaries(track, "e-");
         this.fillSectors(track);
     }  
     

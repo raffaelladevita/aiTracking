@@ -20,9 +20,10 @@ public class Banks {
     private Bank aiTrajectoryBank;
     private Bank aiTrackBank;
     private Bank aiTrackingBank;
+    private Bank aiCandidates;
 
     public Banks(String mode, SchemaFactory schema) {
-	this.runConfig        = new Bank(schema.getSchema("RUN::config"));
+        this.runConfig        = new Bank(schema.getSchema("RUN::config"));
         this.cvParticleBank   = new Bank(schema.getSchema("REC::Particle"));
         this.cvTrajectoryBank = new Bank(schema.getSchema("REC::Traj"));;
         this.cvTrackBank      = new Bank(schema.getSchema("REC::Track"));;
@@ -31,6 +32,7 @@ public class Banks {
         this.aiTrajectoryBank = new Bank(schema.getSchema("RECAI::Traj"));;
         this.aiTrackBank      = new Bank(schema.getSchema("RECAI::Track"));;
         this.aiTrackingBank   = new Bank(schema.getSchema("TimeBasedTrkg::AITracks"));
+        this.aiCandidates     = new Bank(schema.getSchema("ai::tracks"));
         if(mode.equals("HB")) {
             this.cvParticleBank   = new Bank(schema.getSchema("RECHB::Particle"));
             this.cvTrajectoryBank = null;
@@ -67,5 +69,9 @@ public class Banks {
         else        return aiTrackingBank;
     }
     
+    public Bank getAICandidateBank() {
+	return aiCandidates;
+    }
+
      
 }
