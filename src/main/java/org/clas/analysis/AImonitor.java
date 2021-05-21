@@ -317,6 +317,7 @@ public class AImonitor {
 		    if(trTracks.size()==1 && track.isValid() ) status.setAiMissing();
                 }
                 if(track.isPredicted()) trCands[(track.charge()+1)/2].fill(track);
+                else if(trTracks.size()==1 && track.isValid() ) status.setCdMissing();
             }
             trEvent.fill(trTracks);
         }
@@ -517,6 +518,7 @@ public class AImonitor {
         
     public class EventStatus {
         private boolean aiMissing=false;
+        private boolean cdMissing=false;
         private boolean cvMissing=false;
 
         public EventStatus() {
@@ -528,6 +530,14 @@ public class AImonitor {
 
         public void setAiMissing() {
             this.aiMissing = true;
+        }
+
+        public boolean isCdMissing() {
+            return cdMissing;
+        }
+
+        public void setCdMissing() {
+            this.cdMissing = true;
         }
 
         public boolean isCvMissing() {
@@ -561,7 +571,8 @@ public class AImonitor {
         String namePrefix  = parser.getOption("-o").stringValue();        
         String histoName   = "histo.hipo";
         String eventName1  = "missing_ai.hipo";
-        String eventName2  = "missing_cv.hipo";
+        String eventName2  = "missing_cd.hipo";
+        String eventName3  = "missing_cv.hipo";
         if(!namePrefix.isEmpty()) {
             histoName  = namePrefix + "_" + histoName;
             eventName1 = namePrefix + "_" + eventName1;
@@ -587,6 +598,7 @@ public class AImonitor {
         
         HipoWriterSorted writer1 = new HipoWriterSorted();
         HipoWriterSorted writer2 = new HipoWriterSorted();
+        HipoWriterSorted writer3 = new HipoWriterSorted();
 
         if(readName.isEmpty()) {
             
@@ -611,6 +623,7 @@ public class AImonitor {
                     if(write) {
                         AImonitor.setWriter(writer1, schema, eventName1);
                         AImonitor.setWriter(writer2, schema, eventName2);
+                        AImonitor.setWriter(writer3, schema, eventName3);
                     }
                     
                     Banks banks = new Banks(type,schema);
@@ -626,7 +639,8 @@ public class AImonitor {
                     EventStatus status = analysis.processEvent(event);
 
                     if(write && status.isAiMissing()) writer1.addEvent(event);
-                    if(write && status.isCvMissing()) writer2.addEvent(event);
+                    if(write && status.isCdMissing()) writer2.addEvent(event);
+                    if(write && status.isCvMissing()) writer3.addEvent(event);
 
                     progress.updateStatus();
                     if(maxEvents>0){
@@ -639,6 +653,7 @@ public class AImonitor {
             if(write) {
                 writer1.close();
                 writer2.close();
+                writer3.close();
             }
             analysis.saveHistos(histoName);
         }
