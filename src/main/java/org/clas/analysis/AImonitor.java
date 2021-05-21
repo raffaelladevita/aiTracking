@@ -10,9 +10,11 @@ import java.util.List;
 import javax.swing.JFrame;
 import org.clas.histograms.Histos;
 import org.jlab.detector.base.DetectorType;
+import org.jlab.geom.prim.Line3D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.TDirectory;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
@@ -130,6 +132,8 @@ public class AImonitor {
                 canvas.getCanvas(cname).draw(ai[i].get(key));
                 canvas.getCanvas(cname).draw(trMatched[i].get(key));
                 canvas.getCanvas(cname).draw(trUnmatched[i].get(key));
+                for(EmbeddedPad pad : canvas.getCanvas(cname).getCanvasPads())
+                    if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H2F) this.drawRegion1(pad,2);                                   
             }
             cname = charges[i] + " resolution";
             canvas.addCanvas(cname);
@@ -209,7 +213,7 @@ public class AImonitor {
         if(canvas.getCanvas(cname)==null) canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(dg);
         canvas.getCanvas(cname).draw(dg);
-       if(errors) this.plotErrors(canvas.getCanvas(cname));
+        if(errors) this.plotErrors(canvas.getCanvas(cname));
         this.drawLines(canvas.getCanvas(cname));
         this.setRange(canvas.getCanvas(cname), range);
     }
@@ -220,6 +224,29 @@ public class AImonitor {
                 H1F h1 = (H1F) pad.getDatasetPlotters().get(0).getDataSet();
                 DataLine line= new DataLine(h1.getXaxis().min(),1,h1.getXaxis().max(),1);
                 line.setLineWidth(1);
+                pad.draw(line);
+            }
+            else if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H2F) {
+                this.drawRegion1(pad,1);
+            }
+        }
+    }
+    
+    private void drawRegion1(EmbeddedPad pad, int col) {
+        Line3D inner   = new Line3D( -5.197,  18.657, 0,  5.197,  18.657, 0);
+        Line3D outer   = new Line3D(-46.086, 151.061, 0, 46.086, 151.061, 0);
+        Line3D lcorner = new Line3D(-73.104, 138.852, 0,-46.086, 151.061, 0);
+        Line3D rcorner = new Line3D( 46.086, 151.061, 0, 73.104, 138.852, 0);
+        Line3D left    = new Line3D( -5.197,  18.657, 0,-73.104, 138.852, 0);
+        Line3D right   = new Line3D(  5.197,  18.657, 0, 73.104, 138.852, 0);
+        Line3D[] r1 = {inner,outer,lcorner,rcorner,left,right};
+        for(int sector=0; sector<=6; sector++) {
+            for(int iline=0; iline<6; iline++) {
+                Line3D side = new Line3D(r1[iline]);
+                side.rotateZ(Math.toRadians(-90+(sector-1)*60));
+                DataLine line= new DataLine(side.origin().x(),side.origin().y(),side.end().x(),side.end().y());
+                line.setLineWidth(2);
+                line.setLineColor(col);
                 pad.draw(line);
             }
         }
@@ -259,18 +286,22 @@ public class AImonitor {
         trTracks = this.readTracks(0, this.nsuperlayers, event);            
         aiTracks = this.readTracks(1, this.nsuperlayers, event);
 
-        if(trTracks!=null && aiTracks!=null) {
+        if(trTracks!=null) {
             for(Track tr : trTracks) {
-                for(Track ai : aiTracks) {
-                    if(tr.equals(ai)) {
-                        tr.setMatch(true);
-                        ai.setMatch(true);
-                        resol[(tr.charge()+1)/2].fill(tr, ai);
+                if(aiTracks!=null) {
+                    for(Track ai : aiTracks) {
+                        if(tr.equals(ai)) {
+                            tr.setMatch(true);
+                            ai.setMatch(true);
+                            resol[(tr.charge()+1)/2].fill(tr, ai);
+                        }
                     }
                 }
-                for(Track ai : aiCands) {
-                    if(tr.isContainedIn(ai)) {
-                        tr.setPrediction(true);
+                if(aiCands!=null) {
+                    for(Track ai : aiCands) {
+                        if(tr.isContainedIn(ai)) {
+                            tr.setPrediction(true);
+                        }
                     }
                 }
             }
