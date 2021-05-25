@@ -133,7 +133,7 @@ public class AImonitor {
                 canvas.getCanvas(cname).draw(trMatched[i].get(key));
                 canvas.getCanvas(cname).draw(trUnmatched[i].get(key));
                 for(EmbeddedPad pad : canvas.getCanvas(cname).getCanvasPads())
-                    if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H2F) this.drawRegion1(pad,2);                                   
+                    if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H2F) this.drawRegion(pad,2);                                   
             }
             cname = charges[i] + " resolution";
             canvas.addCanvas(cname);
@@ -227,12 +227,17 @@ public class AImonitor {
                 pad.draw(line);
             }
             else if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H2F) {
-                this.drawRegion1(pad,1);
+                this.drawRegion(pad,1);
             }
         }
     }
     
-    private void drawRegion1(EmbeddedPad pad, int col) {
+    private void drawRegion(EmbeddedPad pad, int col) {
+        int region = 1;
+        String name = pad.getDatasetPlotters().get(0).getDataSet().getName().replaceAll("[^1-3]", "");
+        if(!name.equals("")) region = Integer.parseInt(name);
+                        
+        if(region!=1) return;
         Line3D inner   = new Line3D( -5.197,  18.657, 0,  5.197,  18.657, 0);
         Line3D outer   = new Line3D(-46.086, 151.061, 0, 46.086, 151.061, 0);
         Line3D lcorner = new Line3D(-73.104, 138.852, 0,-46.086, 151.061, 0);
@@ -314,10 +319,10 @@ public class AImonitor {
                 }
                 else {
                     trUnmatched[(track.charge()+1)/2].fill(track);
-		    if(trTracks.size()==1 && track.isValid() ) status.setAiMissing();
+            	 if(trTracks.size()==1 && track.isValid()) status.setAiMissing();
                 }
                 if(track.isPredicted()) trCands[(track.charge()+1)/2].fill(track);
-                else if(trTracks.size()==1 && track.isValid() ) status.setCdMissing();
+                else if(trTracks.size()==1 && track.isValid()) status.setCdMissing();
             }
             trEvent.fill(trTracks);
         }
@@ -365,6 +370,10 @@ public class AImonitor {
                 track.NDF(trackingBank.getShort("ndf", loop));
                 track.chi2(trackingBank.getFloat("chi2", loop)/trackingBank.getShort("ndf", loop));
                 for(int i=0; i<2; i++) {
+                    track.cross(trackingBank.getFloat("c" + (i*2+1) + "_x", loop),
+                                trackingBank.getFloat("c" + (i*2+1) + "_y", loop),
+                                trackingBank.getFloat("c" + (i*2+1) + "_z", loop),
+                                (i*2+1));
                     track.trajectory(trackingBank.getFloat("c" + (i*2+1) + "_x", loop),
                                      trackingBank.getFloat("c" + (i*2+1) + "_y", loop),
                                      trackingBank.getFloat("c" + (i*2+1) + "_z", loop),

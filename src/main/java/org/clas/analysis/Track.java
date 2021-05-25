@@ -24,6 +24,7 @@ public class Track {
     private double trackPolarity = 0;
     private double trackChi2 = 0;
     private int trackNDF = 0;
+    private Vector3[] trackCrosses = new Vector3[3];
     private int[] trackClusters = new int[6];
     private int   trackSL = 0;
     
@@ -83,6 +84,9 @@ public class Track {
         this.trackVertex.setXYZ(vx, vy, vz);
         for(int i=0; i<this.trackTrajectory.length; i++) {
             this.trackTrajectory[i] = new Vector3(0,0,0);
+        }
+        for(int i=0; i<this.trackCrosses.length; i++) {
+            this.trackCrosses[i] = new Vector3(0,0,0);
         }
     }
     
@@ -277,6 +281,14 @@ public class Track {
     
     public int pid() {
         return this.trackPid;
+    }
+    
+    public void cross(double x, double y, double z, int region) {
+        this.trackCrosses[region-1] = new Vector3(x, y, z);
+    }
+    
+    public Vector3 cross(int region) {
+        return this.trackCrosses[region-1];
     }
     
     public void trajectory(double x, double y, double z, int detector, int layer) {

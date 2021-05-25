@@ -32,6 +32,7 @@ public class HistoDistribution extends Histos {
         this.summaries.put("6SL",     "6SL");
         this.summaries.put("5SL",     "5SL");
         for(String key :this.summaries.keySet()) this.put(key, new DataGroup(key,3,2));
+        this.put("2D",       new DataGroup("2D",3,2));
         this.put("p",        new DataGroup("p",3,2));
         this.put("theta",    new DataGroup("theta",3,2));
         this.put("vz",       new DataGroup("vz",3,2));        
@@ -72,7 +73,18 @@ public class HistoDistribution extends Histos {
             this.get(dg).addDataSet(hi_chi2,  3);
             this.get(dg).addDataSet(hi_vz,    4);
             this.get(dg).addDataSet(hi_xy,    5);
-            this.get(dg).getH1F("p" + sname);
+        }
+        for(int i=0; i<3; i++) {
+            int region = i+1;
+            double size = 200.0+i*100;
+            H2F hi_traj = new H2F("traj"   + region + "_" + name, "R" + region + " trajectory", 200, -size, size, 200, -size, size);   
+            hi_traj.setTitleX("R" + region + " x (cm)");
+            hi_traj.setTitleY("R" + region + " y (cm)");
+            H2F hi_cross = new H2F("cross" + region + "_" + name, "R" + region + " crosses"   , 200, -size*1.2, size*1.2, 200, -size*1.2, size*1.2);   
+            hi_cross.setTitleX("R" + region + " x (cm)");
+            hi_cross.setTitleY("R" + region + " y (cm)");
+            this.get("2D").addDataSet(hi_traj,  i);            
+            this.get("2D").addDataSet(hi_cross, i+3);            
         }
         for(int i=0; i<6; i++) {
             int sector = i+1;
@@ -100,6 +112,7 @@ public class HistoDistribution extends Histos {
         if(track.SL()==6)      this.fillSummaries(track, "6SL");
         else if(track.SL()==5) this.fillSummaries(track, "5SL");
         if(track.pid()==11)    this.fillSummaries(track, "e-");
+        this.fill2D(track);
         this.fillSectors(track);
     }  
     
@@ -112,11 +125,23 @@ public class HistoDistribution extends Histos {
             this.get(dg).getH1F("phi"   + sname).fill(Math.toDegrees(track.phi()));
             this.get(dg).getH1F("chi2"  + sname).fill(track.chi2());
             this.get(dg).getH2F("xy"    + sname).fill(track.trajectory(DetectorType.DC.getDetectorId(), 6).x()
-                                                               ,track.trajectory(DetectorType.DC.getDetectorId(), 6).y());
+                                                     ,track.trajectory(DetectorType.DC.getDetectorId(), 6).y());
         }
         this.get(dg).getH1F("vz" + sname).fill(track.vz());
     }
      
+    private void fill2D(Track track) {
+        if(track.isValid()) {
+            for(int i=0; i<3; i++) {
+                int region = i+1;
+                this.get("2D").getH2F("traj"   + region + "_" + this.getName()).fill(track.trajectory(DetectorType.DC.getDetectorId(),6+12*i).x()
+                                                                                    ,track.trajectory(DetectorType.DC.getDetectorId(),6+12*i).y());
+                this.get("2D").getH2F("cross"  + region + "_" + this.getName()).fill(track.cross(region).x()
+                                                                                    ,track.cross(region).y());
+            }
+        }
+    }
+    
     private void fillSectors(Track track) {
         int sector = track.sector();
         if(track.isValid()) {
