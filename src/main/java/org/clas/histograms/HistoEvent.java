@@ -21,8 +21,8 @@ public class HistoEvent extends Histos {
     private Particle beam   = null;
     private Particle target = null;
     
-    public HistoEvent(String str, int col, double beamEnergy, int targetPDG) {
-        super(str,col);
+    public HistoEvent(String str, String title, int col, double beamEnergy, int targetPDG) {
+        super(str,title,col);
         this.beam   = new Particle(11, 0,0,beamEnergy, 0,0,0);
         this.target = Particle.createWithPid(targetPDG, 0,0,0, 0,0,0);
     }

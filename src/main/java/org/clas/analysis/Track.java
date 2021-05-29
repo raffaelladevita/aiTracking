@@ -28,7 +28,7 @@ public class Track {
     private int[] trackClusters = new int[6];
     private int   trackSL = 0;
     
-    // from particlle bank
+    // from particle bank
     private int    trackStatus  = 0;
     private double trackChi2pid = 0;
     private int    trackPid = 0;
@@ -40,19 +40,22 @@ public class Track {
     // flag to select on number of superlayers
     private int nSL = 0;
     
+    // HB (0) or TB (0)
+    private int trackMode = 1;
+    
     private boolean trackMatch   = false;
     private boolean trackPredict = false;
     
     public Track() {
-        this.initTrack(0, 0., 0., 0., 0., 0., 0.);
+        this.initTrack(1, 0, 0., 0., 0., 0., 0., 0.);
     }
 
     public Track(Track t) {
-        this.initTrack(t.charge(), t.px(), t.py(), t.pz(), t.vertex().x(), t.vertex().y(), t.vertex().z());
+        this.initTrack(t.mode(), t.charge(), t.px(), t.py(), t.pz(), t.vertex().x(), t.vertex().y(), t.vertex().z());
     }
     
-    public Track(int charge, double px, double py, double pz, double vx, double vy, double vz) {
-        this.initTrack(charge, px, py, pz, vx, vy, vz);
+    public Track(int mode, int charge, double px, double py, double pz, double vx, double vy, double vz) {
+        this.initTrack(mode, charge, px, py, pz, vx, vy, vz);
     }
         
     
@@ -61,16 +64,19 @@ public class Track {
         newp.charge(p.charge());
         newp.vector().copy(p.vector());
         newp.vertex().copy(p.vertex());
+        newp.mode(p.mode());
         return newp;
     }
     
     public void copy(Track track) {
         this.trackVector.setPxPyPzM(track.vector().px(), track.vector().py(), track.vector().pz(), track.vector().mass());
         this.trackVertex.setXYZ(track.vertex().x(), track.vertex().y(), track.vertex().z());        
-        trackCharge   = track.charge();        
+        this.trackCharge = track.charge(); 
+        this.trackMode = track.mode();
     }
     
     public void reset(){
+        this.trackMode= 1;
         this.trackCharge = 0;
         this.trackStatus = 0;
         this.trackChi2 = 0;
@@ -78,7 +84,8 @@ public class Track {
         this.vector().setPxPyPzE(0.0, 0.0, 0.0, 0.0);
     }
     
-    public final void initTrack(int charge, double px, double py, double pz, double vx, double vy, double vz) {
+    public final void initTrack(int mode, int charge, double px, double py, double pz, double vx, double vy, double vz) {
+        this.trackMode   = mode;
         this.trackCharge = charge;
         this.trackVector.setPxPyPzM(px, py, pz, 0);
         this.trackVertex.setXYZ(vx, vy, vz);
@@ -88,6 +95,14 @@ public class Track {
         for(int i=0; i<this.trackCrosses.length; i++) {
             this.trackCrosses[i] = new Vector3(0,0,0);
         }
+    }
+
+    public int mode() {
+        return trackMode;
+    }
+    
+    public void mode(int m) {
+        this.trackMode=m;
     }
     
     public void setP(double mom) {

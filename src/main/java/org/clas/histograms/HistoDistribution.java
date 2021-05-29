@@ -20,8 +20,8 @@ public class HistoDistribution extends Histos {
     
     private LinkedHashMap<String,String> summaries;
                     
-    public HistoDistribution(String str, int col) {
-        super(str,col);
+    public HistoDistribution(String str, String title, int col) {
+        super(str,title,col);
     }
     
     @Override

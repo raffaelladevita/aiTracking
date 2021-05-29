@@ -21,11 +21,13 @@ import org.jlab.groot.group.DataGroup;
  */
 public class Histos extends LinkedHashMap<String,DataGroup> {
     
-    private String name = null;
+    private String name  = null;
+    private String title = null;
     
-    public Histos(String str, int col) {
+    public Histos(String str, String title, int col) {
         super();
         this.setName(str);
+        this.setTitle(title);
         this.init();        
         this.create(col);
     }
@@ -138,6 +140,14 @@ public class Histos extends LinkedHashMap<String,DataGroup> {
     private String getPrefix(IDataSet ds) {
         String prefix = ds.getName().split("_")[0];
         return prefix;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
     
     public void setStats(String opts) {

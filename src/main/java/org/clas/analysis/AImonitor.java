@@ -8,8 +8,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFrame;
-import org.clas.histograms.Histos;
-import org.jlab.detector.base.DetectorType;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.groot.base.GStyle;
 import org.jlab.groot.data.DataLine;
@@ -49,7 +47,7 @@ public class AImonitor {
      
     private Banks banks = null;
     
-    private String[] charges = {"neg", "pos"};
+    private String[] charges = {Charges.NEG.getName(), Charges.POS.getName()};
       
     private int nsuperlayers = 0;
     private int minentries = 0;
@@ -84,17 +82,17 @@ public class AImonitor {
         GStyle.setGraphicsFrameLineWidth(1);
         GStyle.getH1FAttributes().setLineWidth(2);
         for(int i=0; i<2; i++) {
-            tr[i] = new HistoDistribution("tr"+charges[i],1);
-            ai[i] = new HistoDistribution("ai"+charges[i],2);
-            trMatched[i] = new HistoDistribution("tr"+charges[i]+"M",4);
-            aiMatched[i] = new HistoDistribution("ai"+charges[i]+"M",4);
-            trUnmatched[i] = new HistoDistribution("tr"+charges[i]+"N",3);
-            aiUnmatched[i] = new HistoDistribution("ai"+charges[i]+"N",3);
-            trCands[i]     = new HistoDistribution("tr"+charges[i]+"C",5);
+            tr[i] = new HistoDistribution("tr"+charges[i],Types.CONVENTIONAL.getName(),1);
+            ai[i] = new HistoDistribution("ai"+charges[i],Types.AI.getName(),2);
+            trMatched[i] = new HistoDistribution("tr"+charges[i]+"M",Types.MATCHED.getName(),4);
+            aiMatched[i] = new HistoDistribution("ai"+charges[i]+"M",Types.MATCHED.getName(),4);
+            trUnmatched[i] = new HistoDistribution("tr"+charges[i]+"N",Types.UNMATCHED.getName(),3);
+            aiUnmatched[i] = new HistoDistribution("ai"+charges[i]+"N",Types.UNMATCHED.getName(),3);
+            trCands[i]     = new HistoDistribution("tr"+charges[i]+"C",Types.CANDIDATES.getName(),5);
             resol[i] = new HistoResolution(charges[i]+"Res",i+1);   
         }
-        trEvent = new HistoEvent("tr", 1, beamEnergy, targetPDG);
-        aiEvent = new HistoEvent("ai", 2, beamEnergy, targetPDG);        
+        trEvent = new HistoEvent("tr", Types.CONVENTIONAL.getName(), 1, beamEnergy, targetPDG);
+        aiEvent = new HistoEvent("ai", Types.AI.getName(), 2, beamEnergy, targetPDG);        
     }
     
     private void setHistoStats(String opts) {
@@ -111,11 +109,14 @@ public class AImonitor {
         aiEvent.setStats(opts);
     }
     
-    public void printStatistics() {
+    public LumiDatum loadStatistics(String run, double current) {
+        LumiDatum lumi = new LumiDatum(run, current);
         for(int i=0; i<2; i++) {
-            this.printStatistics(ai[i], tr[i], trMatched[i], trCands[i], charges[i]);
+           lumi.initTracks(run, Charges.getCharge(charges[i]), tr[i], ai[i], trMatched[i], trCands[i]);
         }
-        this.printStatistics(aiEvent, trEvent);
+        lumi.initEH(aiEvent, trEvent);
+        lumi.show();
+        return lumi;
     }
     
     public EmbeddedCanvasTabbed plotHistos() {
@@ -125,7 +126,7 @@ public class AImonitor {
         for(int i=0; i<2; i++) {
             for(String key : tr[i].keySet()) {
                 cname = charges[i] + " " + key;
-                if(charges[i].equals("pos") && key.equals("e-")) continue;
+                if(charges[i].equals(Charges.POS.getName()) && key.equals("e-")) continue;
                 if(canvas==null) canvas = new EmbeddedCanvasTabbed(cname);
                 else             canvas.addCanvas(cname);
                 canvas.getCanvas(cname).draw(tr[i].get(key));
@@ -140,7 +141,7 @@ public class AImonitor {
             canvas.getCanvas(cname).draw(resol[i]);
             this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i],minentries).get("summary"),        0.3, false);
             this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i],minentries).get("summary"), 0.3, false);
-            if(charges[i].equals("neg")) {
+            if(charges[i].equals(Charges.NEG.getName())) {
                 this.drawDifferences(canvas, charges[i] + " e- differences",  ai[i].diff(tr[i],minentries).get("e-"),         0.3, false);
                 this.drawDifferences(canvas, charges[i] + " e- differences",  trMatched[i].diff(tr[i],minentries).get("e-"),  0.3, false);
             }
@@ -167,48 +168,6 @@ public class AImonitor {
         return canvas;
     }
 
-    private void printStatistics(Histos ai, Histos tr, Histos trMatched, Histos trCands, String charge) {
-        System.out.println("+-------------------------------------------------------------------------------------------------------------------------------+");
-        System.out.println("|     charge |       type | conventional |           ai |       matched |    predicted |       gain |  efficiency |   inference |");
-        System.out.println("+-------------------------------------------------------------------------------------------------------------------------------+");
-        this.printStatistics(ai, tr, trMatched, trCands, "summary", charge);        
-        this.printStatistics(ai, tr, trMatched, trCands, "6SL", charge);        
-        this.printStatistics(ai, tr, trMatched, trCands, "5SL", charge);        
-        System.out.println("+-------------------------------------------------------------------------------------------------------------------------------+");
-    }
-    
-    private void printStatistics(Histos ai, Histos tr, Histos trMatched, Histos trCands, String dg, String charge) {
-        if(tr.getEntries(dg)>0) {
-            System.out.println(String.format("| %10s | %10s | %12d | % 12d | %12d  | %12d | %10.4f |  %10.4f |  %10.4f |"
-                                                                                                , charge, dg 
-                                                                                                , tr.getEntries(dg) 
-                                                                                                , ai.getEntries(dg)
-                                                                                                , trMatched.getEntries(dg)
-                                                                                                , trCands.getEntries(dg)
-                                                                                                , (double) ai.getEntries(dg)/tr.getEntries(dg)
-                                                                                                , (double) trMatched.getEntries(dg)/tr.getEntries(dg)
-                                                                                                , (double) trCands.getEntries(dg)/tr.getEntries(dg)));
-        }        
-    }
-    
-    private void printStatistics(HistoEvent ai, HistoEvent tr) {
-        System.out.println("+--------------------------------------------------------------------------------------+");
-        System.out.println("|         type |            e |          eh+ |          eh- |      eh+/e |       eh-/e |");
-        System.out.println("+--------------------------------------------------------------------------------------+");
-        this.printStatistics(tr, "conventional");        
-        this.printStatistics(ai, "ai");        
-        System.out.println("+--------------------------------------------------------------------------------------+");
-    }
-    
-    private void printStatistics(HistoEvent he, String type) {
-        System.out.println(String.format("| %12s | %12d | % 12d | %12d | %10.4f |  %10.4f |", type 
-                                                                                            , he.getNe()
-                                                                                            , he.getNehp()
-                                                                                            , he.getNehm()
-                                                                                            , (double) he.getNehp()/he.getNe()
-                                                                                            , (double) he.getNehm()/he.getNe()));        
-    }
-    
     private void drawDifferences(EmbeddedCanvasTabbed canvas, String cname, DataGroup dg, double range, boolean errors) {
         if(canvas.getCanvas(cname)==null) canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(dg);
@@ -359,7 +318,8 @@ public class AImonitor {
             // create tracks list from track bank
             tracks = new ArrayList();
             for(int loop = 0; loop < trackingBank.getRows(); loop++){
-                Track track = new Track(trackingBank.getByte("q", loop),
+                Track track = new Track(banks.getMode(),
+                                        trackingBank.getByte("q", loop),
                                         trackingBank.getFloat("p0_x", loop),
                                         trackingBank.getFloat("p0_y", loop),
                                         trackingBank.getFloat("p0_z", loop),
@@ -374,10 +334,6 @@ public class AImonitor {
                                 trackingBank.getFloat("c" + (i*2+1) + "_y", loop),
                                 trackingBank.getFloat("c" + (i*2+1) + "_z", loop),
                                 (i*2+1));
-                    track.trajectory(trackingBank.getFloat("c" + (i*2+1) + "_x", loop),
-                                     trackingBank.getFloat("c" + (i*2+1) + "_y", loop),
-                                     trackingBank.getFloat("c" + (i*2+1) + "_z", loop),
-                                     DetectorType.DC.getDetectorId(),12+24*i);
                 }
                 track.clusters(trackingBank.getShort("Cluster1_ID", loop),
                                trackingBank.getShort("Cluster2_ID", loop),
@@ -439,7 +395,7 @@ public class AImonitor {
             for(int loop = 0; loop < aiCandidateBank.getRows(); loop++){
                 int charge = -1;
                 if(aiCandidateBank.getByte("charge", loop)==22) charge = 1;
-                Track track = new Track(charge,0,0,0,0,0,0);
+                Track track = new Track(banks.getMode(),charge,0,0,0,0,0,0);
                 track.clusters(aiCandidateBank.getShort("c1", loop),
                                aiCandidateBank.getShort("c2", loop),
                                aiCandidateBank.getShort("c3", loop),
@@ -466,6 +422,7 @@ public class AImonitor {
             trMatched[i].readDataGroup(dir);
             trUnmatched[i].readDataGroup(dir);
             aiMatched[i].readDataGroup(dir);
+            trCands[i].readDataGroup(dir);
             resol[i]=resol[i].readDataGroup(dir);
         }
         trEvent.readDataGroup(dir);
@@ -480,6 +437,7 @@ public class AImonitor {
             trMatched[i].writeDataGroup(dir);
             trUnmatched[i].writeDataGroup(dir);
             aiMatched[i].writeDataGroup(dir);
+            trCands[i].writeDataGroup(dir);
             resol[i].writeDataGroup(dir);
         }
         trEvent.writeDataGroup(dir);
@@ -562,17 +520,22 @@ public class AImonitor {
 
         OptionParser parser = new OptionParser("aiTracking");
         parser.setRequiresInputList(false);
-        parser.addOption("-o"    ,"",     "output file name prefix");
-        parser.addOption("-n"    ,"-1",   "maximum number of events to process");
-        parser.addOption("-m"    ,"false","save events with missing tracks");
-        parser.addOption("-b"    ,"TB",   "tracking level: TB or HB");
-        parser.addOption("-r"    ,"",     "histogram file to be read");
-        parser.addOption("-w"    ,"true", "display histograms");
-        parser.addOption("-s"    ,"",     "histogram stat option");
-        parser.addOption("-d"    ,"0",    "minimum number of entries for histogram differences");
-        parser.addOption("-l"    ,"0",    "number of superlayers (5 or 6, 0=any)");
-        parser.addOption("-e"    ,"10.6", "beam energy");
-        parser.addOption("-t"    ,"2212", "target PDG");
+        // valid options for event-base analysis
+        parser.addOption("-o"          ,"",     "output file name prefix");
+        parser.addOption("-n"          ,"-1",   "maximum number of events to process");
+        parser.addOption("-banks"      ,"TB",   "tracking level: TB or HB");
+        parser.addOption("-superlayers","0",    "number of superlayers (5 or 6, 0=any)");
+        parser.addOption("-write"      ,"0",    "save events with missing tracks (0/1)");
+        parser.addOption("-energy"     ,"10.6", "beam energy");
+        parser.addOption("-target"     ,"2212", "target PDG");
+        // histogram based analysis
+        parser.addOption("-histo"      ,"0",    "read histogram file (0/1)");
+        parser.addOption("-plot"       ,"1",    "display histograms (0/1)");
+        parser.addOption("-stats"      ,"",     "histogram stat option");
+        parser.addOption("-threshold"  ,"0",    "minimum number of entries for histogram differences");
+        // luminosity analysis
+        parser.addOption("-lumi"       ,"",     "(comma-separated) luminosity scan currents, e.g. \"5:data,20:data,40:data,40:bg;40:mc\"");
+        
         parser.parse(args);
         
         int   maxEvents  = parser.getOption("-n").intValue();
@@ -587,39 +550,72 @@ public class AImonitor {
             eventName1 = namePrefix + "_" + eventName1;
             eventName2 = namePrefix + "_" + eventName2;
         }        
-        boolean write    = Boolean.parseBoolean(parser.getOption("-m").stringValue());
-        String  type     = parser.getOption("-b").stringValue();        
-        String  readName = parser.getOption("-r").stringValue();        
-        boolean window   = Boolean.parseBoolean(parser.getOption("-w").stringValue());
-        String  optStats = parser.getOption("-s").stringValue();        
-        int     layers   = parser.getOption("-l").intValue();
-        int     nmin     = parser.getOption("-d").intValue();
-        double  beam     = parser.getOption("-e").doubleValue();
-        int     target   = parser.getOption("-t").intValue();
+        boolean writeMissing = parser.getOption("-write").intValue()!=0;
+        String  trackingType = parser.getOption("-banks").stringValue();        
+        int     superLayers  = parser.getOption("-superlayers").intValue();
+        double  beamEnergy   = parser.getOption("-energy").doubleValue();
+        int     targetPID    = parser.getOption("-target").intValue();         
         
-        if(layers!=0 && layers!=5 && layers!=6) layers=0;
+        boolean readHistos   = (parser.getOption("-histo").intValue()!=0);            
+        boolean openWindow   = (parser.getOption("-plot").intValue()!=0);
+        String  optStats     = parser.getOption("-stats").stringValue();        
+        int     minCounts    = parser.getOption("-threshold").intValue();
+ 
+        List<Double> lumiCurrent = new ArrayList<>();
+        List<String> lumiType    = new ArrayList<>();
+        if(!parser.getOption("-lumi").stringValue().isEmpty()) {
+            String[] lumiParameters = parser.getOption("-lumi").stringValue().split(",");         
+            for(int i=0; i<lumiParameters.length; i++) {
+                String[] pars = lumiParameters[i].split(":");
+                if(pars.length!=2 || !(pars[1].trim().equals("data") || pars[1].trim().equals("bg") || pars[1].trim().equals("mc"))) {
+                    System.out.println("\n >>>> error: incorrect lumi parameters....\n");
+                    System.exit(0);
+                }
+                lumiCurrent.add(Double.parseDouble(lumiParameters[i].split(":")[0]));
+                lumiType.add(lumiParameters[i].split(":")[1]);
+            }
+        }
+        if(superLayers!=0 && superLayers!=5 && superLayers!=6) superLayers=0;
 
-        if(!window) System.setProperty("java.awt.headless", "true");
+        if(!openWindow) System.setProperty("java.awt.headless", "true");
         
         SchemaFactory schema = null;           
         
-        AImonitor analysis = new AImonitor(beam,target,layers,nmin,optStats);
+        AImonitor analysis = new AImonitor(beamEnergy,targetPID,superLayers,minCounts,optStats);
+        
+        ArrayList<LumiDatum> lumis = new ArrayList<>();
         
         HipoWriterSorted writer1 = new HipoWriterSorted();
         HipoWriterSorted writer2 = new HipoWriterSorted();
         HipoWriterSorted writer3 = new HipoWriterSorted();
 
-        if(readName.isEmpty()) {
-            
-            List<String> inputList = parser.getInputList();
-            if(inputList.isEmpty()==true){
-                parser.printUsage();
-                System.out.println("\n >>>> error: no input file is specified....\n");
+        List<String> inputList = parser.getInputList();
+        if(inputList.isEmpty()==true){
+            parser.printUsage();
+            System.out.println("\n >>>> error: no input file is specified....\n");
+            System.exit(0);
+        }
+
+        if(readHistos) {
+            if(lumiCurrent.size()!=0 && lumiCurrent.size()!=inputList.size()) {
+                System.out.println("\n >>>> error: number of lumi parameters provided doesn't match the list of input files: " + lumiCurrent.size() + " versus " + inputList.size() + "\n");
                 System.exit(0);
             }
+            
+            for(int i=0; i<inputList.size(); i++){
+                analysis.readHistos(inputList.get(i));
+                if(lumiCurrent.size()!=0) {
+                    lumis.add(analysis.loadStatistics(lumiType.get(i),lumiCurrent.get(i)));
+                }
+                else {
+                    analysis.loadStatistics("0",0);
+                }
+            }  
+        }
+        else{
 
             ProgressPrintout progress = new ProgressPrintout();
-        
+
             int counter=-1;
             Event event = new Event();
 
@@ -629,13 +625,13 @@ public class AImonitor {
 
                 if(schema==null) {
                     schema = reader.getSchemaFactory();
-                    if(write) {
+                    if(writeMissing) {
                         AImonitor.setWriter(writer1, schema, eventName1);
                         AImonitor.setWriter(writer2, schema, eventName2);
                         AImonitor.setWriter(writer3, schema, eventName3);
                     }
-                    
-                    Banks banks = new Banks(type,schema);
+
+                    Banks banks = new Banks(trackingType,schema);
                     analysis.initBanks(banks);
                 }
 
@@ -647,9 +643,9 @@ public class AImonitor {
 
                     EventStatus status = analysis.processEvent(event);
 
-                    if(write && status.isAiMissing()) writer1.addEvent(event);
-                    if(write && status.isCdMissing()) writer2.addEvent(event);
-                    if(write && status.isCvMissing()) writer3.addEvent(event);
+                    if(writeMissing && status.isAiMissing()) writer1.addEvent(event);
+                    if(writeMissing && status.isCdMissing()) writer2.addEvent(event);
+                    if(writeMissing && status.isCvMissing()) writer3.addEvent(event);
 
                     progress.updateStatus();
                     if(maxEvents>0){
@@ -659,27 +655,33 @@ public class AImonitor {
                 progress.showStatus();
                 reader.close();
             }    
-            if(write) {
+            if(writeMissing) {
                 writer1.close();
                 writer2.close();
                 writer3.close();
             }
             analysis.saveHistos(histoName);
+            analysis.loadStatistics("0",0);
         }
-        else{
-            analysis.readHistos(readName);
-        }
-        analysis.printStatistics();
-        
-        if(window) {
-            JFrame frame = new JFrame(type);
-            frame.setSize(1200, 800);
-            EmbeddedCanvasTabbed canvas = analysis.plotHistos();
+
+        if(openWindow) {
+            JFrame frame = new JFrame(trackingType);
+            EmbeddedCanvasTabbed canvas = null;
+            if(readHistos && lumis.size()>1) {
+                LumiAnalysis luminosity = new LumiAnalysis(lumis);
+                canvas = luminosity.plotGraphs();
+                frame.setSize(1000, 600);
+            }
+            else {
+                canvas = analysis.plotHistos();
+                frame.setSize(1200, 800);
+            }
             frame.add(canvas);
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
-            analysis.printHistos(canvas);
         }
+      
+        
     }
     
 }

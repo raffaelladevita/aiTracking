@@ -21,9 +21,11 @@ public class Fiducial {
         
         boolean inside = true;
         
-        // DC fiducials
-        for(int region=1; region<=3; region++) {
-            inside = inside && inFiducial(track.sector(),region, track.trajectory(DetectorType.DC.getDetectorId(),12*region),track.pid(),track.charge(),track.isinbending());
+        // DC fiducialsonly for TB tracks
+        if(track.mode()==1) {
+            for(int region=1; region<=3; region++) {
+                inside = inside && inFiducial(track.sector(),region, track.trajectory(DetectorType.DC.getDetectorId(),12*region),track.pid(),track.charge(),track.isinbending());
+            }
         }
         return inside;
     }

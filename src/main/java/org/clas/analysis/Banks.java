@@ -9,6 +9,8 @@ import org.jlab.jnp.hipo4.data.SchemaFactory;
  */
 public class Banks {
 
+    private int mode =1;
+    
     private Bank runConfig;
     // conventional banks
     private Bank cvParticleBank;
@@ -34,6 +36,7 @@ public class Banks {
         this.aiTrackingBank   = new Bank(schema.getSchema("TimeBasedTrkg::AITracks"));
         this.aiCandidates     = new Bank(schema.getSchema("ai::tracks"));
         if(mode.equals("HB")) {
+            this.mode = 0;
             this.cvParticleBank   = new Bank(schema.getSchema("RECHB::Particle"));
             this.cvTrajectoryBank = null;
             this.cvTrackBank      = new Bank(schema.getSchema("RECHB::Track"));;
@@ -43,6 +46,10 @@ public class Banks {
             this.aiTrackBank      = new Bank(schema.getSchema("RECHBAI::Track"));;
             this.aiTrackingBank   = new Bank(schema.getSchema("HitBasedTrkg::AITracks"));            
         }
+    }
+
+    public int getMode() {
+        return mode;
     }
 
     public Bank getRunConfig() {
