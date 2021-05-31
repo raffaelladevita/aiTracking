@@ -34,20 +34,20 @@ import org.jlab.utils.options.OptionParser;
 public class AImonitor {    
         
     private Fiducial fiducial = new Fiducial();
-    private HistoDistribution[] tr          = new HistoDistribution[2];
-    private HistoDistribution[] ai          = new HistoDistribution[2];
-    private HistoDistribution[] trMatched   = new HistoDistribution[2];
-    private HistoDistribution[] aiMatched   = new HistoDistribution[2];
-    private HistoDistribution[] trUnmatched = new HistoDistribution[2];
-    private HistoDistribution[] aiUnmatched = new HistoDistribution[2];
-    private HistoDistribution[] trCands     = new HistoDistribution[2];
-    private HistoResolution[]   resol       = new HistoResolution[2];
+    private HistoDistribution[] tr          = new HistoDistribution[3];
+    private HistoDistribution[] ai          = new HistoDistribution[3];
+    private HistoDistribution[] trMatched   = new HistoDistribution[3];
+    private HistoDistribution[] aiMatched   = new HistoDistribution[3];
+    private HistoDistribution[] trUnmatched = new HistoDistribution[3];
+    private HistoDistribution[] aiUnmatched = new HistoDistribution[3];
+    private HistoDistribution[] trCands     = new HistoDistribution[3];
+    private HistoResolution[]   resol       = new HistoResolution[3];
     private HistoEvent          trEvent     = null;
     private HistoEvent          aiEvent     = null;
      
     private Banks banks = null;
     
-    private String[] charges = {Charges.NEG.getName(), Charges.POS.getName()};
+    private String[] charges = {Charges.NEG.getName(), Charges.POS.getName(), Charges.ELE.getName()};
       
     private int nsuperlayers = 0;
     private int minentries = 0;
@@ -81,7 +81,7 @@ public class AImonitor {
         GStyle.getAxisAttributesZ().setTitleFontName("Arial");
         GStyle.setGraphicsFrameLineWidth(1);
         GStyle.getH1FAttributes().setLineWidth(2);
-        for(int i=0; i<2; i++) {
+        for(int i=0; i<charges.length; i++) {
             tr[i] = new HistoDistribution("tr"+charges[i],Types.CONVENTIONAL.getName(),1);
             ai[i] = new HistoDistribution("ai"+charges[i],Types.AI.getName(),2);
             trMatched[i] = new HistoDistribution("tr"+charges[i]+"M",Types.MATCHED.getName(),4);
@@ -97,13 +97,14 @@ public class AImonitor {
     
     private void setHistoStats(String opts) {
         GStyle.getH1FAttributes().setOptStat(opts);
-        for(int i=0; i<2; i++) {
+        for(int i=0; i<charges.length; i++) {
             tr[i].setStats(opts);
             ai[i].setStats(opts);
             trMatched[i].setStats(opts);
             aiMatched[i].setStats(opts);
             trUnmatched[i].setStats(opts);
-            aiUnmatched[i].setStats(opts);           
+            aiUnmatched[i].setStats(opts); 
+            trCands[i].setStats(opts);
         }  
         trEvent.setStats(opts);
         aiEvent.setStats(opts);
@@ -111,7 +112,7 @@ public class AImonitor {
     
     public LumiDatum loadStatistics(String run, double current) {
         LumiDatum lumi = new LumiDatum(run, current);
-        for(int i=0; i<2; i++) {
+        for(int i=0; i<charges.length; i++) {
            lumi.initTracks(run, Charges.getCharge(charges[i]), tr[i], ai[i], trMatched[i], trCands[i]);
         }
         lumi.initEH(aiEvent, trEvent);
@@ -123,7 +124,7 @@ public class AImonitor {
         this.setHistoStats(opts);
         EmbeddedCanvasTabbed canvas  = null;
         String cname = null;
-        for(int i=0; i<2; i++) {
+        for(int i=0; i<charges.length; i++) {
             for(String key : tr[i].keySet()) {
                 cname = charges[i] + " " + key;
                 if(charges[i].equals(Charges.POS.getName()) && key.equals("e-")) continue;
@@ -141,10 +142,6 @@ public class AImonitor {
             canvas.getCanvas(cname).draw(resol[i]);
             this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i],minentries).get("summary"),        0.3, false);
             this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i],minentries).get("summary"), 0.3, false);
-            if(charges[i].equals(Charges.NEG.getName())) {
-                this.drawDifferences(canvas, charges[i] + " e- differences",  ai[i].diff(tr[i],minentries).get("e-"),         0.3, false);
-                this.drawDifferences(canvas, charges[i] + " e- differences",  trMatched[i].diff(tr[i],minentries).get("e-"),  0.3, false);
-            }
             this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i],minentries).get("6SL"),            0.3, false);
             this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i],minentries).get("6SL"),     0.3, false);
             this.drawDifferences(canvas, charges[i] + " 5SL differences", ai[i].diff(tr[i],minentries).get("5SL"),            0.8, false);
@@ -258,6 +255,7 @@ public class AImonitor {
                             tr.setMatch(true);
                             ai.setMatch(true);
                             resol[(tr.charge()+1)/2].fill(tr, ai);
+                            if(tr.pid()==11) resol[2].fill(tr,ai);
                         }
                     }
                 }
@@ -273,14 +271,20 @@ public class AImonitor {
         if(trTracks!=null) {
             for(Track track : trTracks) {
                 tr[(track.charge()+1)/2].fill(track);
+                if(track.pid()==11) tr[2].fill(track);
                 if(track.isMatched()) {
                     trMatched[(track.charge()+1)/2].fill(track);
+                    if(track.pid()==11) trMatched[2].fill(track);
                 }
                 else {
                     trUnmatched[(track.charge()+1)/2].fill(track);
+                    if(track.pid()==11) trUnmatched[2].fill(track);
             	 if(trTracks.size()==1 && track.isValid()) status.setAiMissing();
                 }
-                if(track.isPredicted()) trCands[(track.charge()+1)/2].fill(track);
+                if(track.isPredicted()) {
+                    trCands[(track.charge()+1)/2].fill(track);
+                    if(track.pid()==11) trCands[2].fill(track);
+                }
                 else if(trTracks.size()==1 && track.isValid()) status.setCdMissing();
             }
             trEvent.fill(trTracks);
@@ -288,11 +292,14 @@ public class AImonitor {
         if(aiTracks!=null) {
             for(Track track : aiTracks) {
                 ai[(track.charge()+1)/2].fill(track);
+                if(track.pid()==11) ai[2].fill(track);
                 if(track.isMatched()) {
                     aiMatched[(track.charge()+1)/2].fill(track);
+                    if(track.pid()==11) aiMatched[2].fill(track);
                 }
                 else {
                     aiUnmatched[(track.charge()+1)/2].fill(track);
+                    if(track.pid()==11) aiUnmatched[2].fill(track);
                     if(aiTracks.size()==1 && track.isValid()) status.setCvMissing();
                 }
             }
@@ -416,7 +423,7 @@ public class AImonitor {
         System.out.println(dir.getDirectoryList());
         dir.cd();
         dir.pwd();
-        for(int i=0; i<2; i++) {
+        for(int i=0; i<charges.length; i++) {
             tr[i].readDataGroup(dir);
             ai[i].readDataGroup(dir);
             trMatched[i].readDataGroup(dir);
@@ -431,7 +438,7 @@ public class AImonitor {
 
     public void saveHistos(String fileName) {
         TDirectory dir = new TDirectory();
-        for(int i=0; i<2; i++) {
+        for(int i=0; i<charges.length; i++) {
             tr[i].writeDataGroup(dir);
             ai[i].writeDataGroup(dir);
             trMatched[i].writeDataGroup(dir);
@@ -463,7 +470,7 @@ public class AImonitor {
             System.out.println("Created directory: " + figures);
             }
         }
-        for(int i=0; i<2; i++) {
+        for(int i=0; i<charges.length; i++) {
             String cname = charges[i] + " differences";
             canvas.getCanvas(cname).save(figures + "/" + cname + ".png");
             cname = charges[i] + " resolution";

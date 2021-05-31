@@ -23,8 +23,8 @@ public class LumiAnalysis {
     LinkedHashMap<String,DataGroup> normDGs = new LinkedHashMap<String,DataGroup>();
     LinkedHashMap<String,DataGroup> gainDGs = new LinkedHashMap<String,DataGroup>();
     
-    private Charges[] charges = {Charges.POS, Charges.NEG};
-    private String[]  titles  = {"Positives", "Negatives"};
+    private Charges[] charges = {Charges.POS, Charges.NEG, Charges.ELE};
+    private String[]  titles  = {"Positives", "Negatives", "Electrons"};
     private String[]  inputs  = {"data", "bg", "mc"};
     private int[]     symbols = {0, 3, 1};
 
@@ -43,9 +43,9 @@ public class LumiAnalysis {
             DataGroup dgNorm = new DataGroup(2,1);
             DataGroup dgGain = new DataGroup(2,1);
             for(int i=0; i<2; i++) {
-                dgAI.addDataSet(graph(charges[i].getName() + "eff", "I (nA)", titles[i], 4, marker, 5),i);
-                dgAI.addDataSet(graph(charges[i].getName() + "gain","I (nA)", titles[i], 2, marker, 5),i);
-
+                dgAI.addDataSet(graph(charges[i].getName() + "eff",   "I (nA)", titles[i], 4, marker, 5),i);
+                dgAI.addDataSet(graph(charges[i].getName() + "gain",  "I (nA)", titles[i], 2, marker, 5),i);
+                
                 dgLumi.addDataSet(graph(charges[i].getName() + "conventional", "I (nA)", titles[i], 1, marker, 5),i);
                 dgLumi.addDataSet(graph(charges[i].getName() + "ai",           "I (nA)", titles[i], 2, marker, 5),i);
 
@@ -69,6 +69,7 @@ public class LumiAnalysis {
                     dgGain.addDataSet(graph(charges[i].getName() + "ele", "I (nA)", titles[i], 3, 2, 5),i);
                 }
             }
+            dgAI.addDataSet(graph(charges[2].getName() + "eff", "I (nA)", titles[2], 9, marker, 5),1);
             aiDGs.put(input, dgAI);
             lumiDGs.put(input, dgLumi);
             normDGs.put(input, dgNorm);
@@ -80,8 +81,14 @@ public class LumiAnalysis {
         for(int j=0; j< this.lumies.size(); j++) {
             LumiDatum lumen = this.lumies.get(j);
             for(int i=0; i<2; i++) {
-                aiDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "eff").addPoint(lumen.getCurrent(), lumen.getEfficiency(charges[i], 0), 0, 0.001);
-                aiDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "gain").addPoint(lumen.getCurrent(), lumen.getGain(charges[i], 0), 0, 0.001);
+                aiDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "eff" ).addPoint(lumen.getCurrent(), 
+                                                                                           lumen.getRatio(charges[i],Types.MATCHED,0), 
+                                                                                           0, 
+                                                                                           lumen.getRatioError(charges[i],Types.MATCHED,0));
+                aiDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "gain").addPoint(lumen.getCurrent(), 
+                                                                                           lumen.getRatio(charges[i],Types.AI,0), 
+                                                                                           0, 
+                                                                                           lumen.getRatioError(charges[i],Types.AI,0));
             
                 lumiDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
                                                                                                      lumen.getLumi(Types.CONVENTIONAL, charges[i]), 
@@ -92,13 +99,17 @@ public class LumiAnalysis {
                                                                                            0, 
                                                                                            lumen.getLumiErr(Types.AI, charges[i]));
             }
+            aiDGs.get(lumen.getRun()).getGraph(charges[2].getName() + "eff" ).addPoint(lumen.getCurrent(), 
+                                                                                       lumen.getRatio(charges[2],Types.MATCHED,0), 
+                                                                                       0, 
+                                                                                       lumen.getRatioError(charges[2],Types.MATCHED,0));
         }
         for(int i=0; i<2; i++) {
-            DataFitter.fit(aiDGs.get("data").getF1D("f" + charges[i].getName() + "eff" ),aiDGs.get("data").getGraph(charges[i].getName() + "eff" ),"Q");
-            DataFitter.fit(aiDGs.get("data").getF1D("f" + charges[i].getName() + "gain"),aiDGs.get("data").getGraph(charges[i].getName() + "gain"),"Q");
+            this.fit(aiDGs.get("data").getF1D("f" + charges[i].getName() + "eff" ),aiDGs.get("data").getGraph(charges[i].getName() + "eff" ));
+            this.fit(aiDGs.get("data").getF1D("f" + charges[i].getName() + "gain"),aiDGs.get("data").getGraph(charges[i].getName() + "gain"));
 
-            DataFitter.fit(lumiDGs.get("data").getF1D("f" + charges[i].getName() + "conventional"),lumiDGs.get("data").getGraph(charges[i].getName() + "conventional"),"Q");
-            DataFitter.fit(lumiDGs.get("data").getF1D("f" + charges[i].getName() + "ai"          ),lumiDGs.get("data").getGraph(charges[i].getName() + "ai"),          "Q");
+            this.fit(lumiDGs.get("data").getF1D("f" + charges[i].getName() + "conventional"),lumiDGs.get("data").getGraph(charges[i].getName() + "conventional"));
+            this.fit(lumiDGs.get("data").getF1D("f" + charges[i].getName() + "ai"          ),lumiDGs.get("data").getGraph(charges[i].getName() + "ai"));
             
         }
         for(int j=0; j< this.lumies.size(); j++) {
@@ -125,10 +136,10 @@ public class LumiAnalysis {
             }
         }
         for(int i=0; i<2; i++) {
-            DataFitter.fit(normDGs.get("data").getF1D("f" + charges[i].getName() + "conventional"),normDGs.get("data").getGraph(charges[i].getName() + "conventional"),"Q");
-            DataFitter.fit(normDGs.get("data").getF1D("f" + charges[i].getName() + "ai"          ),normDGs.get("data").getGraph(charges[i].getName() + "ai"),          "Q");
+            this.fit(normDGs.get("data").getF1D("f" + charges[i].getName() + "conventional"),normDGs.get("data").getGraph(charges[i].getName() + "conventional"));
+            this.fit(normDGs.get("data").getF1D("f" + charges[i].getName() + "ai"          ),normDGs.get("data").getGraph(charges[i].getName() + "ai"));
             
-            DataFitter.fit(gainDGs.get("data").getF1D("f" + charges[i].getName()),gainDGs.get("data").getGraph(charges[i].getName()),"Q");
+            this.fit(gainDGs.get("data").getF1D("f" + charges[i].getName()),gainDGs.get("data").getGraph(charges[i].getName()));
             
             removeref(normDGs.get("bg").getGraph(charges[i].getName() + "conventional"));
             removeref(normDGs.get("bg").getGraph(charges[i].getName() + "ai"));
@@ -144,6 +155,14 @@ public class LumiAnalysis {
         }
     }
 
+    private void fit(F1D f, GraphErrors g) {
+        double min=0;
+        double max = g.getVectorX().getMax()*1.1;
+        f.setRange(min, max);
+        DataFitter.fit(f,g,"Q");
+//        g.setFunction(null);
+    }
+    
     private F1D funct(String title, int col){
         F1D f1 = new F1D(title,  "[p0]+[p1]*x",0,60); 
         f1.setLineColor(col);
@@ -171,20 +190,16 @@ public class LumiAnalysis {
         }
         canvas.getCanvas("AI").setGridX(false);
         canvas.getCanvas("AI").setGridY(false);
-        for(EmbeddedPad pad : canvas.getCanvas("AI").getCanvasPads()) {
-            pad.getAxisY().setRange(0.9,1.25);
-            pad.getAxisX().setRange(0,60);
-            DataLine line= new DataLine(0,1,60,1);
-            line.setLineWidth(2);
-            pad.draw(line);
-        }
-        
         for(int i=0; i<2; i++) {
             F1D fune = aiDGs.get("data").getF1D("f" + charges[i].getName() + "eff" );
             F1D fung = aiDGs.get("data").getF1D("f" + charges[i].getName() + "gain" );
             canvas.getCanvas("AI").cd(i);
             canvas.getCanvas("AI").draw(text(fune.getParameter(0),fune.getParameter(1),120,400,4));
             canvas.getCanvas("AI").draw(text(fung.getParameter(0),fung.getParameter(1),120,150,2));
+            canvas.getCanvas("AI").getPad(i).getAxisY().setRange(0.9,1.25);
+            DataLine line= new DataLine(0,1,fune.getRange().getMax(),1);
+            line.setLineWidth(2);
+            canvas.getCanvas("AI").getPad(i).draw(line);
         }
         
         if(lumiDGs.get("data").getGraph("posai").getDataSize(0)>0) {
@@ -216,13 +231,10 @@ public class LumiAnalysis {
             canvas.getCanvas("Norm").draw(text(func.getParameter(0),func.getParameter(1),120,270,1));
             canvas.getCanvas("Norm").draw(text(funa.getParameter(0),funa.getParameter(1),120,230,2));
             canvas.getCanvas("Norm").draw(text(fung.getParameter(0),fung.getParameter(1),120,70,3));
-        }
-        for(EmbeddedPad pad : canvas.getCanvas("Norm").getCanvasPads()) {
-            pad.getAxisY().setRange(0.5,1.2);
-            pad.getAxisX().setRange(0,60);
+            canvas.getCanvas("Norm").getPad(i).getAxisY().setRange(0.5,1.2);
             DataLine line= new DataLine(0,1,60,1);
             line.setLineWidth(2);
-            pad.draw(line);
+            canvas.getCanvas("Norm").getPad(i).draw(line);
         }
         
         return canvas;
@@ -274,8 +286,8 @@ public class LumiAnalysis {
     
     private LatexText text(double p0, double p1, int ix, int iy, int icol) {
         LatexText tt = null;
-        if(p1>0) tt = new LatexText(String.format("%.3f +%.5f x I", p0, p1), ix, iy);
-        else     tt = new LatexText(String.format("%.3f %.5f x I", p0, p1), ix, iy);
+        if(p1>0) tt = new LatexText(String.format("%.3f +%.5f x", p0, p1), ix, iy);
+        else     tt = new LatexText(String.format("%.3f %.5f x", p0, p1), ix, iy);
         tt.setFont("Arial");
         tt.setFontSize(18);
         tt.setColor(icol);

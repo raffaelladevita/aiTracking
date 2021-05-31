@@ -28,7 +28,6 @@ public class HistoDistribution extends Histos {
     public void init() {
         this.summaries = new LinkedHashMap<>();
         this.summaries.put("summary", "");
-        this.summaries.put("e-",      "e-");
         this.summaries.put("6SL",     "6SL");
         this.summaries.put("5SL",     "5SL");
         for(String key :this.summaries.keySet()) this.put(key, new DataGroup(key,3,2));
@@ -111,7 +110,6 @@ public class HistoDistribution extends Histos {
         this.fillSummaries(track, "summary");
         if(track.SL()==6)      this.fillSummaries(track, "6SL");
         else if(track.SL()==5) this.fillSummaries(track, "5SL");
-        if(track.pid()==11)    this.fillSummaries(track, "e-");
         this.fill2D(track);
         this.fillSectors(track);
     }  

@@ -10,7 +10,7 @@ import org.clas.histograms.Histos;
 public class LumiDatum {
     private String     run;
     private double     current=0;
-    private int[][][]  tracks = new int[2][5][3];
+    private int[][][]  tracks = new int[3][5][3];
     private int[][]    eh = new int[2][3];
     private double[][] norm = {{1,1},{1,1},{1,1}};
 
@@ -93,27 +93,23 @@ public class LumiDatum {
        else System.out.println("Error setting lumi data for type=" + type.getName() + " charge=" + charge.getName());
     }
 
-    public double getEfficiency(Charges charge, int sl) {
+    public double getRatio(Charges charge, Types type, int sl) {
        double cv = this.getTracks(charge,Types.CONVENTIONAL,sl);
-       double ai = this.getTracks(charge,Types.MATCHED,sl);
-       double ratio = ai/cv;
-       return ratio;
-    }    
+       double ai = this.getTracks(charge,type,sl);
+       return ai/cv;
+    }
 
-    public double getInference(Charges charge, int sl) {
+    public double getRatioError(Charges charge, Types type, int sl) {
        double cv = this.getTracks(charge,Types.CONVENTIONAL,sl);
-       double ai = this.getTracks(charge,Types.CANDIDATES,sl);
-       double ratio = ai/cv;
-       return ratio;
-    }    
-
-    public double getGain(Charges charge, int sl) {
-       double cv = this.getTracks(charge,Types.CONVENTIONAL,sl);
-       int ai = this.getTracks(charge,Types.AI,sl);
-       double ratio = (double) ai/cv;
-       return ratio;
-    }    
-
+       double ai = this.getTracks(charge,type,sl);
+       return this.getRatioError(ai, cv);
+    }
+    
+    private double getRatioError(double numerator, double denominator){
+        double err = (numerator/denominator)*Math.sqrt(Math.abs(numerator-denominator)/numerator/denominator);
+        return err;
+    }
+    
     public double getLumi(Types type, Charges charge) {
        double e  = this.getEH(type,Charges.ELE);
        double eh = this.getEH(type,charge);
@@ -151,20 +147,6 @@ public class LumiDatum {
        return err;
     }
 
-    public double getRatio(LumiDatum data, Types type, Charges charge) {
-       double e1 = data.getEH(type,charge);
-       double e2 = this.getEH(type,charge);
-       double value = e2/e1;
-       return value;
-    }
-       
-    public double getRatioErr(LumiDatum data, Types type, Charges charge) {
-       double e1 = data.getEH(type,charge);
-       double e2 = this.getEH(type,charge);
-       double err = (e2/e1)*Math.sqrt(1/e1+1/e2);
-       return err;
-    }
-       
     private void printTracks(Charges charge) {
         System.out.println("+-------------------------------------------------------------------------------------------------------------------------------+");
         System.out.println("|     charge |       type | conventional |           ai |       matched |    predicted |       gain |  efficiency |   inference |");
@@ -182,9 +164,9 @@ public class LumiDatum {
                                                                                                 , this.getTracks(charge, Types.AI, sl)
                                                                                                 , this.getTracks(charge, Types.MATCHED, sl)
                                                                                                 , this.getTracks(charge, Types.CANDIDATES, sl)
-                                                                                                , this.getGain(charge, sl)
-                                                                                                , this.getEfficiency(charge, sl)
-                                                                                                , this.getInference(charge, sl)));
+                                                                                                , this.getRatio(charge, Types.AI, sl)
+                                                                                                , this.getRatio(charge, Types.MATCHED, sl)
+                                                                                                , this.getRatio(charge, Types.CANDIDATES, sl)));
     }        
     
     private void printLumi() {
