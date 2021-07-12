@@ -71,12 +71,15 @@ public class HistoResolution extends DataGroup{
         int nrows = this.getRows();
         int ncols = this.getColumns();
         int nds   = nrows*ncols;
+        boolean replace = true;
         HistoResolution newGroup = new HistoResolution(this.getName());
         for(int i = 0; i < nds; i++){
             List<IDataSet> dsList = this.getData(i);
             for(IDataSet ds : dsList){
-                System.out.println("\t --> " + ds.getName());
-                newGroup.addDataSet(dir.getObject(folder, ds.getName()),i);
+//                    System.out.println("\t --> " + ds.getName());
+                if(dir.getObject(folder, ds.getName())!=null) {
+                    newGroup.addDataSet(dir.getObject(folder, ds.getName()),i);
+                }
             }
         }
         return newGroup;

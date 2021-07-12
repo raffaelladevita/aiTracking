@@ -69,7 +69,8 @@ public class LumiAnalysis {
                     dgGain.addDataSet(graph(charges[i].getName() + "ele", "I (nA)", titles[i], 3, 2, 5),i);
                 }
             }
-            dgAI.addDataSet(graph(charges[2].getName() + "eff", "I (nA)", titles[2], 9, marker, 5),1);
+            dgAI.addDataSet(graph(charges[2].getName() + "eff",  "I (nA)", titles[2], 9, marker, 5),1);
+            dgAI.addDataSet(graph(charges[2].getName() + "gain", "I (nA)", titles[2], 7, marker, 5),1);
             aiDGs.put(input, dgAI);
             lumiDGs.put(input, dgLumi);
             normDGs.put(input, dgNorm);
@@ -103,6 +104,10 @@ public class LumiAnalysis {
                                                                                        lumen.getRatio(charges[2],Types.MATCHED,0), 
                                                                                        0, 
                                                                                        lumen.getRatioError(charges[2],Types.MATCHED,0));
+            aiDGs.get(lumen.getRun()).getGraph(charges[2].getName() + "gain" ).addPoint(lumen.getCurrent(), 
+                                                                                        lumen.getRatio(charges[2],Types.AI,0), 
+                                                                                        0, 
+                                                                                        lumen.getRatioError(charges[2],Types.AI,0));
         }
         for(int i=0; i<2; i++) {
             this.fit(aiDGs.get("data").getF1D("f" + charges[i].getName() + "eff" ),aiDGs.get("data").getGraph(charges[i].getName() + "eff" ));
