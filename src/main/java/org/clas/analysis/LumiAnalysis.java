@@ -54,16 +54,7 @@ public class LumiAnalysis {
 
                 dgGain.addDataSet(graph(charges[i].getName(), "I (nA)", titles[i], 3, marker, 5),i);
                 
-                if(input.equals("data")) {
-                    dgAI.addDataSet(funct("f" + charges[i].getName() + "eff" , 4),i);
-                    dgAI.addDataSet(funct("f" + charges[i].getName() + "gain", 2),i);
-                    dgLumi.addDataSet(funct("f" + charges[i].getName() + "conventional", 1),i);
-                    dgLumi.addDataSet(funct("f" + charges[i].getName() + "ai",           2),i);
-                    dgNorm.addDataSet(funct("f" + charges[i].getName() + "conventional", 1),i);
-                    dgNorm.addDataSet(funct("f" + charges[i].getName() + "ai",           2),i);
-                    dgGain.addDataSet(funct("f" + charges[i].getName(), 3),i);                    
-                }
-                else if(input.equals("bg") && charges[i]==Charges.NEG) {
+                if(input.equals("bg") && charges[i]==Charges.NEG) {
                     dgNorm.addDataSet(graph(charges[i].getName() + "conventional" + "ele", "I (nA)", titles[i], 1, 2, 5),i);
                     dgNorm.addDataSet(graph(charges[i].getName() + "ai" + "ele",           "I (nA)", titles[i], 2, 2, 5),i);                    
                     dgGain.addDataSet(graph(charges[i].getName() + "ele", "I (nA)", titles[i], 3, 2, 5),i);
@@ -110,19 +101,19 @@ public class LumiAnalysis {
                                                                                         lumen.getRatioError(charges[2],Types.AI,0));
         }
         for(int i=0; i<2; i++) {
-            this.fit(aiDGs.get("data").getF1D("f" + charges[i].getName() + "eff" ),aiDGs.get("data").getGraph(charges[i].getName() + "eff" ));
-            this.fit(aiDGs.get("data").getF1D("f" + charges[i].getName() + "gain"),aiDGs.get("data").getGraph(charges[i].getName() + "gain"));
+            this.fit(aiDGs.get("data").getGraph(charges[i].getName() + "eff" ));
+            this.fit(aiDGs.get("data").getGraph(charges[i].getName() + "gain"));
 
-            this.fit(lumiDGs.get("data").getF1D("f" + charges[i].getName() + "conventional"),lumiDGs.get("data").getGraph(charges[i].getName() + "conventional"));
-            this.fit(lumiDGs.get("data").getF1D("f" + charges[i].getName() + "ai"          ),lumiDGs.get("data").getGraph(charges[i].getName() + "ai"));
+            this.fit(lumiDGs.get("data").getGraph(charges[i].getName() + "conventional"));
+            this.fit(lumiDGs.get("data").getGraph(charges[i].getName() + "ai"));
             
         }
         for(int j=0; j< this.lumies.size(); j++) {
             LumiDatum lumen = this.lumies.get(j);
             for(int i=0; i<2; i++) {
                 if(!lumen.getRun().equals("mc")) {
-                    lumen.setNorm(charges[i], Types.CONVENTIONAL, lumiDGs.get("data").getF1D("f" + charges[i].getName() + "conventional").getParameter(0));
-                    lumen.setNorm(charges[i], Types.AI,           lumiDGs.get("data").getF1D("f" + charges[i].getName() + "ai").getParameter(0));
+                    lumen.setNorm(charges[i], Types.CONVENTIONAL, lumiDGs.get("data").getGraph(charges[i].getName() + "conventional").getFunction().getParameter(0));
+                    lumen.setNorm(charges[i], Types.AI,           lumiDGs.get("data").getGraph(charges[i].getName() + "ai").getFunction().getParameter(0));
                 }
                 normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
                                                                                                      lumen.getLumiNorm(Types.CONVENTIONAL, charges[i]), 
@@ -141,10 +132,10 @@ public class LumiAnalysis {
             }
         }
         for(int i=0; i<2; i++) {
-            this.fit(normDGs.get("data").getF1D("f" + charges[i].getName() + "conventional"),normDGs.get("data").getGraph(charges[i].getName() + "conventional"));
-            this.fit(normDGs.get("data").getF1D("f" + charges[i].getName() + "ai"          ),normDGs.get("data").getGraph(charges[i].getName() + "ai"));
+            this.fit(normDGs.get("data").getGraph(charges[i].getName() + "conventional"));
+            this.fit(normDGs.get("data").getGraph(charges[i].getName() + "ai"));
             
-            this.fit(gainDGs.get("data").getF1D("f" + charges[i].getName()),gainDGs.get("data").getGraph(charges[i].getName()));
+            this.fit(gainDGs.get("data").getGraph(charges[i].getName()));
             
             removeref(normDGs.get("bg").getGraph(charges[i].getName() + "conventional"));
             removeref(normDGs.get("bg").getGraph(charges[i].getName() + "ai"));
@@ -160,7 +151,8 @@ public class LumiAnalysis {
         }
     }
 
-    private void fit(F1D f, GraphErrors g) {
+    private void fit(GraphErrors g) {
+        F1D f = funct("f"+g.getName(), g.getMarkerColor());
         double min=0;
         double max = g.getVectorX().getMax()*1.1;
         f.setRange(min, max);
@@ -196,8 +188,8 @@ public class LumiAnalysis {
         canvas.getCanvas("AI").setGridX(false);
         canvas.getCanvas("AI").setGridY(false);
         for(int i=0; i<2; i++) {
-            F1D fune = aiDGs.get("data").getF1D("f" + charges[i].getName() + "eff" );
-            F1D fung = aiDGs.get("data").getF1D("f" + charges[i].getName() + "gain" );
+            F1D fune = (F1D) aiDGs.get("data").getGraph(charges[i].getName() + "eff" ).getFunction();
+            F1D fung = (F1D) aiDGs.get("data").getGraph(charges[i].getName() + "gain" ).getFunction();
             canvas.getCanvas("AI").cd(i);
             canvas.getCanvas("AI").draw(text(fune.getParameter(0),fune.getParameter(1),120,400,4));
             canvas.getCanvas("AI").draw(text(fung.getParameter(0),fung.getParameter(1),120,150,2));
@@ -229,15 +221,15 @@ public class LumiAnalysis {
         canvas.getCanvas("Norm").setGridX(false);
         canvas.getCanvas("Norm").setGridY(false);
         for(int i=0; i<2; i++) {
-            F1D func = normDGs.get("data").getF1D("f" + charges[i].getName() + "conventional" );
-            F1D funa = normDGs.get("data").getF1D("f" + charges[i].getName() + "ai" );
-            F1D fung = gainDGs.get("data").getF1D("f" + charges[i].getName());
+            F1D func = (F1D) normDGs.get("data").getGraph(charges[i].getName() + "conventional" ).getFunction();
+            F1D funa = (F1D) normDGs.get("data").getGraph(charges[i].getName() + "ai" ).getFunction();
+            F1D fung = (F1D) gainDGs.get("data").getGraph(charges[i].getName()).getFunction();
             canvas.getCanvas("Norm").cd(i);
             canvas.getCanvas("Norm").draw(text(func.getParameter(0),func.getParameter(1),120,270,1));
             canvas.getCanvas("Norm").draw(text(funa.getParameter(0),funa.getParameter(1),120,230,2));
             canvas.getCanvas("Norm").draw(text(fung.getParameter(0),fung.getParameter(1),120,70,3));
             canvas.getCanvas("Norm").getPad(i).getAxisY().setRange(0.5,1.2);
-            DataLine line= new DataLine(0,1,60,1);
+            DataLine line= new DataLine(0,1,func.getRange().getMax(),1);
             line.setLineWidth(2);
             canvas.getCanvas("Norm").getPad(i).draw(line);
         }
