@@ -256,6 +256,8 @@ public class AImonitor {
                             ai.setMatch(true);
                             resol[(tr.charge()+1)/2].fill(tr, ai);
                             if(tr.pid()==11) resol[2].fill(tr,ai);
+                            if(tr.diff(ai) && trTracks.size()==1 && aiTracks.size()==1) 
+                                status.setMismatch();
                         }
                     }
                 }
@@ -494,6 +496,7 @@ public class AImonitor {
         private boolean aiMissing=false;
         private boolean cdMissing=false;
         private boolean cvMissing=false;
+        private boolean mismatched=false;
 
         public EventStatus() {
         }
@@ -520,7 +523,17 @@ public class AImonitor {
 
         public void setCvMissing() {
             this.cvMissing = true;
-        }      
+        } 
+
+        public boolean isMismatched() {
+            return mismatched;
+        }
+
+        public void setMismatch() {
+            this.mismatched = true;
+        }
+        
+        
     }
     
     public static void main(String[] args){
@@ -552,10 +565,13 @@ public class AImonitor {
         String eventName1  = "missing_ai.hipo";
         String eventName2  = "missing_cd.hipo";
         String eventName3  = "missing_cv.hipo";
+        String eventName4  = "mismatched.hipo";
         if(!namePrefix.isEmpty()) {
             histoName  = namePrefix + "_" + histoName;
             eventName1 = namePrefix + "_" + eventName1;
             eventName2 = namePrefix + "_" + eventName2;
+            eventName3 = namePrefix + "_" + eventName3;
+            eventName4 = namePrefix + "_" + eventName4;
         }        
         boolean writeMissing = parser.getOption("-write").intValue()!=0;
         String  trackingType = parser.getOption("-banks").stringValue();        
@@ -595,6 +611,7 @@ public class AImonitor {
         HipoWriterSorted writer1 = new HipoWriterSorted();
         HipoWriterSorted writer2 = new HipoWriterSorted();
         HipoWriterSorted writer3 = new HipoWriterSorted();
+        HipoWriterSorted writer4 = new HipoWriterSorted();
 
         List<String> inputList = parser.getInputList();
         if(inputList.isEmpty()==true){
@@ -636,6 +653,7 @@ public class AImonitor {
                         AImonitor.setWriter(writer1, schema, eventName1);
                         AImonitor.setWriter(writer2, schema, eventName2);
                         AImonitor.setWriter(writer3, schema, eventName3);
+                        AImonitor.setWriter(writer4, schema, eventName4);
                     }
 
                     Banks banks = new Banks(trackingType,schema);
@@ -650,9 +668,10 @@ public class AImonitor {
 
                     EventStatus status = analysis.processEvent(event);
 
-                    if(writeMissing && status.isAiMissing()) writer1.addEvent(event);
-                    if(writeMissing && status.isCdMissing()) writer2.addEvent(event);
-                    if(writeMissing && status.isCvMissing()) writer3.addEvent(event);
+                    if(writeMissing && status.isAiMissing())  writer1.addEvent(event);
+                    if(writeMissing && status.isCdMissing())  writer2.addEvent(event);
+                    if(writeMissing && status.isCvMissing())  writer3.addEvent(event);
+                    if(writeMissing && status.isMismatched()) writer4.addEvent(event);
 
                     progress.updateStatus();
                     if(maxEvents>0){
@@ -666,6 +685,7 @@ public class AImonitor {
                 writer1.close();
                 writer2.close();
                 writer3.close();
+                writer4.close();
             }
             analysis.saveHistos(histoName);
             analysis.loadStatistics("0",0);
@@ -681,7 +701,7 @@ public class AImonitor {
             }
             else {
                 canvas = analysis.plotHistos();
-                frame.setSize(1200, 800);
+                frame.setSize(1200, 750);
             }
             frame.add(canvas);
             frame.setLocationRelativeTo(null);

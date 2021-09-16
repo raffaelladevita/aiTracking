@@ -6,7 +6,6 @@ import org.jlab.groot.data.DataLine;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.fitter.DataFitter;
 import org.jlab.groot.graphics.EmbeddedCanvasTabbed;
-import org.jlab.groot.graphics.EmbeddedPad;
 import org.jlab.groot.group.DataGroup;
 import org.jlab.groot.math.F1D;
 import org.jlab.groot.ui.LatexText;
@@ -193,7 +192,7 @@ public class LumiAnalysis {
             canvas.getCanvas("AI").cd(i);
             canvas.getCanvas("AI").draw(text(fune.getParameter(0),fune.getParameter(1),120,400,4));
             canvas.getCanvas("AI").draw(text(fung.getParameter(0),fung.getParameter(1),120,150,2));
-            canvas.getCanvas("AI").getPad(i).getAxisY().setRange(0.9,1.25);
+            canvas.getCanvas("AI").getPad(i).getAxisY().setRange(0.8,1.4);
             DataLine line= new DataLine(0,1,fune.getRange().getMax(),1);
             line.setLineWidth(2);
             canvas.getCanvas("AI").getPad(i).draw(line);
@@ -204,9 +203,6 @@ public class LumiAnalysis {
         }
         canvas.getCanvas("Lumi").setGridX(false);
         canvas.getCanvas("Lumi").setGridY(false);
-        for(EmbeddedPad pad : canvas.getCanvas("Lumi").getCanvasPads()) {
-            pad.getAxisX().setRange(0,60);
-        }
 
         for(String type : normDGs.keySet()) {
             if(normDGs.get(type).getGraph("posai").getDataSize(0)>0) {
@@ -225,16 +221,36 @@ public class LumiAnalysis {
             F1D funa = (F1D) normDGs.get("data").getGraph(charges[i].getName() + "ai" ).getFunction();
             F1D fung = (F1D) gainDGs.get("data").getGraph(charges[i].getName()).getFunction();
             canvas.getCanvas("Norm").cd(i);
-            canvas.getCanvas("Norm").draw(text(func.getParameter(0),func.getParameter(1),120,270,1));
-            canvas.getCanvas("Norm").draw(text(funa.getParameter(0),funa.getParameter(1),120,230,2));
+            canvas.getCanvas("Norm").draw(text(func.getParameter(0),func.getParameter(1),120,370,1));
+            canvas.getCanvas("Norm").draw(text(funa.getParameter(0),funa.getParameter(1),120,330,2));
             canvas.getCanvas("Norm").draw(text(fung.getParameter(0),fung.getParameter(1),120,70,3));
-            canvas.getCanvas("Norm").getPad(i).getAxisY().setRange(0.5,1.2);
+            canvas.getCanvas("Norm").getPad(i).getAxisY().setRange(0.3,1.4);
             DataLine line= new DataLine(0,1,func.getRange().getMax(),1);
             line.setLineWidth(2);
             canvas.getCanvas("Norm").getPad(i).draw(line);
         }
-        
+        this.printResults();
         return canvas;
+    }
+    
+    private void printResults() {
+        for(String type : normDGs.keySet()) {
+            for(int i=0; i<2; i++) {
+                GraphErrors conv = normDGs.get(type).getGraph(charges[i].getName() + "conventional");
+                GraphErrors ai   = normDGs.get(type).getGraph(charges[i].getName() + "ai");
+                GraphErrors gain = gainDGs.get(type).getGraph(charges[i].getName());
+                if(conv!=null && ai!=null && gain!=null && conv.getDataSize(0)>0) {
+                    System.out.println(type + " " + charges[i].getName());
+                    System.out.println("current\tconv\terror\tai\terror\tgain\terror");
+                    for(int j=0; j<conv.getDataSize(0); j++)
+                        System.out.println(String.format("%.0f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f", 
+                                                         conv.getDataX(j),
+                                                         conv.getDataY(j),conv.getDataEY(j),
+                                                         ai.getDataY(j),  ai.getDataEY(j),
+                                                         gain.getDataY(j),gain.getDataEY(j)));
+                }
+            }
+        }
     }
 
     private void removeref(GraphErrors graph) {
