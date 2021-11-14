@@ -344,12 +344,13 @@ public class AImonitor {
                                 trackingBank.getFloat("c" + (i*2+1) + "_z", loop),
                                 (i*2+1));
                 }
-                track.clusters(trackingBank.getShort("Cluster1_ID", loop),
-                               trackingBank.getShort("Cluster2_ID", loop),
-                               trackingBank.getShort("Cluster3_ID", loop),
-                               trackingBank.getShort("Cluster4_ID", loop),
-                               trackingBank.getShort("Cluster5_ID", loop),
-                               trackingBank.getShort("Cluster6_ID", loop));
+                if(banks.hasClusterId())
+                    track.clusters(trackingBank.getShort("Cluster1_ID", loop),
+                                   trackingBank.getShort("Cluster2_ID", loop),
+                                   trackingBank.getShort("Cluster3_ID", loop),
+                                   trackingBank.getShort("Cluster4_ID", loop),
+                                   trackingBank.getShort("Cluster5_ID", loop),
+                                   trackingBank.getShort("Cluster6_ID", loop));
                 if(runConfig!=null && runConfig.getRows()>0) track.polarity(runConfig.getFloat("torus",0));
                 tracks.add(track);
             }
