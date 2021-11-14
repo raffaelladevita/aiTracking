@@ -588,6 +588,7 @@ public class AImonitor {
         List<Double> lumiCurrent = new ArrayList<>();
         List<String> lumiType    = new ArrayList<>();
         if(!parser.getOption("-lumi").stringValue().isEmpty()) {
+            readHistos = true;
             String[] lumiParameters = parser.getOption("-lumi").stringValue().split(",");         
             for(int i=0; i<lumiParameters.length; i++) {
                 String[] pars = lumiParameters[i].split(":");
