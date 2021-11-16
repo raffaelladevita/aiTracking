@@ -438,7 +438,9 @@ public class Track {
      public boolean isForLumiScan() {
         boolean value = false;
         if(this.pid()==11 && this.status()<0) value = this.p()>2.5 && this.p()<5.2;
-        else                                  value = this.p()>0.4 && Math.abs(this.chi2pid())<3;
+        else                                  value = this.p()>0.4
+                                                   && Math.abs(this.chi2pid())<3
+                                                   && this.theta()<Math.toRadians(40.);
         value = value && Math.abs(this.vz()+5)<10 ;
         return value;
     }
