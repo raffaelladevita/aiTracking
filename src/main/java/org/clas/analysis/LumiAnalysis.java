@@ -115,9 +115,9 @@ public class LumiAnalysis {
                     lumen.setNorm(charges[i], Types.AI,           lumiDGs.get("data").getGraph(charges[i].getName() + "ai").getFunction().getParameter(0));
                 }
                 normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
-                                                                                                     lumen.getLumiNorm(Types.CONVENTIONAL, charges[i]), 
+                                                                                                     lumen.getLumiNorm(Types.CONVENTIONAL, charges[i], lumen.getNorm(charges[i], Types.AI)), 
                                                                                                      0, 
-                                                                                                     lumen.getLumiNormErr(Types.CONVENTIONAL, charges[i]));
+                                                                                                     lumen.getLumiNormErr(Types.CONVENTIONAL, charges[i], lumen.getNorm(charges[i], Types.AI)));
                 normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "ai").addPoint(lumen.getCurrent(), 
                                                                                            lumen.getLumiNorm(Types.AI, charges[i]), 
                                                                                            0, 
@@ -223,7 +223,7 @@ public class LumiAnalysis {
             canvas.getCanvas("Norm").cd(i);
             canvas.getCanvas("Norm").draw(text(func.getParameter(0),func.getParameter(1),120,370,1));
             canvas.getCanvas("Norm").draw(text(funa.getParameter(0),funa.getParameter(1),120,330,2));
-            canvas.getCanvas("Norm").draw(text(fung.getParameter(0),fung.getParameter(1),120,70,3));
+            canvas.getCanvas("Norm").draw(text(fung.getParameter(0),fung.getParameter(1),120,60,3));
             canvas.getCanvas("Norm").getPad(i).getAxisY().setRange(0.5,1.2);
             DataLine line= new DataLine(0,1,func.getRange().getMax(),1);
             line.setLineWidth(2);

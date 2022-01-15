@@ -134,15 +134,23 @@ public class LumiDatum {
        return this.getLumiErr(type, charge)/this.getNorm(charge,type);
     }
 
+    public double getLumiNorm(Types type, Charges charge, double norm) {
+       return this.getLumi(type, charge)/norm;
+    }
+
+    public double getLumiNormErr(Types type, Charges charge, double norm) {
+       return this.getLumiErr(type, charge)/norm;
+    }
+
     public double getLumiRatio(Charges charge) {
-       return this.getLumiNorm(Types.AI, charge)/this.getLumiNorm(Types.CONVENTIONAL,charge);
+       return this.getLumi(Types.AI, charge)/this.getLumi(Types.CONVENTIONAL,charge);
     }
 
     public double getLumiRatioErr(Charges charge) {
-       double e1  = this.getLumiNorm(Types.CONVENTIONAL,charge);
-       double e2  = this.getLumiNorm(Types.AI, charge);
-       double ee1 = this.getLumiNormErr(Types.CONVENTIONAL,charge);
-       double ee2 = this.getLumiNormErr(Types.AI, charge);
+       double e1  = this.getLumi(Types.CONVENTIONAL,charge);
+       double e2  = this.getLumi(Types.AI, charge);
+       double ee1 = this.getLumiErr(Types.CONVENTIONAL,charge);
+       double ee2 = this.getLumiErr(Types.AI, charge);
        double err = (e2/e1)*Math.sqrt((ee1/e1)*(ee1/e1)+(ee2/e2)*(ee2/e2));
        return err;
     }
