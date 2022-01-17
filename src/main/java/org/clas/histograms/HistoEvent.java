@@ -38,7 +38,7 @@ public class HistoEvent extends Histos {
     public void create(int col) {
         String name = this.getName();
         // 2 pi
-        String[] a2pimx = {"MX(ep->e'#pi+#pi-X) (GeV)","MX2(ep->e'p#pi+X) (GeV2)","MX2(ep->e'p#pi-X) (GeV2)"};
+        String[] a2pimx = {"M_X(ep#rarrow e'^#pi+^#pi-X) (GeV)","M_^X2(ep#rarrow e'p^#pi+X) (Ge^V2)","M_^X2(ep#rarrow e'p^#pi-X) (Ge^V2)"};
         for(int i=1; i<=3; i++) {
             double rmin = 0;
             double rmax = 3;
@@ -55,7 +55,7 @@ public class HistoEvent extends Histos {
             this.get("2pi").addDataSet(hi_imass, i+2);
         }
         // 1 pi
-        String[] atitle = {"MX(ep->e'#pi+X) (GeV)","MX2(ep->e'pX) (GeV2)"};
+        String[] atitle = {"M_X(ep#rarrow e'^#pi+X) (GeV)","M_^X2(ep#rarrow e'pX) (Ge^V2)"};
         for(int i=1; i<=2; i++) {
             double rmin = 0;
             double rmax = 3;
@@ -72,19 +72,19 @@ public class HistoEvent extends Histos {
             this.get("1pi").addDataSet(hi_mmass, i+1);
         }
         // eh+/-
-        String[] aehW = {"W(ep->e'X) (GeV)","W(ep->e'X) (GeV)","W(ep->e'h+X) (GeV)","W(ep->e'h-X) (GeV)"};
+        String[] aehW = {"W(ep#rarrow e'X) (GeV)","W(ep#rarrow e'X) (GeV)","W(ep#rarrow e'h^+X) (GeV)","W(ep#rarrow e'h^-X) (GeV)"};
         double rmin = 0.5;
         double rmax = 4.0;
         H1F hi_we = new H1F("We" + "_" + name, "", 100, rmin, rmax);     
-        hi_we.setTitleX("W(ep->e'X) (GeV)");
+        hi_we.setTitleX("W(ep#rarrow e'X) (GeV)");
         hi_we.setTitleY("Counts");
         hi_we.setLineColor(col);
         H1F hi_wehp = new H1F("Wehp" + "_" + name, "", 100, rmin, rmax);     
-        hi_wehp.setTitleX("W(ep->e'h+X) (GeV)");
+        hi_wehp.setTitleX("W(ep#rarrow e'h^+X) (GeV)");
         hi_wehp.setTitleY("Counts");
         hi_wehp.setLineColor(col);
         H1F hi_wehm = new H1F("Wehm" + "_" + name, "", 100, rmin, rmax);     
-        hi_wehm.setTitleX("W(ep->e'h-X) (GeV)");
+        hi_wehm.setTitleX("W(ep#rarrow e'h^-X) (GeV)");
         hi_wehm.setTitleY("Counts");
         hi_wehm.setLineColor(col);
         this.get("eh").addDataSet(hi_we,   0);
