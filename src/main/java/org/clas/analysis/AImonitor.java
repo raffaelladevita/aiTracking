@@ -49,15 +49,13 @@ public class AImonitor {
     
     private String[] charges = {Charges.NEG.getName(), Charges.POS.getName(), Charges.ELE.getName()};
       
-    private int nsuperlayers = 0;
     private int minentries = 0;
     private String opts = "";
     
-    public AImonitor(double beamEnergy, int targetPDG, int nSL, int nMin, String opts){       
-        this.nsuperlayers = nSL;
+    public AImonitor(int nMin, String opts){       
         this.minentries = nMin;
         this.opts = opts;
-        this.createHistos(beamEnergy, targetPDG);
+        this.createHistos();
     }
     
     
@@ -65,7 +63,7 @@ public class AImonitor {
         this.banks = banks;        
     }
 
-    private void createHistos(double beamEnergy, int targetPDG) {
+    private void createHistos() {
         
         GStyle.getH1FAttributes().setOptStat(opts);
         GStyle.getAxisAttributesX().setTitleFontSize(24);
@@ -91,8 +89,8 @@ public class AImonitor {
             trCands[i]     = new HistoDistribution("tr"+charges[i]+"C",Types.CANDIDATES.getName(),5);
             resol[i] = new HistoResolution(charges[i]+"Res",i+1);   
         }
-        trEvent = new HistoEvent("tr", Types.CONVENTIONAL.getName(), 1, beamEnergy, targetPDG);
-        aiEvent = new HistoEvent("ai", Types.AI.getName(), 2, beamEnergy, targetPDG);        
+        trEvent = new HistoEvent("tr", Types.CONVENTIONAL.getName(), 1);
+        aiEvent = new HistoEvent("ai", Types.AI.getName(), 2);        
     }
     
     private void setHistoStats(String opts) {
@@ -244,8 +242,8 @@ public class AImonitor {
         ArrayList<Track> aiTracks = null;
         ArrayList<Track> trTracks = null;
         aiCands  = this.readCandidates(event);
-        trTracks = this.readTracks(0, this.nsuperlayers, event);            
-        aiTracks = this.readTracks(1, this.nsuperlayers, event);
+        trTracks = this.readTracks(0, event);            
+        aiTracks = this.readTracks(1, event);
 
         if(trTracks!=null) {
             for(Track tr : trTracks) {
@@ -311,7 +309,7 @@ public class AImonitor {
     }
 
 
-    public ArrayList<Track> readTracks(int type, int nsuperlayers, Event event) {	
+    public ArrayList<Track> readTracks(int type, Event event) {	
         ArrayList<Track> tracks = null;
         Bank runConfig      = banks.getRunConfig();
         Bank particleBank   = banks.getRecParticleBank(type);
@@ -389,7 +387,6 @@ public class AImonitor {
             // add fiducial information and selection on number of superlayers
             for(Track tr : tracks) {
                 tr.isInFiducial(fiducial.inFiducial(tr));
-                tr.SL(nsuperlayers);
             }
         }
         return tracks;
@@ -546,6 +543,7 @@ public class AImonitor {
         parser.addOption("-n"          ,"-1",   "maximum number of events to process");
         parser.addOption("-banks"      ,"TB",   "tracking level: TB or HB");
         parser.addOption("-superlayers","0",    "number of superlayers (5 or 6, 0=any)");
+        parser.addOption("-vertex"     ,"-15:5","vertex range (min:max)");
         parser.addOption("-write"      ,"0",    "save events with missing tracks (0/1)");
         parser.addOption("-energy"     ,"10.6", "beam energy");
         parser.addOption("-target"     ,"2212", "target PDG");
@@ -577,8 +575,17 @@ public class AImonitor {
         boolean writeMissing = parser.getOption("-write").intValue()!=0;
         String  trackingType = parser.getOption("-banks").stringValue();        
         int     superLayers  = parser.getOption("-superlayers").intValue();
-        double  beamEnergy   = parser.getOption("-energy").doubleValue();
-        int     targetPID    = parser.getOption("-target").intValue();         
+        String[] vertex      = parser.getOption("-vertex").stringValue().split(":");
+        if(vertex.length != 2) {
+            System.out.println("\n >>>> error: incorrect vertex parameters...\n");
+            System.exit(0);
+        }
+        else {
+            Constants.ZMIN = Double.parseDouble(vertex[0]);
+            Constants.ZMAX = Double.parseDouble(vertex[1]);
+        }
+        Constants.BEAMENERGY = parser.getOption("-energy").doubleValue();
+        Constants.TARGETPID  = parser.getOption("-target").intValue();         
         
         boolean readHistos   = (parser.getOption("-histo").intValue()!=0);            
         boolean openWindow   = (parser.getOption("-plot").intValue()!=0);
@@ -593,20 +600,23 @@ public class AImonitor {
             for(int i=0; i<lumiParameters.length; i++) {
                 String[] pars = lumiParameters[i].split(":");
                 if(pars.length!=2 || !(pars[1].trim().equals("data") || pars[1].trim().equals("bg") || pars[1].trim().equals("mc"))) {
-                    System.out.println("\n >>>> error: incorrect lumi parameters....\n");
+                    System.out.println("\n >>>> error: incorrect lumi parameters...\n");
                     System.exit(0);
                 }
                 lumiCurrent.add(Double.parseDouble(lumiParameters[i].split(":")[0]));
                 lumiType.add(lumiParameters[i].split(":")[1]);
             }
         }
-        if(superLayers!=0 && superLayers!=5 && superLayers!=6) superLayers=0;
-
+        if(superLayers!=0 && superLayers!=5 && superLayers!=6) 
+            Constants.NSUPERLAYERS=0;
+        else 
+            Constants.NSUPERLAYERS=superLayers;
+        
         if(!openWindow) System.setProperty("java.awt.headless", "true");
         
         SchemaFactory schema = null;           
         
-        AImonitor analysis = new AImonitor(beamEnergy,targetPID,superLayers,minCounts,optStats);
+        AImonitor analysis = new AImonitor(minCounts,optStats);
         
         ArrayList<LumiDatum> lumis = new ArrayList<>();
         

@@ -37,9 +37,6 @@ public class Track {
     private Vector3[] trackTrajectory = new Vector3[9]; // size set to contain 3 DC reegions, 3 FTOF and ECAL layers
     private boolean inFiducial = true;
     
-    // flag to select on number of superlayers
-    private int nSL = 0;
-    
     // HB (0) or TB (0)
     private int trackMode = 1;
     
@@ -257,13 +254,9 @@ public class Track {
         return trackSL;
     }
 
-    public void SL(int n) {
-        this.nSL = n;
-    }
-
     private boolean hasSL(){
-       if(this.nSL==0) return true;
-       else return (this.SL()==this.nSL);
+       if(Constants.NSUPERLAYERS==0) return true;
+       else return (this.SL()==Constants.NSUPERLAYERS);
     }
     
     public void polarity(double polarity){
@@ -426,7 +419,7 @@ public class Track {
 
      public boolean isValid() {
         boolean value = false;
-        if(Math.abs(this.vz()+5)<10 
+        if(this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX
         &&  this.chi2()<10  
         && Math.abs(this.chi2pid())<5
         && this.isInFiducial()
@@ -441,7 +434,7 @@ public class Track {
         else                                  value = this.p()>0.4
                                                    && Math.abs(this.chi2pid())<3
                                                    && this.theta()<Math.toRadians(40.);
-        value = value && Math.abs(this.vz()+5)<10 ;
+        value = value && this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX;
         return value;
     }
 

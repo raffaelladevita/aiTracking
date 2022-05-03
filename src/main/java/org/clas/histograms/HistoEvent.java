@@ -1,11 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.clas.histograms;
 
 import java.util.ArrayList;
+import org.clas.analysis.Constants;
 import org.clas.analysis.Track;
 import org.jlab.clas.physics.Particle;
 import org.jlab.groot.data.H1F;
@@ -21,10 +17,10 @@ public class HistoEvent extends Histos {
     private Particle beam   = null;
     private Particle target = null;
     
-    public HistoEvent(String str, String title, int col, double beamEnergy, int targetPDG) {
+    public HistoEvent(String str, String title, int col) {
         super(str,title,col);
-        this.beam   = new Particle(11, 0,0,beamEnergy, 0,0,0);
-        this.target = Particle.createWithPid(targetPDG, 0,0,0, 0,0,0);
+        this.beam   = new Particle(11, 0,0,Constants.BEAMENERGY, 0,0,0);
+        this.target = Particle.createWithPid(Constants.TARGETPID, 0,0,0, 0,0,0);
     }
     
     @Override
