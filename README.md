@@ -53,12 +53,14 @@ Run the code with:
 ```  
 
 
-###Luminosity scan analysis
+### Luminosity scan analysis
 To analyze a luminosity scan:
 * run the code on the data files for each luminosity setting, separately,
 * save the histogram files,
 * run the code with the ````-lumi``` option. For example:
 ```
 ./bin/aiTracking -histo 1 -lumi "2:data,5:data,10:data,20:data,40:data" 2nA_histo_file.hipo 5nA_histo_file.hipo 10nA_histo_file.hipo 20nA_histo_file.hipo 40nA_histo_file.hipo
+
+The cuts used in this analysis are defined at https://github.com/raffaelladevita/aiTracking/blob/master/src/main/java/org/clas/analysis/Track.java#L431-L439 and can be easily modified as needed.
 
 Note that the luminosity analysis can be performed also if only conventional or only AI-assisted tracking results are available in the data files.
