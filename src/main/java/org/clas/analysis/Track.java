@@ -256,7 +256,7 @@ public class Track {
     }
     
     public void hit(int layer, int wire) {
-        if(layer>0 && layer<=6 &&
+        if(layer>0 && layer<=36 &&
             wire>0 && wire<=112) {
             int ilayer = layer-1;
             byte w = (byte) wire;
@@ -443,8 +443,8 @@ public class Track {
     public boolean isValid(boolean zcut) {
         boolean value = false;
         if((this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX || !zcut)
-        &&  this.chi2()<10  
-        && Math.abs(this.chi2pid())<5
+//        &&  this.chi2()<20  
+        && Math.abs(this.chi2pid())<3
         && this.isInFiducial()
         && this.hasSL()
         ) value=true;
@@ -544,7 +544,7 @@ public class Track {
         
     public boolean equals(Track o) {
         if(Constants.HITMATCH)
-            return this.matchedHits(o)>0.8*this.nHits();
+            return this.matchedHits(o)>0.6*this.nHits();
         else
             return this.matchedClusters(o)==6;
     }

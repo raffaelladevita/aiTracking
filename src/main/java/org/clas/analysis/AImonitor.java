@@ -287,7 +287,7 @@ public class AImonitor {
                 else {
                     trUnmatched[(track.charge()+1)/2].fill(track);
                     if(track.pid()==11) trUnmatched[2].fill(track);
-            	 if(trTracks.size()==1 && track.isValid(true)) status.setAiMissing();
+            	    if(trTracks.size()==1 && track.isValid(true)) status.setAiMissing();
                 }
                 if(track.isPredicted()) {
                     trCands[(track.charge()+1)/2].fill(track);
@@ -360,10 +360,13 @@ public class AImonitor {
                                    trackingBank.getShort("Cluster5_ID", it),
                                    trackingBank.getShort("Cluster6_ID", it));
                 if(hitBank.getRows()>0) {
-                    int tid = trackingBank.getShort("id", it);
+ //                   int tid = trackingBank.getShort("id", it);
                     for(int ih=0; ih<hitBank.getRows(); ih++) {
-                        if(hitBank.getInt("trkID", ih)==tid) {
-                            int layer = (hitBank.getByte("superlayer", ih)-1)*6+hitBank.getByte("layer", ih);
+                        int superlayer = hitBank.getByte("superlayer", ih);
+                        int clusterId  = hitBank.getShort("clusterID", ih);
+                        if(clusterId>0 && clusterId==track.clusters()[superlayer-1]) {
+ //                       if(hitBank.getInt("trkID", ih)==tid) {
+                            int layer = (superlayer-1)*6+hitBank.getByte("layer", ih);
                             int wire  = hitBank.getShort("wire", ih);
                             track.hit(layer, wire);
                         }
