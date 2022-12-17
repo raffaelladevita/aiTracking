@@ -26,6 +26,7 @@ public class Track {
     private int trackNDF = 0;
     private Vector3[] trackCrosses = new Vector3[3];
     private int[] trackClusters = new int[6];
+    private byte[][] trackHits = new byte[36][2];
     private int   trackSL = 0;
     
     // from particle bank
@@ -250,6 +251,24 @@ public class Track {
         }
     }    
 
+    public byte[][] hits() {
+        return this.trackHits;
+    }
+    
+    public void hit(int layer, int wire) {
+        if(layer>0 && layer<=6 &&
+            wire>0 && wire<=112) {
+            int ilayer = layer-1;
+            byte w = (byte) wire;
+            if(this.trackHits[ilayer][0]>0) {
+                this.trackHits[ilayer][1]=w;
+            }
+            else {
+                this.trackHits[ilayer][0]=w;
+            }
+        }
+    }
+    
     public int SL() {
         return trackSL;
     }
@@ -417,9 +436,13 @@ public class Track {
         }
     }
 
-     public boolean isValid() {
+    public boolean isValid() {
+        return this.isValid(true);
+    }
+
+    public boolean isValid(boolean zcut) {
         boolean value = false;
-        if(this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX
+        if((this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX || !zcut)
         &&  this.chi2()<10  
         && Math.abs(this.chi2pid())<5
         && this.isInFiducial()
@@ -445,13 +468,36 @@ public class Track {
         }
         return nmatch;
     }
-    
+
     private int nClusters() {
         int nclus = 0;
         for(int i=0; i<6; i++) {
             if(this.clusters()[i]>=0) nclus++;            
         }
         return nclus;
+    }
+        
+    private int matchedHits(Track t) {
+        int nmatch = 0;
+        for(int il=0; il<36; il++) {
+            for(int iw1=0; iw1<2; iw1++) {
+            for(int iw2=0; iw2<2; iw2++) {
+                if(this.hits()[il][iw1]>0 &&
+                   this.hits()[il][iw2]>0 &&
+                   this.hits()[il][iw1]==t.hits()[il][iw2]) nmatch++;
+            }}           
+        }
+        return nmatch;
+    }
+    
+    private int nHits() {
+        int nhits = 0;
+        for(int il=0; il<36; il++) {
+            for(int iw=0; iw<2; iw++) {
+                if(this.hits()[il][iw]>0) nhits++;
+            }           
+        }
+        return nhits;
     }
     
     public boolean diff(Track t) {
@@ -497,14 +543,21 @@ public class Track {
     }
         
     public boolean equals(Track o) {
-        if(this.matchedClusters(o)==6) return true;
-        else return false;
+        if(Constants.HITMATCH)
+            return this.matchedHits(o)>0.8*this.nHits();
+        else
+            return this.matchedClusters(o)==6;
     }
     
     public boolean isContainedIn(Track o) {
         boolean value = true;
-        for(int i=0; i<6; i++) {
-            if(this.clusters()[i]!=-1 && this.clusters()[i]!=o.clusters()[i]) value=false;           
+        if(Constants.HITMATCH) {
+            if(this.matchedHits(o)<o.nHits()) value=false;
+        }
+        else {
+            for(int i=0; i<6; i++) {
+                if(this.clusters()[i]!=-1 && this.clusters()[i]!=o.clusters()[i]) value=false;           
+            }
         }
         return value;
     }

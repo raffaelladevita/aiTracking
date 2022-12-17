@@ -133,7 +133,11 @@ public class AImonitor {
                 canvas.getCanvas(cname).draw(trMatched[i].get(key));
                 canvas.getCanvas(cname).draw(trUnmatched[i].get(key));
                 for(EmbeddedPad pad : canvas.getCanvas(cname).getCanvasPads())
-                    if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H2F) this.drawRegion(pad,2);                                   
+                    if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H2F) {
+                        H2F h2 = (H2F) pad.getDatasetPlotters().get(0).getDataSet();
+                        if(h2.getTitleX().contains("x") && h2.getTitleY().contains("y"))
+                            this.drawRegion(pad,2);
+                    }                                   
             }
             cname = charges[i] + " resolution";
             canvas.addCanvas(cname);
@@ -181,7 +185,11 @@ public class AImonitor {
                 pad.draw(line);
             }
             else if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H2F) {
-                this.drawRegion(pad,1);
+                if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H2F) {
+                    H2F h2 = (H2F) pad.getDatasetPlotters().get(0).getDataSet();
+                    if(h2.getTitleX().contains("x") && h2.getTitleY().contains("y"))
+                        this.drawRegion(pad,2);
+                }   
             }
         }
     }
@@ -279,7 +287,7 @@ public class AImonitor {
                 else {
                     trUnmatched[(track.charge()+1)/2].fill(track);
                     if(track.pid()==11) trUnmatched[2].fill(track);
-            	 if(trTracks.size()==1 && track.isValid()) status.setAiMissing();
+            	 if(trTracks.size()==1 && track.isValid(true)) status.setAiMissing();
                 }
                 if(track.isPredicted()) {
                     trCands[(track.charge()+1)/2].fill(track);
@@ -316,39 +324,51 @@ public class AImonitor {
         Bank trajectoryBank = banks.getRecTrajectoryBank(type);
         Bank trackBank      = banks.getRecTrackBank(type);
         Bank trackingBank   = banks.getTrackingBank(type);
+        Bank hitBank        = banks.getHitBank(type);
         if(runConfig!=null)      event.read(runConfig);
         if(particleBank!=null)   event.read(particleBank);
         if(trajectoryBank!=null) event.read(trajectoryBank);
         if(trackBank!=null)      event.read(trackBank);
         if(trackingBank!=null)   event.read(trackingBank);
+        if(hitBank!=null)        event.read(hitBank);
         if(trackingBank!=null && trackingBank.getRows()>0) {
             // create tracks list from track bank
             tracks = new ArrayList();
-            for(int loop = 0; loop < trackingBank.getRows(); loop++){
+            for(int it = 0; it < trackingBank.getRows(); it++){
                 Track track = new Track(banks.getMode(),
-                                        trackingBank.getByte("q", loop),
-                                        trackingBank.getFloat("p0_x", loop),
-                                        trackingBank.getFloat("p0_y", loop),
-                                        trackingBank.getFloat("p0_z", loop),
-                                        trackingBank.getFloat("Vtx0_x", loop),
-                                        trackingBank.getFloat("Vtx0_y", loop),
-                                        trackingBank.getFloat("Vtx0_z", loop));
-                track.sector(trackingBank.getByte("sector", loop));
-                track.NDF(trackingBank.getShort("ndf", loop));
-                track.chi2(trackingBank.getFloat("chi2", loop)/trackingBank.getShort("ndf", loop));
+                                        trackingBank.getByte("q", it),
+                                        trackingBank.getFloat("p0_x", it),
+                                        trackingBank.getFloat("p0_y", it),
+                                        trackingBank.getFloat("p0_z", it),
+                                        trackingBank.getFloat("Vtx0_x", it),
+                                        trackingBank.getFloat("Vtx0_y", it),
+                                        trackingBank.getFloat("Vtx0_z", it));
+                track.sector(trackingBank.getByte("sector", it));
+                track.NDF(trackingBank.getShort("ndf", it));
+                track.chi2(trackingBank.getFloat("chi2", it)/trackingBank.getShort("ndf", it));
                 for(int i=0; i<2; i++) {
-                    track.cross(trackingBank.getFloat("c" + (i*2+1) + "_x", loop),
-                                trackingBank.getFloat("c" + (i*2+1) + "_y", loop),
-                                trackingBank.getFloat("c" + (i*2+1) + "_z", loop),
+                    track.cross(trackingBank.getFloat("c" + (i*2+1) + "_x", it),
+                                trackingBank.getFloat("c" + (i*2+1) + "_y", it),
+                                trackingBank.getFloat("c" + (i*2+1) + "_z", it),
                                 (i*2+1));
                 }
                 if(banks.hasClusterId())
-                    track.clusters(trackingBank.getShort("Cluster1_ID", loop),
-                                   trackingBank.getShort("Cluster2_ID", loop),
-                                   trackingBank.getShort("Cluster3_ID", loop),
-                                   trackingBank.getShort("Cluster4_ID", loop),
-                                   trackingBank.getShort("Cluster5_ID", loop),
-                                   trackingBank.getShort("Cluster6_ID", loop));
+                    track.clusters(trackingBank.getShort("Cluster1_ID", it),
+                                   trackingBank.getShort("Cluster2_ID", it),
+                                   trackingBank.getShort("Cluster3_ID", it),
+                                   trackingBank.getShort("Cluster4_ID", it),
+                                   trackingBank.getShort("Cluster5_ID", it),
+                                   trackingBank.getShort("Cluster6_ID", it));
+                if(hitBank.getRows()>0) {
+                    int tid = trackingBank.getShort("id", it);
+                    for(int ih=0; ih<hitBank.getRows(); ih++) {
+                        if(hitBank.getInt("trkID", ih)==tid) {
+                            int layer = (hitBank.getByte("superlayer", ih)-1)*6+hitBank.getByte("layer", ih);
+                            int wire  = hitBank.getShort("wire", ih);
+                            track.hit(layer, wire);
+                        }
+                    }
+                }
                 if(runConfig!=null && runConfig.getRows()>0) track.polarity(runConfig.getFloat("torus",0));
                 tracks.add(track);
             }
@@ -543,6 +563,7 @@ public class AImonitor {
         parser.addOption("-n"          ,"-1",   "maximum number of events to process");
         parser.addOption("-banks"      ,"TB",   "tracking level: TB or HB");
         parser.addOption("-superlayers","0",    "number of superlayers (5 or 6, 0=any)");
+        parser.addOption("-match"      ,"0",    "match based on clusters or hits (0/1)");
         parser.addOption("-vertex"     ,"-15:5","vertex range (min:max)");
         parser.addOption("-write"      ,"0",    "save events with missing tracks (0/1)");
         parser.addOption("-energy"     ,"10.6", "beam energy");
@@ -575,6 +596,7 @@ public class AImonitor {
         boolean writeMissing = parser.getOption("-write").intValue()!=0;
         String  trackingType = parser.getOption("-banks").stringValue();        
         int     superLayers  = parser.getOption("-superlayers").intValue();
+        boolean hitMatch     = parser.getOption("-match").intValue()!=0;
         String[] vertex      = parser.getOption("-vertex").stringValue().split(":");
         if(vertex.length != 2) {
             System.out.println("\n >>>> error: incorrect vertex parameters...\n");
@@ -611,6 +633,8 @@ public class AImonitor {
             Constants.NSUPERLAYERS=0;
         else 
             Constants.NSUPERLAYERS=superLayers;
+        
+        Constants.HITMATCH = hitMatch;
         
         if(!openWindow) System.setProperty("java.awt.headless", "true");
         

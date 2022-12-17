@@ -17,12 +17,14 @@ public class Banks {
     private Bank cvTrajectoryBank;
     private Bank cvTrackBank;
     private Bank cvTrackingBank;
+    private Bank cvHitBank;
     // ai banks
     private Bank aiParticleBank;
     private Bank aiTrajectoryBank;
     private Bank aiTrackBank;
     private Bank aiTrackingBank;
     private Bank aiCandidates;
+    private Bank aiHitBank;
     
     private boolean clusterIds;
 
@@ -42,6 +44,9 @@ public class Banks {
             if(schema.getSchema("TimeBasedTrkg::TBTracks").hasEntry("Cluster1_ID"))
                clusterIds = true;
         }
+        if(schema.hasSchema("TimeBasedTrkg::TBHits")) {
+            this.cvHitBank        = new Bank(schema.getSchema("TimeBasedTrkg::TBHits"));
+        }
         if(schema.hasSchema("RECAI::Particle"))
             this.aiParticleBank   = new Bank(schema.getSchema("RECAI::Particle"));
         if(schema.hasSchema("RECAI::Traj"))
@@ -52,6 +57,9 @@ public class Banks {
             this.aiTrackingBank   = new Bank(schema.getSchema("TimeBasedTrkg::AITracks"));
             if(schema.getSchema("TimeBasedTrkg::AITracks").hasEntry("Cluster1_ID"))
                 clusterIds = true;
+        }
+        if(schema.hasSchema("TimeBasedTrkg::AIHits")) {
+            this.aiHitBank        = new Bank(schema.getSchema("TimeBasedTrkg::AIHits"));
         }
         if(mode.equals("HB")) {
             this.mode = 0;
@@ -66,6 +74,9 @@ public class Banks {
                 if(schema.getSchema("HitBasedTrkg::HBTracks").hasEntry("Cluster1_ID"))
                    clusterIds = true;
             }
+            if(schema.hasSchema("HitBasedTrkg::HBHits")) {
+                this.cvHitBank        = new Bank(schema.getSchema("HitBasedTrkg::HBHits"));
+            }
             if(schema.hasSchema("RECHBAI::Particle"))
                 this.aiParticleBank   = new Bank(schema.getSchema("RECHBAI::Particle"));
             if(schema.hasSchema("RECHBAI::Track"))
@@ -74,6 +85,9 @@ public class Banks {
                 this.aiTrackingBank   = new Bank(schema.getSchema("HitBasedTrkg::AITracks"));
                 if(schema.getSchema("HitBasedTrkg::AITracks").hasEntry("Cluster1_ID"))
                     clusterIds = true;
+            }
+            if(schema.hasSchema("HitBasedTrkg::AIHits")) {
+                this.aiHitBank        = new Bank(schema.getSchema("HitBasedTrkg::AIHits"));
             }
         }
     }
@@ -104,6 +118,11 @@ public class Banks {
     public Bank getTrackingBank(int type) {
         if(type==0) return cvTrackingBank;
         else        return aiTrackingBank;
+    }
+    
+    public Bank getHitBank(int type) {
+        if(type==0) return cvHitBank;
+        else        return aiHitBank;
     }
     
     public Bank getAICandidateBank() {

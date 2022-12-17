@@ -30,7 +30,7 @@ public class HistoDistribution extends Histos {
         this.summaries.put("summary", "");
         this.summaries.put("6SL",     "6SL");
         this.summaries.put("5SL",     "5SL");
-        for(String key :this.summaries.keySet()) this.put(key, new DataGroup(key,3,2));
+        for(String key :this.summaries.keySet()) this.put(key, new DataGroup(key,4,2));
         this.put("2D",       new DataGroup("2D",3,2));
         this.put("p",        new DataGroup("p",3,2));
         this.put("theta",    new DataGroup("theta",3,2));
@@ -55,10 +55,17 @@ public class HistoDistribution extends Histos {
             hi_phi.setTitleX("#phi (deg)");
             hi_phi.setTitleY("Counts");
             hi_phi.setLineColor(col);
+            H2F hi_ptheta = new H2F("ptheta" + sname, "ptheta", 100, 0.0, 8.0, 100, 0.0, 40.0);   
+            hi_ptheta.setTitleX("p (GeV)");
+            hi_ptheta.setTitleY("#theta (deg)");
             H1F hi_chi2 = new H1F("chi2" + sname, "chi2", 100, 0.0, 15.0);   
             hi_chi2.setTitleX("#chi2");
             hi_chi2.setTitleY("Counts");
             hi_chi2.setLineColor(col);
+            H1F hi_ndf = new H1F("ndf" + sname, "ndf", 40, 0.0, 40.0);   
+            hi_ndf.setTitleX("#chi2");
+            hi_ndf.setTitleY("Counts");
+            hi_ndf.setLineColor(col);
             H1F hi_vz = new H1F("vz" + sname, "vz", 180, -50.0, 40.0);   
             hi_vz.setTitleX("Vz (cm)");
             hi_vz.setTitleY("Counts");
@@ -66,12 +73,14 @@ public class HistoDistribution extends Histos {
             H2F hi_xy = new H2F("xy" + sname, "xy", 200, -200.0, 200.0, 200, -200.0, 200.0);   
             hi_xy.setTitleX("R1 x (cm)");
             hi_xy.setTitleY("R1 y (cm)");
-            this.get(dg).addDataSet(hi_p,     0);
-            this.get(dg).addDataSet(hi_theta, 1);
-            this.get(dg).addDataSet(hi_phi,   2);
-            this.get(dg).addDataSet(hi_chi2,  3);
-            this.get(dg).addDataSet(hi_vz,    4);
-            this.get(dg).addDataSet(hi_xy,    5);
+            this.get(dg).addDataSet(hi_p,      0);
+            this.get(dg).addDataSet(hi_theta,  1);
+            this.get(dg).addDataSet(hi_phi,    2);
+            this.get(dg).addDataSet(hi_ptheta, 3);
+            this.get(dg).addDataSet(hi_chi2,   4);
+            this.get(dg).addDataSet(hi_ndf,    5);
+            this.get(dg).addDataSet(hi_vz,     6);
+            this.get(dg).addDataSet(hi_xy,     7);
         }
         for(int i=0; i<3; i++) {
             int region = i+1;
@@ -118,14 +127,16 @@ public class HistoDistribution extends Histos {
         String title = this.summaries.get(dg);
         String sname = title + "_" + this.getName();
         if(track.isValid()) {
-            this.get(dg).getH1F("p"     + sname).fill(track.p());
-            this.get(dg).getH1F("theta" + sname).fill(Math.toDegrees(track.theta()));
-            this.get(dg).getH1F("phi"   + sname).fill(Math.toDegrees(track.phi()));
-            this.get(dg).getH1F("chi2"  + sname).fill(track.chi2());
-            this.get(dg).getH2F("xy"    + sname).fill(track.trajectory(DetectorType.DC.getDetectorId(), 6).x()
+            this.get(dg).getH1F("p"      + sname).fill(track.p());
+            this.get(dg).getH1F("theta"  + sname).fill(Math.toDegrees(track.theta()));
+            this.get(dg).getH1F("phi"    + sname).fill(Math.toDegrees(track.phi()));
+            this.get(dg).getH2F("ptheta" + sname).fill(track.p(),Math.toDegrees(track.theta()));
+            this.get(dg).getH1F("chi2"   + sname).fill(track.chi2());
+            this.get(dg).getH1F("ndf"    + sname).fill(track.NDF());
+            this.get(dg).getH2F("xy"     + sname).fill(track.trajectory(DetectorType.DC.getDetectorId(), 6).x()
                                                      ,track.trajectory(DetectorType.DC.getDetectorId(), 6).y());
         }
-        this.get(dg).getH1F("vz" + sname).fill(track.vz());
+        if(track.isValid(false)) this.get(dg).getH1F("vz" + sname).fill(track.vz());
     }
      
     private void fill2D(Track track) {
@@ -146,7 +157,7 @@ public class HistoDistribution extends Histos {
             this.get("p").getH1F("psec"         + sector + "_" + this.getName()).fill(track.p());
             this.get("theta").getH1F("thetasec" + sector + "_" + this.getName()).fill(Math.toDegrees(track.theta()));
         }
-        this.get("vz").getH1F("vzsec"    + sector + "_" +  this.getName()).fill(track.vz());       
+        if(track.isValid(false)) this.get("vz").getH1F("vzsec"    + sector + "_" +  this.getName()).fill(track.vz());       
     }
     
     @Override

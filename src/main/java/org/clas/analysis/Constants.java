@@ -13,4 +13,6 @@ public class Constants {
     public static int    TARGETPID = 2212;
     
     public static int NSUPERLAYERS = 0;
+    
+    public static boolean HITMATCH = false;
 }
