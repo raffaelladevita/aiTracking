@@ -115,20 +115,20 @@ public class LumiAnalysis {
                     lumen.setNorm(charges[i], Types.AI,           lumiDGs.get("data").getGraph(charges[i].getName() + "ai").getFunction().getParameter(0));
                 }
                 if(lumen.getNorm(charges[i], Types.AI)>0)
-                    normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
-                                                lumen.getLumiNorm(Types.CONVENTIONAL, charges[i], lumen.getNorm(charges[i], Types.AI)), 
+                    normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "ai").addPoint(lumen.getCurrent(), 
+                                                lumen.getLumiNorm(Types.AI, charges[i], lumen.getNorm(charges[i], Types.CONVENTIONAL)), 
                                                 0, 
-                                                lumen.getLumiNormErr(Types.CONVENTIONAL, charges[i], lumen.getNorm(charges[i], Types.AI)));
+                                                lumen.getLumiNormErr(Types.AI, charges[i], lumen.getNorm(charges[i], Types.CONVENTIONAL)));
                 else
                     normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
                                                 lumen.getLumiNorm(Types.CONVENTIONAL, charges[i]), 
                                                 0, 
                                                 lumen.getLumiNormErr(Types.CONVENTIONAL, charges[i]));
                     
-                normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "ai").addPoint(lumen.getCurrent(), 
-                                                                                           lumen.getLumiNorm(Types.AI, charges[i]), 
+                normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
+                                                                                           lumen.getLumiNorm(Types.CONVENTIONAL, charges[i]), 
                                                                                            0, 
-                                                                                           lumen.getLumiNormErr(Types.AI, charges[i]));
+                                                                                           lumen.getLumiNormErr(Types.CONVENTIONAL, charges[i]));
                 gainDGs.get(lumen.getRun()).getGraph(charges[i].getName()).addPoint(lumen.getCurrent(),lumen.getLumiRatio(charges[i]),0,lumen.getLumiRatioErr(charges[i]));
                 if(lumen.getRun().equals("bg") && charges[i]==Charges.NEG) {
                     normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional" + "ele").addPoint(lumen.getCurrent(), lumen.getEH(Types.CONVENTIONAL, Charges.ELE), 0, 0.001);
@@ -233,8 +233,8 @@ public class LumiAnalysis {
             if(funa.getParameter(0)!=0)
                 canvas.getCanvas("Norm").draw(text(funa.getParameter(0),funa.getParameter(1),120,330,2));
             if(fung.getParameter(0)!=0)
-                canvas.getCanvas("Norm").draw(text(fung.getParameter(0),fung.getParameter(1),120,60,3));
-            canvas.getCanvas("Norm").getPad(i).getAxisY().setRange(0.4,1.1);
+                canvas.getCanvas("Norm").draw(text(fung.getParameter(0),fung.getParameter(1),120,40,3));
+            canvas.getCanvas("Norm").getPad(i).getAxisY().setRange(0.5,1.1);
             DataLine line= new DataLine(0,1,func.getRange().getMax(),1);
             line.setLineWidth(2);
             canvas.getCanvas("Norm").getPad(i).draw(line);

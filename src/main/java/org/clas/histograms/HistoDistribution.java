@@ -63,7 +63,7 @@ public class HistoDistribution extends Histos {
             hi_chi2.setTitleY("Counts");
             hi_chi2.setLineColor(col);
             H1F hi_ndf = new H1F("ndf" + sname, "ndf", 40, 0.0, 40.0);   
-            hi_ndf.setTitleX("#chi2");
+            hi_ndf.setTitleX("NDF");
             hi_ndf.setTitleY("Counts");
             hi_ndf.setLineColor(col);
             H1F hi_vz = new H1F("vz" + sname, "vz", 180, -50.0, 40.0);   
