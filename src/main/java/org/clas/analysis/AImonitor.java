@@ -568,6 +568,7 @@ public class AImonitor {
         parser.addOption("-superlayers","0",    "number of superlayers (5 or 6, 0=any)");
         parser.addOption("-match"      ,"0",    "match based on clusters or hits (0/1)");
         parser.addOption("-vertex"     ,"-15:5","vertex range (min:max)");
+        parser.addOption("-chi2"       ,"-1",   "max track reduced chi2 (-1 = infinity");
         parser.addOption("-write"      ,"0",    "save events with missing tracks (0/1)");
         parser.addOption("-energy"     ,"10.6", "beam energy");
         parser.addOption("-target"     ,"2212", "target PDG");
@@ -609,6 +610,8 @@ public class AImonitor {
             Constants.ZMIN = Double.parseDouble(vertex[0]);
             Constants.ZMAX = Double.parseDouble(vertex[1]);
         }
+        if(parser.getOption("-chi2").doubleValue()>0)
+            Constants.CHI2MAX = parser.getOption("-chi2").doubleValue();
         Constants.BEAMENERGY = parser.getOption("-energy").doubleValue();
         Constants.TARGETPID  = parser.getOption("-target").intValue();         
         

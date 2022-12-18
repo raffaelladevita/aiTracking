@@ -6,6 +6,7 @@ package org.clas.analysis;
  */
 public class Constants {
   
+    public static double CHI2MAX = Double.POSITIVE_INFINITY;
     public static double ZMIN = -15;
     public static double ZMAX = 5;
     

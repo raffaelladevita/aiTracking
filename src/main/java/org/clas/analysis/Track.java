@@ -443,7 +443,7 @@ public class Track {
     public boolean isValid(boolean zcut) {
         boolean value = false;
         if((this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX || !zcut)
-//        &&  this.chi2()<20  
+        && this.chi2()<Constants.CHI2MAX 
         && Math.abs(this.chi2pid())<3
         && this.isInFiducial()
         && this.hasSL()
@@ -457,7 +457,8 @@ public class Track {
         else                                  value = this.p()>0.4
                                                    && Math.abs(this.chi2pid())<3
                                                    && this.theta()<Math.toRadians(40.);
-        value = value && this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX;
+        value = value && this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX
+                      && this.chi2()<Constants.CHI2MAX;
         return value;
     }
 
