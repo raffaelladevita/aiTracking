@@ -35,7 +35,8 @@ public class Track {
     private int    trackPid = 0;
     
     // from trajectory bank
-    private Vector3[] trackTrajectory = new Vector3[9]; // size set to contain 3 DC reegions, 3 FTOF and ECAL layers
+    private Vector3[] trackTrajectory = new Vector3[9]; // size set to contain 3 DC regions, 3 FTOF and ECAL layers
+    private double[]  trackEdge       = new double[9];  // size set to contain 3 DC regions, 3 FTOF and ECAL layers
     private boolean inFiducial = true;
     
     // HB (0) or TB (0)
@@ -319,8 +320,15 @@ public class Track {
     }
     
     public void trajectory(double x, double y, double z, int detector, int layer) {
+        this.trajectory(x, y, z, 100, detector, layer);
+    }
+    
+    public void trajectory(double x, double y, double z, double edge, int detector, int layer) {
         int i = this.trajIndex(detector, layer);
-        if(i>=0) this.trackTrajectory[i] = new Vector3(x, y, z);
+        if(i>=0) {
+            this.trackTrajectory[i] = new Vector3(x, y, z);
+            this.trackEdge[i] = edge;
+        }
     }
     
     public Vector3 trajectory(int detector, int layer) {
@@ -343,6 +351,29 @@ public class Track {
         return i;
     }
 
+    public boolean isInDetector() {
+        if(this.minWire()<Constants.WIREMIN) 
+            return false;
+        // check DC
+        for(int i=0; i<3; i++) {
+            if(this.trackEdge[i]<Constants.getEdge(DetectorType.DC)) 
+                return false;
+        }
+        // check FTOF
+        if(this.trackEdge[3]<Constants.getEdge(DetectorType.FTOF) && 
+           this.trackEdge[4]<Constants.getEdge(DetectorType.FTOF) && 
+           this.trackEdge[5]<Constants.getEdge(DetectorType.FTOF))
+            return false;
+        // check ECAL for electrons
+        if(this.pid()==11) {
+           for(int i=6; i<9; i++) {
+            if(this.trackEdge[i]<Constants.getEdge(DetectorType.ECAL)) 
+                return false;
+            } 
+        }
+        return true;
+    }
+    
     public boolean isInFiducial() {
         return inFiducial;
     }
@@ -443,9 +474,12 @@ public class Track {
     public boolean isValid(boolean zcut) {
         boolean value = false;
         if((this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX || !zcut)
+        && this.p()>Constants.PMIN
         && this.chi2()<Constants.CHI2MAX 
         && Math.abs(this.chi2pid())<3
         && this.isInFiducial()
+        && this.isInDetector()
+        && (Constants.SECTOR==0 || this.sector()==Constants.SECTOR)
         && this.hasSL()
         ) value=true;
         return value;
@@ -454,11 +488,12 @@ public class Track {
      public boolean isForLumiScan() {
         boolean value = false;
         if(this.pid()==11 && this.status()<0) value = this.p()>2.5 && this.p()<5.2;
-        else                                  value = this.p()>0.4
+        else                                  value = this.p()>Constants.PMIN
                                                    && Math.abs(this.chi2pid())<3
                                                    && this.theta()<Math.toRadians(40.);
         value = value && this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX
-                      && this.chi2()<Constants.CHI2MAX;
+                      && this.chi2()<Constants.CHI2MAX
+                      && this.isInDetector();
         return value;
     }
 
@@ -478,6 +513,17 @@ public class Track {
         return nclus;
     }
         
+    private int minWire() {
+        byte wire = 112;
+        for(int i=0; i<36; i++) {
+            for(int j=0; j<2; j++) {
+                if(this.trackHits[i][j]>0 && this.trackHits[i][j]<wire)
+                    wire = this.trackHits[i][j];
+            }
+        }
+        return wire;
+    }
+    
     private int matchedHits(Track t) {
         int nmatch = 0;
         for(int il=0; il<36; il++) {
@@ -521,23 +567,26 @@ public class Track {
         str.append(String.format("\tpx: %9.5f",   this.px()));
         str.append(String.format("\tpy: %9.5f",   this.py()));
         str.append(String.format("\tpz: %9.5f\n", this.pz()));
-        str.append(String.format("\tpx: %9.5f",   this.vx()));
-        str.append(String.format("\tvx: %9.5f",   this.vy()));
+        str.append(String.format("\tvx: %9.5f",   this.vx()));
+        str.append(String.format("\tvy: %9.5f",   this.vy()));
         str.append(String.format("\tvz: %9.5f\n", this.vz()));
         str.append("\t");
         for(int i=0; i<this.clusters().length; i++) str.append(String.format("clus%1d:%3d\t", (i+1), this.clusters()[i]));
         str.append("\n");
         str.append(String.format("\tchi2: %7.3f",   this.chi2()));
         str.append(String.format("\tNDF:  %4d\n",   this.NDF()));            
+        str.append(String.format("\tminWire: %4d",  this.minWire()));            
         str.append(String.format("\tpid: %4d",      this.pid()));            
         str.append(String.format("\tchi2pid: %.1f", this.chi2pid()));            
         str.append(String.format("\tstatus: %4d\n", this.status()));            
         str.append(String.format("\tmatch:  %b\t",  this.isMatched()));            
         str.append(String.format("\tvalid:  %b\n",  this.isValid()));            
         for(int i=0; i<this.trackTrajectory.length; i++) {
-        str.append("\t");
+            str.append("\t");
             str.append(String.format("traj%1d: ", (i+1)));
             if(this.trackTrajectory[i]!=null) str.append(this.trackTrajectory[i].toString());
+            str.append("\t");
+            str.append(String.format("edge: %.1f", this.trackEdge[i]));
             str.append("\n");
         }
         return str.toString();

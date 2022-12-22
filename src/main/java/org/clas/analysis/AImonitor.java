@@ -288,7 +288,7 @@ public class AImonitor {
                     trUnmatched[(track.charge()+1)/2].fill(track);
                     if(track.pid()==11) trUnmatched[2].fill(track);
             	    if(trTracks.size()==1 && track.isValid(true)) status.setAiMissing();
-                }
+                    }
                 if(track.isPredicted()) {
                     trCands[(track.charge()+1)/2].fill(track);
                     if(track.pid()==11) trCands[2].fill(track);
@@ -399,11 +399,19 @@ public class AImonitor {
                     if(((int) Math.abs(status)/1000)==2) { 
                         int index = trajectoryBank.getShort("index", loop);
                         Track track  = tracks.get(index); 
-                        track.trajectory(trajectoryBank.getFloat("x", loop),
-                                         trajectoryBank.getFloat("y", loop),
-                                         trajectoryBank.getFloat("z", loop),
-                                         trajectoryBank.getByte("detector", loop),
-                                         trajectoryBank.getByte("layer", loop));
+                        if(trajectoryBank.getSchema().hasEntry("edge"))
+                            track.trajectory(trajectoryBank.getFloat("x", loop),
+                                             trajectoryBank.getFloat("y", loop),
+                                             trajectoryBank.getFloat("z", loop),
+                                             trajectoryBank.getFloat("edge", loop),
+                                             trajectoryBank.getByte("detector", loop),
+                                             trajectoryBank.getByte("layer", loop));
+                        else
+                            track.trajectory(trajectoryBank.getFloat("x", loop),
+                                             trajectoryBank.getFloat("y", loop),
+                                             trajectoryBank.getFloat("z", loop),
+                                             trajectoryBank.getByte("detector", loop),
+                                             trajectoryBank.getByte("layer", loop));                            
                     }
                 }
             }
@@ -566,8 +574,12 @@ public class AImonitor {
         parser.addOption("-n"          ,"-1",   "maximum number of events to process");
         parser.addOption("-banks"      ,"TB",   "tracking level: TB or HB");
         parser.addOption("-superlayers","0",    "number of superlayers (5 or 6, 0=any)");
+        parser.addOption("-sector"     ,"0",    "sector (1-6, 0=any)");
         parser.addOption("-match"      ,"0",    "match based on clusters or hits (0/1)");
+        parser.addOption("-pmin"       ,"0.5",  "minimum momentum (GeV)");
         parser.addOption("-vertex"     ,"-15:5","vertex range (min:max)");
+        parser.addOption("-edge"       ,"",     "colon-separated DC, FTOF, ECAL edge cuts in cm (e.g. 5:10:5)");
+        parser.addOption("-wiremin"    ,"1",    "min DC wire");
         parser.addOption("-chi2"       ,"-1",   "max track reduced chi2 (-1 = infinity");
         parser.addOption("-write"      ,"0",    "save events with missing tracks (0/1)");
         parser.addOption("-energy"     ,"10.6", "beam energy");
@@ -599,6 +611,7 @@ public class AImonitor {
         }        
         boolean writeMissing = parser.getOption("-write").intValue()!=0;
         String  trackingType = parser.getOption("-banks").stringValue();        
+        int     sector       = parser.getOption("-sector").intValue();
         int     superLayers  = parser.getOption("-superlayers").intValue();
         boolean hitMatch     = parser.getOption("-match").intValue()!=0;
         String[] vertex      = parser.getOption("-vertex").stringValue().split(":");
@@ -610,6 +623,18 @@ public class AImonitor {
             Constants.ZMIN = Double.parseDouble(vertex[0]);
             Constants.ZMAX = Double.parseDouble(vertex[1]);
         }
+        Constants.PMIN = parser.getOption("-pmin").doubleValue();
+        String[] edge  = parser.getOption("-edge").stringValue().split(":");
+        if(!parser.getOption("-edge").stringValue().isBlank() && edge.length != 3) {
+            System.out.println("\n >>>> error: incorrect edge parameters...\n");
+            System.exit(0);
+        }
+        else if(edge.length==3) {
+            Constants.EDGE[0] = Double.parseDouble(edge[0]);
+            Constants.EDGE[1] = Double.parseDouble(edge[1]);
+            Constants.EDGE[2] = Double.parseDouble(edge[2]);
+        }
+        Constants.WIREMIN    = parser.getOption("-wiremin").intValue();         
         if(parser.getOption("-chi2").doubleValue()>0)
             Constants.CHI2MAX = parser.getOption("-chi2").doubleValue();
         Constants.BEAMENERGY = parser.getOption("-energy").doubleValue();
@@ -639,6 +664,11 @@ public class AImonitor {
             Constants.NSUPERLAYERS=0;
         else 
             Constants.NSUPERLAYERS=superLayers;
+        
+        if(sector<0 || sector>6)
+            Constants.SECTOR = 0;
+        else
+            Constants.SECTOR = sector;
         
         Constants.HITMATCH = hitMatch;
         

@@ -53,7 +53,7 @@ public class Histos extends LinkedHashMap<String,DataGroup> {
     }
     
     public LinkedHashMap<String,DataGroup> diff(Histos histo, int minEntries) {
-        LinkedHashMap<String,DataGroup> diffs = new LinkedHashMap<String,DataGroup>();
+        LinkedHashMap<String,DataGroup> diffs = new LinkedHashMap<>();
         for(String key : this.keySet()) {
             diffs.put(key, this.diff(key,histo,minEntries));
         }
