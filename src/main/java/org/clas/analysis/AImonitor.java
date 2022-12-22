@@ -477,6 +477,8 @@ public class AImonitor {
         }
         trEvent.readDataGroup(dir);
         aiEvent.readDataGroup(dir);
+        trEventM.readDataGroup(dir);
+        trEventN.readDataGroup(dir);
     }
 
     public void saveHistos(String fileName) {
@@ -492,6 +494,8 @@ public class AImonitor {
         }
         trEvent.writeDataGroup(dir);
         aiEvent.writeDataGroup(dir);
+        trEventM.writeDataGroup(dir);
+        trEventN.writeDataGroup(dir);
         System.out.println("Saving histograms to file " + fileName);
         dir.writeFile(fileName);
     }    
