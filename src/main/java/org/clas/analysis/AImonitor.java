@@ -44,6 +44,8 @@ public class AImonitor {
     private HistoResolution[]   resol       = new HistoResolution[3];
     private HistoEvent          trEvent     = null;
     private HistoEvent          aiEvent     = null;
+    private HistoEvent          trEventM    = null;
+    private HistoEvent          trEventN    = null;
      
     private Banks banks = null;
     
@@ -80,17 +82,19 @@ public class AImonitor {
         GStyle.setGraphicsFrameLineWidth(1);
         GStyle.getH1FAttributes().setLineWidth(2);
         for(int i=0; i<charges.length; i++) {
-            tr[i] = new HistoDistribution("tr"+charges[i],Types.CONVENTIONAL.getName(),1);
-            ai[i] = new HistoDistribution("ai"+charges[i],Types.AI.getName(),2);
-            trMatched[i] = new HistoDistribution("tr"+charges[i]+"M",Types.MATCHED.getName(),4);
-            aiMatched[i] = new HistoDistribution("ai"+charges[i]+"M",Types.MATCHED.getName(),4);
-            trUnmatched[i] = new HistoDistribution("tr"+charges[i]+"N",Types.UNMATCHED.getName(),3);
-            aiUnmatched[i] = new HistoDistribution("ai"+charges[i]+"N",Types.UNMATCHED.getName(),3);
-            trCands[i]     = new HistoDistribution("tr"+charges[i]+"C",Types.CANDIDATES.getName(),5);
+            tr[i] = new HistoDistribution("tr"+charges[i],Type.CONVENTIONAL.getName(),1);
+            ai[i] = new HistoDistribution("ai"+charges[i],Type.AI.getName(),2);
+            trMatched[i] = new HistoDistribution("tr"+charges[i]+"M",Type.MATCHED.getName(),4);
+            aiMatched[i] = new HistoDistribution("ai"+charges[i]+"M",Type.MATCHED.getName(),4);
+            trUnmatched[i] = new HistoDistribution("tr"+charges[i]+"N",Type.UNMATCHED.getName(),3);
+            aiUnmatched[i] = new HistoDistribution("ai"+charges[i]+"N",Type.UNMATCHED.getName(),3);
+            trCands[i]     = new HistoDistribution("tr"+charges[i]+"C",Type.CANDIDATES.getName(),5);
             resol[i] = new HistoResolution(charges[i]+"Res",i+1);   
         }
-        trEvent = new HistoEvent("tr", Types.CONVENTIONAL.getName(), 1);
-        aiEvent = new HistoEvent("ai", Types.AI.getName(), 2);        
+        trEvent  = new HistoEvent("tr", Type.CONVENTIONAL, 1);
+        aiEvent  = new HistoEvent("ai", Type.AI, 2);        
+        trEventM = new HistoEvent("trM", Type.MATCHED, 4);
+        trEventN = new HistoEvent("trN", Type.UNMATCHED, 3);
     }
     
     private void setHistoStats(String opts) {
@@ -106,6 +110,8 @@ public class AImonitor {
         }  
         trEvent.setStats(opts);
         aiEvent.setStats(opts);
+        trEventM.setStats(opts);
+        trEventN.setStats(opts);
     }
     
     public LumiDatum loadStatistics(String run, double current) {
@@ -153,11 +159,15 @@ public class AImonitor {
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("2pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("2pi"));                    
+        canvas.getCanvas(cname).draw(trEventM.get("2pi"));
+        canvas.getCanvas(cname).draw(trEventN.get("2pi"));
         this.drawDifferences(canvas, "2pidifferences", aiEvent.diff(trEvent,minentries).get("2pi"), 0.7, true);
         cname = "1pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("1pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("1pi"));                    
+        canvas.getCanvas(cname).draw(trEventM.get("1pi"));
+        canvas.getCanvas(cname).draw(trEventN.get("1pi"));
         this.drawDifferences(canvas, "1pidifferences", aiEvent.diff(trEvent,minentries).get("1pi"), 0.4, true);
         cname = "eh+/-";
         canvas.addCanvas(cname);
@@ -296,6 +306,8 @@ public class AImonitor {
                 else if(trTracks.size()==1 && track.isValid()) status.setCdMissing();
             }
             trEvent.fill(trTracks);
+            trEventM.fill(trTracks);
+            trEventN.fill(trTracks);
         }
         if(aiTracks!=null) {
             for(Track track : aiTracks) {

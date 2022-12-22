@@ -21,17 +21,17 @@ public class LumiDatum {
     
     public void initTracks(String run, Charges charge, Histos...histos) {
         for(Histos histo : histos) {
-            this.setTracks(charge, Types.getType(histo.getTitle()), 0, histo.getEntries("summary"));
-            this.setTracks(charge, Types.getType(histo.getTitle()), 6, histo.getEntries("6SL"));
-            this.setTracks(charge, Types.getType(histo.getTitle()), 5, histo.getEntries("5SL"));
+            this.setTracks(charge, Type.getType(histo.getTitle()), 0, histo.getEntries("summary"));
+            this.setTracks(charge, Type.getType(histo.getTitle()), 6, histo.getEntries("6SL"));
+            this.setTracks(charge, Type.getType(histo.getTitle()), 5, histo.getEntries("5SL"));
         }
     }
 
     public void initEH(HistoEvent...histos) {
         for(HistoEvent histo : histos) {
-            this.setEH(Types.getType(histo.getTitle()), Charges.ELE, histo.getNe());
-            this.setEH(Types.getType(histo.getTitle()), Charges.POS, histo.getNehp());
-            this.setEH(Types.getType(histo.getTitle()), Charges.NEG, histo.getNehm());
+            this.setEH(Type.getType(histo.getTitle()), Charges.ELE, histo.getNe());
+            this.setEH(Type.getType(histo.getTitle()), Charges.POS, histo.getNehp());
+            this.setEH(Type.getType(histo.getTitle()), Charges.NEG, histo.getNehm());
         }
     }
 
@@ -60,47 +60,47 @@ public class LumiDatum {
        this.run=run;
     }
 
-    public double getNorm(Charges charge, Types type) {
-        if(charge!=Charges.UNDEFINED && type!=Types.UNDEFINED ) return norm[charge.getId()][type.getId()];
+    public double getNorm(Charges charge, Type type) {
+        if(charge!=Charges.UNDEFINED && type!=Type.UNDEFINED ) return norm[charge.getId()][type.getId()];
         else return 1;
     }
 
-    public void setNorm(Charges charge, Types type, double norm) {
-        if(charge!=Charges.UNDEFINED && type!=Types.UNDEFINED ) this.norm[charge.getId()][type.getId()] = norm;
+    public void setNorm(Charges charge, Type type, double norm) {
+        if(charge!=Charges.UNDEFINED && type!=Type.UNDEFINED ) this.norm[charge.getId()][type.getId()] = norm;
         else System.out.println("Error setting the normalization factor for charge=" + charge.getName() + " type=" + type.getName());
     }
     
 
-    public int getTracks(Charges charge, Types type, int sl) {
+    public int getTracks(Charges charge, Type type, int sl) {
        int il=jsl(sl);
-       if(charge!=Charges.UNDEFINED && type!=Types.UNDEFINED && il!=-1) return tracks[charge.getId()][type.getId()][il];
+       if(charge!=Charges.UNDEFINED && type!=Type.UNDEFINED && il!=-1) return tracks[charge.getId()][type.getId()][il];
        else return 0;
     }
     
-    public void setTracks(Charges charge, Types type, int sl, int ntracks) {
+    public void setTracks(Charges charge, Type type, int sl, int ntracks) {
        int il=jsl(sl);
-       if(charge!=Charges.UNDEFINED && type!=Types.UNDEFINED && il!=-1) tracks[charge.getId()][type.getId()][il]=ntracks;
+       if(charge!=Charges.UNDEFINED && type!=Type.UNDEFINED && il!=-1) tracks[charge.getId()][type.getId()][il]=ntracks;
        else System.out.println("Error setting number of tracks for charge=" + charge.getName() + " type=" + type.getName() + " SL=" + sl);
     }
     
-    public int getEH(Types type, Charges charge) {
-       if(charge!=Charges.UNDEFINED && type!=Types.UNDEFINED) return eh[type.getId()][charge.getId()];
+    public int getEH(Type type, Charges charge) {
+       if(charge!=Charges.UNDEFINED && type!=Type.UNDEFINED) return eh[type.getId()][charge.getId()];
        else return 0;
     }
     
-    public void setEH(Types type, Charges charge, int tr) {
-       if(charge!=Charges.UNDEFINED && type!=Types.UNDEFINED) eh[type.getId()][charge.getId()]=tr;
+    public void setEH(Type type, Charges charge, int tr) {
+       if(charge!=Charges.UNDEFINED && type!=Type.UNDEFINED) eh[type.getId()][charge.getId()]=tr;
        else System.out.println("Error setting lumi data for type=" + type.getName() + " charge=" + charge.getName());
     }
 
-    public double getRatio(Charges charge, Types type, int sl) {
-       double cv = this.getTracks(charge,Types.CONVENTIONAL,sl);
+    public double getRatio(Charges charge, Type type, int sl) {
+       double cv = this.getTracks(charge,Type.CONVENTIONAL,sl);
        double ai = this.getTracks(charge,type,sl);
        return ai/cv;
     }
 
-    public double getRatioError(Charges charge, Types type, int sl) {
-       double cv = this.getTracks(charge,Types.CONVENTIONAL,sl);
+    public double getRatioError(Charges charge, Type type, int sl) {
+       double cv = this.getTracks(charge,Type.CONVENTIONAL,sl);
        double ai = this.getTracks(charge,type,sl);
        return this.getRatioError(ai, cv);
     }
@@ -110,7 +110,7 @@ public class LumiDatum {
         return err;
     }
     
-    public double getLumi(Types type, Charges charge) {
+    public double getLumi(Type type, Charges charge) {
        double e  = this.getEH(type,Charges.ELE);
        double eh = this.getEH(type,charge);
        double ratio = eh/e;
@@ -118,7 +118,7 @@ public class LumiDatum {
        return ratio;
     }    
     
-    public double getLumiErr(Types type, Charges charge) {
+    public double getLumiErr(Type type, Charges charge) {
        double e  = this.getEH(type,Charges.ELE);
        double eh = this.getEH(type,charge);
        double err = (eh/e)*Math.sqrt(Math.abs(eh-e)/e/eh);
@@ -126,31 +126,31 @@ public class LumiDatum {
        return err;
     }
 
-    public double getLumiNorm(Types type, Charges charge) {
+    public double getLumiNorm(Type type, Charges charge) {
        return this.getLumi(type, charge)/this.getNorm(charge,type);
     }
 
-    public double getLumiNormErr(Types type, Charges charge) {
+    public double getLumiNormErr(Type type, Charges charge) {
        return this.getLumiErr(type, charge)/this.getNorm(charge,type);
     }
 
-    public double getLumiNorm(Types type, Charges charge, double norm) {
+    public double getLumiNorm(Type type, Charges charge, double norm) {
        return this.getLumi(type, charge)/norm;
     }
 
-    public double getLumiNormErr(Types type, Charges charge, double norm) {
+    public double getLumiNormErr(Type type, Charges charge, double norm) {
        return this.getLumiErr(type, charge)/norm;
     }
 
     public double getLumiRatio(Charges charge) {
-       return this.getLumi(Types.AI, charge)/this.getLumi(Types.CONVENTIONAL,charge);
+       return this.getLumi(Type.AI, charge)/this.getLumi(Type.CONVENTIONAL,charge);
     }
 
     public double getLumiRatioErr(Charges charge) {
-       double e1  = this.getLumi(Types.CONVENTIONAL,charge);
-       double e2  = this.getLumi(Types.AI, charge);
-       double ee1 = this.getLumiErr(Types.CONVENTIONAL,charge);
-       double ee2 = this.getLumiErr(Types.AI, charge);
+       double e1  = this.getLumi(Type.CONVENTIONAL,charge);
+       double e2  = this.getLumi(Type.AI, charge);
+       double ee1 = this.getLumiErr(Type.CONVENTIONAL,charge);
+       double ee2 = this.getLumiErr(Type.AI, charge);
        double err = (e2/e1)*Math.sqrt((ee1/e1)*(ee1/e1)+(ee2/e2)*(ee2/e2));
        return err;
     }
@@ -168,25 +168,25 @@ public class LumiDatum {
     private void printTracks(Charges charge, int sl) {
         System.out.println(String.format("| %10s | %10d | %12d | % 12d | %12d  | %12d | %10.4f |  %10.4f |  %10.4f |"
                                                                                                 , charge.getName(), sl 
-                                                                                                , this.getTracks(charge, Types.CONVENTIONAL, sl)
-                                                                                                , this.getTracks(charge, Types.AI, sl)
-                                                                                                , this.getTracks(charge, Types.MATCHED, sl)
-                                                                                                , this.getTracks(charge, Types.CANDIDATES, sl)
-                                                                                                , this.getRatio(charge, Types.AI, sl)
-                                                                                                , this.getRatio(charge, Types.MATCHED, sl)
-                                                                                                , this.getRatio(charge, Types.CANDIDATES, sl)));
+                                                                                                , this.getTracks(charge, Type.CONVENTIONAL, sl)
+                                                                                                , this.getTracks(charge, Type.AI, sl)
+                                                                                                , this.getTracks(charge, Type.MATCHED, sl)
+                                                                                                , this.getTracks(charge, Type.CANDIDATES, sl)
+                                                                                                , this.getRatio(charge, Type.AI, sl)
+                                                                                                , this.getRatio(charge, Type.MATCHED, sl)
+                                                                                                , this.getRatio(charge, Type.CANDIDATES, sl)));
     }        
     
     private void printLumi() {
         System.out.println("+--------------------------------------------------------------------------------------+");
         System.out.println("|         type |            e |          eh+ |          eh- |      eh+/e |       eh-/e |");
         System.out.println("+--------------------------------------------------------------------------------------+");
-        this.printLumi(Types.CONVENTIONAL);        
-        this.printLumi(Types.AI);        
+        this.printLumi(Type.CONVENTIONAL);        
+        this.printLumi(Type.AI);        
         System.out.println("+--------------------------------------------------------------------------------------+");
     }
     
-    private void printLumi(Types type) {
+    private void printLumi(Type type) {
         System.out.println(String.format("| %12s | %12d | % 12d | %12d | %10.4f |  %10.4f |", type.getName()
                                                                                             , this.getEH(type, Charges.ELE)
                                                                                             , this.getEH(type, Charges.POS)

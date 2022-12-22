@@ -3,6 +3,7 @@ package org.clas.histograms;
 import java.util.ArrayList;
 import org.clas.analysis.Constants;
 import org.clas.analysis.Track;
+import org.clas.analysis.Type;
 import org.jlab.clas.physics.Particle;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.group.DataGroup;
@@ -17,8 +18,11 @@ public class HistoEvent extends Histos {
     private Particle beam   = null;
     private Particle target = null;
     
-    public HistoEvent(String str, String title, int col) {
-        super(str,title,col);
+    private Type type = null;
+    
+    public HistoEvent(String str, Type type, int col) {
+        super(str,type.getName(),col);
+        this.type   = type;
         this.beam   = new Particle(11, 0,0,Constants.BEAMENERGY, 0,0,0);
         this.target = Particle.createWithPid(Constants.TARGETPID, 0,0,0, 0,0,0);
     }
@@ -91,110 +95,112 @@ public class HistoEvent extends Histos {
     
     @Override
     public void fill(ArrayList<Track> tracks) {
-        Particle electron = null;
-        Particle piplus   = null;
-        Particle piminus  = null;  
-        Particle proton   = null;  
-        Particle trigger = null;
-        ArrayList<Particle> hadpos   = new ArrayList<>();  
-        ArrayList<Particle> hadneg   = new ArrayList<>();  
+        Track electron = null;
+        Track piplus   = null;
+        Track piminus  = null;  
+        Track proton   = null;  
+        Track trigger = null;
+        ArrayList<Track> hadpos   = new ArrayList<>();  
+        ArrayList<Track> hadneg   = new ArrayList<>();  
         for(Track track : tracks) {
             if(track.isValid()) {
                 if(electron==null && track.pid()==11 && track.status()<0) {
-                    electron= new Particle(11, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+                    electron= track;
                 }
                 else if(piplus==null && track.pid()==211)  {
-                    piplus= new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+                    piplus= track;
                 }
                 else if(piminus==null && track.pid()==-211)  {
-                    piminus= new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+                    piminus= track;
                 }
                 else if(proton==null && track.pid()==2212)  {
-                    proton= new Particle(2212, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+                    proton= track;
                 }
             }
             if(track.isForLumiScan()) {
                 if(trigger==null && track.pid()==11 && track.status()<0) {
-                    trigger= new Particle(11, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz());
+                    trigger= track;
                 }
                 if(track.charge()>0 && track.status()>0)  {
-                    hadpos.add(new Particle(211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz()));
+                    hadpos.add(track);
                 }
                 if(track.charge()<0 && track.status()>0)  {
-                    hadneg.add(new Particle(-211, track.px(),track.py(),track.pz(), track.vx(), track.vy(), track.vz()));
+                    hadneg.add(track);
                 }
             }
         }
-        if(electron!=null && piplus!=null && piminus!=null) {
-            proton = new Particle();
-            proton.copy(target);
-            proton.combine(beam, +1);
-            proton.combine(electron, -1);
-            proton.combine(piplus,   -1);
-            proton.combine(piminus,  -1);
-            Particle rho = new Particle();
-            rho.copy(piplus);
-            rho.combine(piminus, +1);
-            this.get("2pi").getH1F("mxt1_" + this.getName()).fill(proton.mass());
-            this.get("2pi").getH1F("mit1_" + this.getName()).fill(rho.mass());                    
+        if(this.isEventType(electron, proton, piplus, piminus)) {
+            if(electron!=null && piplus!=null && piminus!=null) {
+                Particle missing = new Particle();
+                missing.copy(target);
+                missing.combine(beam, +1);
+                missing.combine(electron.particle(), -1);
+                missing.combine(piplus.particle(),   -1);
+                missing.combine(piminus.particle(),  -1);
+                Particle rho = new Particle();
+                rho.copy(piplus.particle());
+                rho.combine(piminus.particle(), +1);
+                this.get("2pi").getH1F("mxt1_" + this.getName()).fill(missing.mass());
+                this.get("2pi").getH1F("mit1_" + this.getName()).fill(rho.mass());                    
+            }
+            else if(electron!=null && piplus!=null && proton!=null && piminus==null) {
+                Particle missing = new Particle();
+                missing.copy(target);
+                missing.combine(beam, +1);
+                missing.combine(electron.particle(), -1);
+                missing.combine(piplus.particle(),   -1);
+                missing.combine(proton.particle(),  -1);
+                Particle rho = new Particle();
+                rho.copy(piplus.particle());
+                rho.combine(missing, +1);
+                this.get("2pi").getH1F("mxt2_" + this.getName()).fill(missing.mass2());
+                this.get("2pi").getH1F("mit2_" + this.getName()).fill(rho.mass());                                
+            }
+            else if(electron!=null && piminus!=null && proton!=null && piplus==null) {
+                Particle missing = new Particle();
+                missing.copy(target);
+                missing.combine(beam, +1);
+                missing.combine(electron.particle(), -1);
+                missing.combine(piminus.particle(),   -1);
+                missing.combine(proton.particle(),  -1);
+                Particle rho = new Particle();
+                rho.copy(missing);
+                rho.combine(piminus.particle(), +1);
+                this.get("2pi").getH1F("mxt3_" + this.getName()).fill(missing.mass2());
+                this.get("2pi").getH1F("mit3_" + this.getName()).fill(rho.mass());                                
+            }
+            else if(electron!=null && piplus!=null && piminus==null && proton==null) {
+                Particle neutron = new Particle();
+                neutron.copy(target);
+                neutron.combine(beam, +1);
+                neutron.combine(electron.particle(), -1);
+                neutron.combine(piplus.particle(),   -1);
+                Particle W = new Particle();
+                W.copy(target);
+                W.combine(beam, +1);
+                W.combine(electron.particle(), -1);
+                this.get("1pi").getH1F("W1_" + this.getName()).fill(W.mass());
+                this.get("1pi").getH1F("mxt1_" + this.getName()).fill(neutron.mass());                    
+            }
+            else if(electron!=null && proton!=null && piminus==null && piplus==null) {
+                Particle pizero = new Particle();
+                pizero.copy(target);
+                pizero.combine(beam, +1);
+                pizero.combine(electron.particle(), -1);
+                pizero.combine(proton.particle(),   -1);
+                Particle W = new Particle();
+                W.copy(target);
+                W.combine(beam, +1);
+                W.combine(electron.particle(), -1);
+                this.get("1pi").getH1F("W2_" + this.getName()).fill(W.mass());
+                this.get("1pi").getH1F("mxt2_" + this.getName()).fill(pizero.mass2());                    
+            }
         }
-        else if(electron!=null && piplus!=null && proton!=null && piminus==null) {
-            piminus = new Particle();
-            piminus.copy(target);
-            piminus.combine(beam, +1);
-            piminus.combine(electron, -1);
-            piminus.combine(piplus,   -1);
-            piminus.combine(proton,  -1);
-            Particle rho = new Particle();
-            rho.copy(piplus);
-            rho.combine(piminus, +1);
-            this.get("2pi").getH1F("mxt2_" + this.getName()).fill(piminus.mass2());
-            this.get("2pi").getH1F("mit2_" + this.getName()).fill(rho.mass());                                
-        }
-        else if(electron!=null && piminus!=null && proton!=null && piplus==null) {
-            piplus = new Particle();
-            piplus.copy(target);
-            piplus.combine(beam, +1);
-            piplus.combine(electron, -1);
-            piplus.combine(piminus,   -1);
-            piplus.combine(proton,  -1);
-            Particle rho = new Particle();
-            rho.copy(piplus);
-            rho.combine(piminus, +1);
-            this.get("2pi").getH1F("mxt3_" + this.getName()).fill(piplus.mass2());
-            this.get("2pi").getH1F("mit3_" + this.getName()).fill(rho.mass());                                
-        }
-        else if(electron!=null && piplus!=null && piminus==null && proton==null) {
-            Particle neutron = new Particle();
-            neutron.copy(target);
-            neutron.combine(beam, +1);
-            neutron.combine(electron, -1);
-            neutron.combine(piplus,   -1);
-            Particle W = new Particle();
-            W.copy(target);
-            W.combine(beam, +1);
-            W.combine(electron, -1);
-            this.get("1pi").getH1F("W1_" + this.getName()).fill(W.mass());
-            this.get("1pi").getH1F("mxt1_" + this.getName()).fill(neutron.mass());                    
-        }
-        else if(electron!=null && proton!=null && piminus==null && piplus==null) {
-            Particle pizero = new Particle();
-            pizero.copy(target);
-            pizero.combine(beam, +1);
-            pizero.combine(electron, -1);
-            pizero.combine(proton,   -1);
-            Particle W = new Particle();
-            W.copy(target);
-            W.combine(beam, +1);
-            W.combine(electron, -1);
-            this.get("1pi").getH1F("W2_" + this.getName()).fill(W.mass());
-            this.get("1pi").getH1F("mxt2_" + this.getName()).fill(pizero.mass2());                    
-        } 
         if(trigger!=null) {
             Particle W = new Particle();
             W.copy(target);
             W.combine(beam, +1);
-            W.combine(trigger, -1);
+            W.combine(trigger.particle(), -1);
             this.get("eh").getH1F("We_" + this.getName()).fill(W.mass());
             for(int i=0; i<hadpos.size(); i++) this.get("eh").getH1F("Wehp_" + this.getName()).fill(W.mass());
             for(int i=0; i<hadneg.size(); i++) this.get("eh").getH1F("Wehm_" + this.getName()).fill(W.mass());
@@ -213,4 +219,24 @@ public class HistoEvent extends Histos {
         return (int) this.get("eh").getH1F("Wehm_" + this.getName()).getIntegral();
     }
 
+    private boolean isEventType(Track p1, Track p2, Track p3, Track p4) {
+        if(this.type==Type.MATCHED) {
+            boolean value = true;
+            if(p1!=null && !p1.isMatched()) value = false;
+            if(p2!=null && !p2.isMatched()) value = false;
+            if(p3!=null && !p3.isMatched()) value = false;
+            if(p4!=null && !p4.isMatched()) value = false;
+            return value;
+        }
+        else if(this.type==Type.UNMATCHED) {
+            boolean value = false;
+            if(p1!=null && !p1.isMatched()) value = true;
+            if(p2!=null && !p2.isMatched()) value = true;
+            if(p3!=null && !p3.isMatched()) value = true;
+            if(p4!=null && !p4.isMatched()) value = true;
+            return value;
+        }
+        else
+            return true;
+    }
 }

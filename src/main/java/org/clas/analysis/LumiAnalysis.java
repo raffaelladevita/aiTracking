@@ -73,31 +73,31 @@ public class LumiAnalysis {
             LumiDatum lumen = this.lumies.get(j);
             for(int i=0; i<2; i++) {
                 aiDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "eff" ).addPoint(lumen.getCurrent(), 
-                                                                                           lumen.getRatio(charges[i],Types.MATCHED,0), 
+                                                                                           lumen.getRatio(charges[i],Type.MATCHED,0), 
                                                                                            0, 
-                                                                                           lumen.getRatioError(charges[i],Types.MATCHED,0));
+                                                                                           lumen.getRatioError(charges[i],Type.MATCHED,0));
                 aiDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "gain").addPoint(lumen.getCurrent(), 
-                                                                                           lumen.getRatio(charges[i],Types.AI,0), 
+                                                                                           lumen.getRatio(charges[i],Type.AI,0), 
                                                                                            0, 
-                                                                                           lumen.getRatioError(charges[i],Types.AI,0));
+                                                                                           lumen.getRatioError(charges[i],Type.AI,0));
             
                 lumiDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
-                                                                                                     lumen.getLumi(Types.CONVENTIONAL, charges[i]), 
+                                                                                                     lumen.getLumi(Type.CONVENTIONAL, charges[i]), 
                                                                                                      0, 
-                                                                                                     lumen.getLumiErr(Types.CONVENTIONAL, charges[i]));
+                                                                                                     lumen.getLumiErr(Type.CONVENTIONAL, charges[i]));
                 lumiDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "ai").addPoint(lumen.getCurrent(), 
-                                                                                           lumen.getLumi(Types.AI, charges[i]), 
+                                                                                           lumen.getLumi(Type.AI, charges[i]), 
                                                                                            0, 
-                                                                                           lumen.getLumiErr(Types.AI, charges[i]));
+                                                                                           lumen.getLumiErr(Type.AI, charges[i]));
             }
             aiDGs.get(lumen.getRun()).getGraph(charges[2].getName() + "eff" ).addPoint(lumen.getCurrent(), 
-                                                                                       lumen.getRatio(charges[2],Types.MATCHED,0), 
+                                                                                       lumen.getRatio(charges[2],Type.MATCHED,0), 
                                                                                        0, 
-                                                                                       lumen.getRatioError(charges[2],Types.MATCHED,0));
+                                                                                       lumen.getRatioError(charges[2],Type.MATCHED,0));
             aiDGs.get(lumen.getRun()).getGraph(charges[2].getName() + "gain" ).addPoint(lumen.getCurrent(), 
-                                                                                        lumen.getRatio(charges[2],Types.AI,0), 
+                                                                                        lumen.getRatio(charges[2],Type.AI,0), 
                                                                                         0, 
-                                                                                        lumen.getRatioError(charges[2],Types.AI,0));
+                                                                                        lumen.getRatioError(charges[2],Type.AI,0));
         }
         for(int i=0; i<2; i++) {
             this.fit(aiDGs.get("data").getGraph(charges[i].getName() + "eff" ));
@@ -111,28 +111,28 @@ public class LumiAnalysis {
             LumiDatum lumen = this.lumies.get(j);
             for(int i=0; i<2; i++) {
                 if(!lumen.getRun().equals("mc")) {
-                    lumen.setNorm(charges[i], Types.CONVENTIONAL, lumiDGs.get("data").getGraph(charges[i].getName() + "conventional").getFunction().getParameter(0));
-                    lumen.setNorm(charges[i], Types.AI,           lumiDGs.get("data").getGraph(charges[i].getName() + "ai").getFunction().getParameter(0));
+                    lumen.setNorm(charges[i], Type.CONVENTIONAL, lumiDGs.get("data").getGraph(charges[i].getName() + "conventional").getFunction().getParameter(0));
+                    lumen.setNorm(charges[i], Type.AI,           lumiDGs.get("data").getGraph(charges[i].getName() + "ai").getFunction().getParameter(0));
                 }
-                if(lumen.getNorm(charges[i], Types.AI)>0)
+                if(lumen.getNorm(charges[i], Type.AI)>0)
                     normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "ai").addPoint(lumen.getCurrent(), 
-                                                lumen.getLumiNorm(Types.AI, charges[i], lumen.getNorm(charges[i], Types.CONVENTIONAL)), 
+                                                lumen.getLumiNorm(Type.AI, charges[i], lumen.getNorm(charges[i], Type.CONVENTIONAL)), 
                                                 0, 
-                                                lumen.getLumiNormErr(Types.AI, charges[i], lumen.getNorm(charges[i], Types.CONVENTIONAL)));
+                                                lumen.getLumiNormErr(Type.AI, charges[i], lumen.getNorm(charges[i], Type.CONVENTIONAL)));
                 else
                     normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
-                                                lumen.getLumiNorm(Types.CONVENTIONAL, charges[i]), 
+                                                lumen.getLumiNorm(Type.CONVENTIONAL, charges[i]), 
                                                 0, 
-                                                lumen.getLumiNormErr(Types.CONVENTIONAL, charges[i]));
+                                                lumen.getLumiNormErr(Type.CONVENTIONAL, charges[i]));
                     
                 normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
-                                                                                           lumen.getLumiNorm(Types.CONVENTIONAL, charges[i]), 
+                                                                                           lumen.getLumiNorm(Type.CONVENTIONAL, charges[i]), 
                                                                                            0, 
-                                                                                           lumen.getLumiNormErr(Types.CONVENTIONAL, charges[i]));
+                                                                                           lumen.getLumiNormErr(Type.CONVENTIONAL, charges[i]));
                 gainDGs.get(lumen.getRun()).getGraph(charges[i].getName()).addPoint(lumen.getCurrent(),lumen.getLumiRatio(charges[i]),0,lumen.getLumiRatioErr(charges[i]));
                 if(lumen.getRun().equals("bg") && charges[i]==Charges.NEG) {
-                    normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional" + "ele").addPoint(lumen.getCurrent(), lumen.getEH(Types.CONVENTIONAL, Charges.ELE), 0, 0.001);
-                    normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "ai" + "ele").addPoint(lumen.getCurrent(), lumen.getEH(Types.AI, Charges.ELE), 0, 0.001);
+                    normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional" + "ele").addPoint(lumen.getCurrent(), lumen.getEH(Type.CONVENTIONAL, Charges.ELE), 0, 0.001);
+                    normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "ai" + "ele").addPoint(lumen.getCurrent(), lumen.getEH(Type.AI, Charges.ELE), 0, 0.001);
                     gainDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "ele").addPoint(lumen.getCurrent(),lumen.getLumiRatio(Charges.ELE),0,lumen.getLumiRatioErr(Charges.ELE));                    
                 }
             }

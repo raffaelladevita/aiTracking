@@ -1,11 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.clas.analysis;
 
 import org.jlab.clas.physics.LorentzVector;
+import org.jlab.clas.physics.Particle;
 import org.jlab.clas.physics.Vector3;
 import org.jlab.detector.base.DetectorType;
 
@@ -554,6 +550,12 @@ public class Track {
         return false;
     }
     
+    public Particle particle() {
+        if(this.pid()!=0)
+            return new Particle(this.pid(), this.px(), this.py(), this.pz(), this.vx(), this.vy(), this.vz());
+        else
+            return null;
+    }
     
     public void show(){
         System.out.println(this.toString());
