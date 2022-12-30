@@ -21,7 +21,7 @@ public class HistoEvent extends Histos {
     private Type type = null;
     
     public HistoEvent(String str, Type type, int col) {
-        super(str,type.getName(),col);
+        super(str,type,col);
         this.type   = type;
         this.beam   = new Particle(11, 0,0,Constants.BEAMENERGY, 0,0,0);
         this.target = Particle.createWithPid(Constants.TARGETPID, 0,0,0, 0,0,0);
@@ -94,7 +94,7 @@ public class HistoEvent extends Histos {
     
     
     @Override
-    public void fill(ArrayList<Track> tracks) {
+    public boolean fill(ArrayList<Track> tracks) {
         Track electron = null;
         Track piplus   = null;
         Track piminus  = null;  
@@ -129,6 +129,15 @@ public class HistoEvent extends Histos {
                 }
             }
         }
+        if(trigger!=null) {
+            Particle W = new Particle();
+            W.copy(target);
+            W.combine(beam, +1);
+            W.combine(trigger.particle(), -1);
+            this.get("eh").getH1F("We_" + this.getName()).fill(W.mass());
+            for(int i=0; i<hadpos.size(); i++) this.get("eh").getH1F("Wehp_" + this.getName()).fill(W.mass());
+            for(int i=0; i<hadneg.size(); i++) this.get("eh").getH1F("Wehm_" + this.getName()).fill(W.mass());
+        }
         if(this.isEventType(electron, proton, piplus, piminus)) {
             if(electron!=null && piplus!=null && piminus!=null) {
                 Particle missing = new Particle();
@@ -141,7 +150,8 @@ public class HistoEvent extends Histos {
                 rho.copy(piplus.particle());
                 rho.combine(piminus.particle(), +1);
                 this.get("2pi").getH1F("mxt1_" + this.getName()).fill(missing.mass());
-                this.get("2pi").getH1F("mit1_" + this.getName()).fill(rho.mass());                    
+                this.get("2pi").getH1F("mit1_" + this.getName()).fill(rho.mass());  
+                return true;
             }
             else if(electron!=null && piplus!=null && proton!=null && piminus==null) {
                 Particle missing = new Particle();
@@ -154,7 +164,8 @@ public class HistoEvent extends Histos {
                 rho.copy(piplus.particle());
                 rho.combine(missing, +1);
                 this.get("2pi").getH1F("mxt2_" + this.getName()).fill(missing.mass2());
-                this.get("2pi").getH1F("mit2_" + this.getName()).fill(rho.mass());                                
+                this.get("2pi").getH1F("mit2_" + this.getName()).fill(rho.mass());  
+                return true;
             }
             else if(electron!=null && piminus!=null && proton!=null && piplus==null) {
                 Particle missing = new Particle();
@@ -167,7 +178,8 @@ public class HistoEvent extends Histos {
                 rho.copy(missing);
                 rho.combine(piminus.particle(), +1);
                 this.get("2pi").getH1F("mxt3_" + this.getName()).fill(missing.mass2());
-                this.get("2pi").getH1F("mit3_" + this.getName()).fill(rho.mass());                                
+                this.get("2pi").getH1F("mit3_" + this.getName()).fill(rho.mass()); 
+                return true;
             }
             else if(electron!=null && piplus!=null && piminus==null && proton==null) {
                 Particle neutron = new Particle();
@@ -181,6 +193,7 @@ public class HistoEvent extends Histos {
                 W.combine(electron.particle(), -1);
                 this.get("1pi").getH1F("W1_" + this.getName()).fill(W.mass());
                 this.get("1pi").getH1F("mxt1_" + this.getName()).fill(neutron.mass());                    
+                return true;
             }
             else if(electron!=null && proton!=null && piminus==null && piplus==null) {
                 Particle pizero = new Particle();
@@ -194,17 +207,10 @@ public class HistoEvent extends Histos {
                 W.combine(electron.particle(), -1);
                 this.get("1pi").getH1F("W2_" + this.getName()).fill(W.mass());
                 this.get("1pi").getH1F("mxt2_" + this.getName()).fill(pizero.mass2());                    
+                return true;
             }
         }
-        if(trigger!=null) {
-            Particle W = new Particle();
-            W.copy(target);
-            W.combine(beam, +1);
-            W.combine(trigger.particle(), -1);
-            this.get("eh").getH1F("We_" + this.getName()).fill(W.mass());
-            for(int i=0; i<hadpos.size(); i++) this.get("eh").getH1F("Wehp_" + this.getName()).fill(W.mass());
-            for(int i=0; i<hadneg.size(); i++) this.get("eh").getH1F("Wehm_" + this.getName()).fill(W.mass());
-        }
+        return false;
     }
     
     public int getNe() {

@@ -21,17 +21,17 @@ public class LumiDatum {
     
     public void initTracks(String run, Charges charge, Histos...histos) {
         for(Histos histo : histos) {
-            this.setTracks(charge, Type.getType(histo.getTitle()), 0, histo.getEntries("summary"));
-            this.setTracks(charge, Type.getType(histo.getTitle()), 6, histo.getEntries("6SL"));
-            this.setTracks(charge, Type.getType(histo.getTitle()), 5, histo.getEntries("5SL"));
+            this.setTracks(charge, histo.getType(), 0, histo.getEntries("summary"));
+            this.setTracks(charge, histo.getType(), 6, histo.getEntries("6SL"));
+            this.setTracks(charge, histo.getType(), 5, histo.getEntries("5SL"));
         }
     }
 
     public void initEH(HistoEvent...histos) {
         for(HistoEvent histo : histos) {
-            this.setEH(Type.getType(histo.getTitle()), Charges.ELE, histo.getNe());
-            this.setEH(Type.getType(histo.getTitle()), Charges.POS, histo.getNehp());
-            this.setEH(Type.getType(histo.getTitle()), Charges.NEG, histo.getNehm());
+            this.setEH(histo.getType(), Charges.ELE, histo.getNe());
+            this.setEH(histo.getType(), Charges.POS, histo.getNehp());
+            this.setEH(histo.getType(), Charges.NEG, histo.getNehm());
         }
     }
 

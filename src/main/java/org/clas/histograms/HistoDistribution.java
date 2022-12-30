@@ -1,12 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.clas.histograms;
 
 import java.util.LinkedHashMap;
 import org.clas.analysis.Track;
+import org.clas.analysis.Type;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
@@ -20,8 +16,8 @@ public class HistoDistribution extends Histos {
     
     private LinkedHashMap<String,String> summaries;
                     
-    public HistoDistribution(String str, String title, int col) {
-        super(str,title,col);
+    public HistoDistribution(String str, Type type, int col) {
+        super(str,type,col);
     }
     
     @Override

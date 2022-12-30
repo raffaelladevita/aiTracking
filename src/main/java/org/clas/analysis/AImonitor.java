@@ -82,13 +82,13 @@ public class AImonitor {
         GStyle.setGraphicsFrameLineWidth(1);
         GStyle.getH1FAttributes().setLineWidth(2);
         for(int i=0; i<charges.length; i++) {
-            tr[i] = new HistoDistribution("tr"+charges[i],Type.CONVENTIONAL.getName(),1);
-            ai[i] = new HistoDistribution("ai"+charges[i],Type.AI.getName(),2);
-            trMatched[i] = new HistoDistribution("tr"+charges[i]+"M",Type.MATCHED.getName(),4);
-            aiMatched[i] = new HistoDistribution("ai"+charges[i]+"M",Type.MATCHED.getName(),4);
-            trUnmatched[i] = new HistoDistribution("tr"+charges[i]+"N",Type.UNMATCHED.getName(),3);
-            aiUnmatched[i] = new HistoDistribution("ai"+charges[i]+"N",Type.UNMATCHED.getName(),3);
-            trCands[i]     = new HistoDistribution("tr"+charges[i]+"C",Type.CANDIDATES.getName(),5);
+            tr[i] = new HistoDistribution("tr"+charges[i],Type.CONVENTIONAL,1);
+            ai[i] = new HistoDistribution("ai"+charges[i],Type.AI,2);
+            trMatched[i] = new HistoDistribution("tr"+charges[i]+"M",Type.MATCHED,4);
+            aiMatched[i] = new HistoDistribution("ai"+charges[i]+"M",Type.MATCHED,4);
+            trUnmatched[i] = new HistoDistribution("tr"+charges[i]+"N",Type.UNMATCHED,3);
+            aiUnmatched[i] = new HistoDistribution("ai"+charges[i]+"N",Type.UNMATCHED,3);
+            trCands[i]     = new HistoDistribution("tr"+charges[i]+"C",Type.CANDIDATES,5);
             resol[i] = new HistoResolution(charges[i]+"Res",i+1);   
         }
         trEvent  = new HistoEvent("tr", Type.CONVENTIONAL, 1);
@@ -148,10 +148,10 @@ public class AImonitor {
             cname = charges[i] + " resolution";
             canvas.addCanvas(cname);
             canvas.getCanvas(cname).draw(resol[i]);
-            this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i],minentries).get("summary"),        0.3, false);
-            this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i],minentries).get("summary"), 0.3, false);
-            this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i],minentries).get("6SL"),            0.3, false);
-            this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i],minentries).get("6SL"),     0.3, false);
+            this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i],minentries).get("summary"),        0.1, false);
+            this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i],minentries).get("summary"), 0.1, false);
+            this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i],minentries).get("6SL"),            0.1, false);
+            this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i],minentries).get("6SL"),     0.1, false);
             this.drawDifferences(canvas, charges[i] + " 5SL differences", ai[i].diff(tr[i],minentries).get("5SL"),            0.8, false);
             this.drawDifferences(canvas, charges[i] + " 5SL differences", trMatched[i].diff(tr[i],minentries).get("5SL"),     0.8, false);
         }
@@ -159,14 +159,14 @@ public class AImonitor {
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("2pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("2pi"));                    
-        canvas.getCanvas(cname).draw(trEventM.get("2pi"));
+//        canvas.getCanvas(cname).draw(trEventM.get("2pi"));
         canvas.getCanvas(cname).draw(trEventN.get("2pi"));
         this.drawDifferences(canvas, "2pidifferences", aiEvent.diff(trEvent,minentries).get("2pi"), 0.7, true);
         cname = "1pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("1pi"));
         canvas.getCanvas(cname).draw(aiEvent.get("1pi"));                    
-        canvas.getCanvas(cname).draw(trEventM.get("1pi"));
+//        canvas.getCanvas(cname).draw(trEventM.get("1pi"));
         canvas.getCanvas(cname).draw(trEventN.get("1pi"));
         this.drawDifferences(canvas, "1pidifferences", aiEvent.diff(trEvent,minentries).get("1pi"), 0.4, true);
         cname = "eh+/-";
@@ -272,7 +272,7 @@ public class AImonitor {
                             ai.setMatch(true);
                             resol[(tr.charge()+1)/2].fill(tr, ai);
                             if(tr.pid()==11) resol[2].fill(tr,ai);
-                            if(tr.diff(ai) && trTracks.size()==1 && aiTracks.size()==1) 
+                            if(tr.diff(ai) && tr.isValid() && ai.isValid() && trTracks.size()==1 && aiTracks.size()==1) 
                                 status.setMismatch();
                         }
                     }
@@ -307,7 +307,7 @@ public class AImonitor {
             }
             trEvent.fill(trTracks);
             trEventM.fill(trTracks);
-            trEventN.fill(trTracks);
+            if(trEventN.fill(trTracks)) status.setPiMissing();
         }
         if(aiTracks!=null) {
             for(Track track : aiTracks) {
@@ -542,6 +542,7 @@ public class AImonitor {
         private boolean cdMissing=false;
         private boolean cvMissing=false;
         private boolean mismatched=false;
+        private boolean piMissing=false;
 
         public EventStatus() {
         }
@@ -577,8 +578,15 @@ public class AImonitor {
         public void setMismatch() {
             this.mismatched = true;
         }
-        
-        
+
+        public boolean isPiMissing() {
+            return piMissing;
+        }
+
+        public void setPiMissing() {
+            this.piMissing = true;
+        }
+                
     }
     
     public static void main(String[] args){
@@ -618,12 +626,14 @@ public class AImonitor {
         String eventName2  = "missing_cd.hipo";
         String eventName3  = "missing_cv.hipo";
         String eventName4  = "mismatched.hipo";
+        String eventName5  = "missing_pi.hipo";
         if(!namePrefix.isEmpty()) {
             histoName  = namePrefix + "_" + histoName;
             eventName1 = namePrefix + "_" + eventName1;
             eventName2 = namePrefix + "_" + eventName2;
             eventName3 = namePrefix + "_" + eventName3;
             eventName4 = namePrefix + "_" + eventName4;
+            eventName5 = namePrefix + "_" + eventName5;
         }        
         boolean writeMissing = parser.getOption("-write").intValue()!=0;
         String  trackingType = parser.getOption("-banks").stringValue();        
@@ -700,6 +710,7 @@ public class AImonitor {
         HipoWriterSorted writer2 = new HipoWriterSorted();
         HipoWriterSorted writer3 = new HipoWriterSorted();
         HipoWriterSorted writer4 = new HipoWriterSorted();
+        HipoWriterSorted writer5 = new HipoWriterSorted();
 
         List<String> inputList = parser.getInputList();
         if(inputList.isEmpty()==true){
@@ -742,6 +753,7 @@ public class AImonitor {
                         AImonitor.setWriter(writer2, schema, eventName2);
                         AImonitor.setWriter(writer3, schema, eventName3);
                         AImonitor.setWriter(writer4, schema, eventName4);
+                        AImonitor.setWriter(writer5, schema, eventName5);
                     }
 
                     Banks banks = new Banks(trackingType,schema);
@@ -760,6 +772,7 @@ public class AImonitor {
                     if(writeMissing && status.isCdMissing())  writer2.addEvent(event);
                     if(writeMissing && status.isCvMissing())  writer3.addEvent(event);
                     if(writeMissing && status.isMismatched()) writer4.addEvent(event);
+                    if(writeMissing && status.isPiMissing())  writer5.addEvent(event);
 
                     progress.updateStatus();
                     if(maxEvents>0){
@@ -774,6 +787,7 @@ public class AImonitor {
                 writer2.close();
                 writer3.close();
                 writer4.close();
+                writer5.close();
             }
             analysis.saveHistos(histoName);
             analysis.loadStatistics("0",0);

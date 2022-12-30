@@ -356,9 +356,10 @@ public class Track {
                 return false;
         }
         // check FTOF
-        if(this.trackEdge[3]<Constants.getEdge(DetectorType.FTOF) && 
-           this.trackEdge[4]<Constants.getEdge(DetectorType.FTOF) && 
-           this.trackEdge[5]<Constants.getEdge(DetectorType.FTOF))
+        if(this.trackEdge[3]<Constants.getEdge(DetectorType.FTOF) 
+        && this.trackEdge[4]<Constants.getEdge(DetectorType.FTOF) 
+//        && this.trackEdge[5]<Constants.getEdge(DetectorType.FTOF)
+          )
             return false;
         // check ECAL for electrons
         if(this.pid()==11) {

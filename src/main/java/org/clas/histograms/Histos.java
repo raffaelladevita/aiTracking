@@ -1,14 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.clas.histograms;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import org.clas.analysis.Track;
+import org.clas.analysis.Type;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.data.IDataSet;
@@ -21,13 +17,13 @@ import org.jlab.groot.group.DataGroup;
  */
 public class Histos extends LinkedHashMap<String,DataGroup> {
     
-    private String name  = null;
-    private String title = null;
+    private String name = null;
+    private Type   type = null;
     
-    public Histos(String str, String title, int col) {
+    public Histos(String str, Type type, int col) {
         super();
         this.setName(str);
-        this.setTitle(title);
+        this.setType(type);
         this.init();        
         this.create(col);
     }
@@ -41,7 +37,8 @@ public class Histos extends LinkedHashMap<String,DataGroup> {
     public void fill(Track track) {
     }
 
-    public void fill(ArrayList<Track> tracks) {
+    public boolean fill(ArrayList<Track> tracks) {
+        return true;
     }
 
     public int getEntries() {
@@ -133,7 +130,7 @@ public class Histos extends LinkedHashMap<String,DataGroup> {
         return name;
     }
         
-    public void setName(String name) {
+    public final void setName(String name) {
         this.name = name;
     }
         
@@ -142,12 +139,12 @@ public class Histos extends LinkedHashMap<String,DataGroup> {
         return prefix;
     }
 
-    public String getTitle() {
-        return title;
+    public Type getType() {
+        return type;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public final void setType(Type type) {
+        this.type = type;
     }
     
     public void setStats(String opts) {
