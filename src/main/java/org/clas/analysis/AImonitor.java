@@ -6,6 +6,8 @@ import org.clas.histograms.HistoDistribution;
 import org.clas.fiducials.Fiducial;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.JFrame;
 import org.jlab.geom.prim.Line3D;
@@ -150,6 +152,8 @@ public class AImonitor {
             canvas.getCanvas(cname).draw(resol[i]);
             this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i],minentries).get("summary"),        0.1, false);
             this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i],minentries).get("summary"), 0.1, false);
+            this.drawDifferences(canvas, charges[i] + " 2D differences",  ai[i].diff(tr[i],minentries).get("2D"),             0.1, false);
+            this.drawDifferences(canvas, charges[i] + " 2D differences",  trMatched[i].diff(tr[i],minentries).get("2D"),      0.1, false);
             this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i],minentries).get("6SL"),            0.1, false);
             this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i],minentries).get("6SL"),     0.1, false);
             this.drawDifferences(canvas, charges[i] + " 5SL differences", ai[i].diff(tr[i],minentries).get("5SL"),            0.8, false);
@@ -343,6 +347,11 @@ public class AImonitor {
         if(trackBank!=null)      event.read(trackBank);
         if(trackingBank!=null)   event.read(trackingBank);
         if(hitBank!=null)        event.read(hitBank);
+
+        double torusScale = -1;
+        if(runConfig!=null && runConfig.getRows()>0) torusScale = runConfig.getFloat("torus",0);
+        
+        // use tracking back if available 
         if(trackingBank!=null && trackingBank.getRows()>0) {
             // create tracks list from track bank
             tracks = new ArrayList();
@@ -355,6 +364,7 @@ public class AImonitor {
                                         trackingBank.getFloat("Vtx0_x", it),
                                         trackingBank.getFloat("Vtx0_y", it),
                                         trackingBank.getFloat("Vtx0_z", it));
+                track.index(it);
                 track.sector(trackingBank.getByte("sector", it));
                 track.NDF(trackingBank.getShort("ndf", it));
                 track.chi2(trackingBank.getFloat("chi2", it)/trackingBank.getShort("ndf", it));
@@ -384,7 +394,7 @@ public class AImonitor {
                         }
                     }
                 }
-                if(runConfig!=null && runConfig.getRows()>0) track.polarity(runConfig.getFloat("torus",0));
+                track.polarity(torusScale);
                 tracks.add(track);
             }
             // add information from particle bank
@@ -402,6 +412,37 @@ public class AImonitor {
                     }
                 }
             }
+        }
+        else if(trackBank!=null && particleBank!=null) {
+            tracks = new ArrayList<>();
+            for(int it = 0; it < trackBank.getRows(); it++){
+                int pindex = trackBank.getShort("pindex", it);
+                int status = particleBank.getShort("status", pindex);
+                // Forward Detector only
+                if(((int) Math.abs(status)/1000)==2) { 
+                    int index = trackBank.getShort("index", it);
+                    Track track = new Track(banks.getMode(),
+                                        particleBank.getByte("charge", pindex),
+                                        particleBank.getFloat("px", pindex),
+                                        particleBank.getFloat("py", pindex),
+                                        particleBank.getFloat("pz", pindex),
+                                        particleBank.getFloat("vx", pindex),
+                                        particleBank.getFloat("vy", pindex),
+                                        particleBank.getFloat("vz", pindex));
+                    track.index(index);
+                    track.sector(trackBank.getByte("sector", it));
+                    track.NDF(trackBank.getShort("NDF", it));
+                    track.chi2(trackBank.getFloat("chi2", it)/trackBank.getShort("NDF", it));
+                    track.status(status);
+                    track.pid(particleBank.getInt("pid", pindex));                
+                    track.chi2pid(particleBank.getFloat("chi2pid", pindex));    
+                    track.polarity(torusScale);
+                    tracks.add(track);
+                }
+            }
+            Collections.sort(tracks);
+        }
+        if(tracks!=null) {
             // add information from trajectory bank
             if(trajectoryBank!=null) {
                 for(int loop = 0; loop < trajectoryBank.getRows(); loop++){

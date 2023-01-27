@@ -10,8 +10,9 @@ import org.jlab.detector.base.DetectorType;
  * @author devita
  */
 
-public class Track {
+public class Track implements Comparable<Track> {
     
+    private int trackIndex = 0;
     // from tracking bank
     private LorentzVector trackVector = new LorentzVector(0.0,0.0,0.0,0);
     private Vector3 trackVertex = new Vector3(0.0,0.0,0.0);
@@ -90,6 +91,14 @@ public class Track {
         for(int i=0; i<this.trackCrosses.length; i++) {
             this.trackCrosses[i] = new Vector3(0,0,0);
         }
+    }
+
+    public int index() {
+        return trackIndex;
+    }
+
+    public void index(int trackIndex) {
+        this.trackIndex = trackIndex;
     }
 
     public int mode() {
@@ -497,7 +506,7 @@ public class Track {
     private int matchedClusters(Track t) {
         int nmatch = 0;
         for(int i=0; i<6; i++) {
-            if(this.clusters()[i]==t.clusters()[i]) nmatch++;            
+            if(this.clusters()[i]==t.clusters()[i] && this.clusters()[i]!=0) nmatch++;            
         }
         return nmatch;
     }
@@ -613,6 +622,11 @@ public class Track {
             }
         }
         return value;
+    }
+
+    @Override
+    public int compareTo(Track o) {
+        return this.index()<o.index() ? -1 : 1;
     }
     
 }
