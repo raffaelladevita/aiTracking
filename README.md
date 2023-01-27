@@ -38,28 +38,35 @@ Run the code with:
 
    Options :
     -banks : tracking level: TB or HB (default = TB)
+     -chi2 : max track reduced chi2 (-1 = infinity (default = -1)
+     -edge : colon-separated DC, FTOF, ECAL edge cuts in cm (e.g. 5:10:5) (default = )
    -energy : beam energy (default = 10.6)
     -histo : read histogram file (0/1) (default = 0)
      -lumi : (comma-separated) luminosity scan currents, e.g. "5:data,20:data,40:data,40:bg;40:mc" (default = )
+    -match : match based on clusters or hits (0/1) (default = 0)
         -n : maximum number of events to process (default = -1)
         -o : output file name prefix (default = )
      -plot : display histograms (0/1) (default = 1)
+     -pmin : minimum momentum (GeV) (default = 0.5)
+   -sector : sector (1-6, 0=any) (default = 0)
     -stats : histogram stat option (default = )
 -superlayers : number of superlayers (5 or 6, 0=any) (default = 0)
    -target : target PDG (default = 2212)
 -threshold : minimum number of entries for histogram differences (default = 0)
    -vertex : vertex range (min:max) (default = -15:5)
+  -wiremin : min DC wire (default = 1)
     -write : save events with missing tracks (0/1) (default = 0)
 ```  
 
 
 ### Luminosity scan analysis
 To analyze a luminosity scan:
-* run the code on the data files for each luminosity setting, separately,
+* run the code on the data files for each luminosity setting, separately. For denoising validation use the option ```-match 1``` to match tracks at the hit level.
 * save the histogram files,
 * run the code with the ````-lumi``` option. For example:
 ```
 ./bin/aiTracking -histo 1 -lumi "2:data,5:data,10:data,20:data,40:data" 2nA_histo_file.hipo 5nA_histo_file.hipo 10nA_histo_file.hipo 20nA_histo_file.hipo 40nA_histo_file.hipo
+```
 
 The cuts used in this analysis are defined at https://github.com/raffaelladevita/aiTracking/blob/master/src/main/java/org/clas/analysis/Track.java#L431-L439 and can be easily modified as needed.
 
