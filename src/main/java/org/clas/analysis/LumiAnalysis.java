@@ -114,16 +114,16 @@ public class LumiAnalysis {
                     lumen.setNorm(charges[i], Type.CONVENTIONAL, lumiDGs.get("data").getGraph(charges[i].getName() + "conventional").getFunction().getParameter(0));
                     lumen.setNorm(charges[i], Type.AI,           lumiDGs.get("data").getGraph(charges[i].getName() + "ai").getFunction().getParameter(0));
                 }
-                if(lumen.getNorm(charges[i], Type.AI)>0)
+                if(lumen.getNorm(charges[i], Type.CONVENTIONAL)>0)
                     normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "ai").addPoint(lumen.getCurrent(), 
                                                 lumen.getLumiNorm(Type.AI, charges[i], lumen.getNorm(charges[i], Type.CONVENTIONAL)), 
                                                 0, 
                                                 lumen.getLumiNormErr(Type.AI, charges[i], lumen.getNorm(charges[i], Type.CONVENTIONAL)));
                 else
-                    normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
-                                                lumen.getLumiNorm(Type.CONVENTIONAL, charges[i]), 
+                    normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "ai").addPoint(lumen.getCurrent(), 
+                                                lumen.getLumiNorm(Type.AI, charges[i]), 
                                                 0, 
-                                                lumen.getLumiNormErr(Type.CONVENTIONAL, charges[i]));
+                                                lumen.getLumiNormErr(Type.AI, charges[i]));
                     
                 normDGs.get(lumen.getRun()).getGraph(charges[i].getName() + "conventional").addPoint(lumen.getCurrent(), 
                                                                                            lumen.getLumiNorm(Type.CONVENTIONAL, charges[i]), 
@@ -249,7 +249,7 @@ public class LumiAnalysis {
                 GraphErrors conv = normDGs.get(type).getGraph(charges[i].getName() + "conventional");
                 GraphErrors ai   = normDGs.get(type).getGraph(charges[i].getName() + "ai");
                 GraphErrors gain = gainDGs.get(type).getGraph(charges[i].getName());
-                if(conv!=null && ai!=null && gain!=null && conv.getDataSize(0)>0) {
+                if(conv!=null && ai!=null && gain!=null && conv.getDataSize(0)>0 && ai.getDataSize(0)>0) {
                     System.out.println(type + " " + charges[i].getName());
                     System.out.println("current\tconv\terror\tai\terror\tgain\terror");
                     for(int j=0; j<conv.getDataSize(0); j++)
@@ -258,6 +258,11 @@ public class LumiAnalysis {
                                                          conv.getDataY(j),conv.getDataEY(j),
                                                          ai.getDataY(j),  ai.getDataEY(j),
                                                          gain.getDataY(j),gain.getDataEY(j)));
+                    F1D func = (F1D) conv.getFunction();
+                    F1D funa = (F1D) ai.getFunction();
+                    F1D fung = (F1D) gain.getFunction();
+                    System.out.println(String.format("cv slope = (%.5f \u00b1 %.5f)", func.getParameter(1), func.parameter(1).error()));
+                    System.out.println(String.format("ai slope = (%.5f \u00b1 %.5f)", funa.getParameter(1), funa.parameter(1).error()));
                 }
             }
         }
