@@ -16,6 +16,7 @@ It also provides the functionality for luminosity scan analyses to estimate the 
 * Input data:
   * hipo files with data processed with the data-aicv.yaml provided with the coatjava distributions and the following bank:
     * ```RUN::config, ai::tracks, REC::Particle, REC::Track, REC::Traj, TimeBasedTrkg::TBTracks, RECAI::Particle, RECAI::Track, RECAI::Traj, TimeBasedTrkg::AITracks``` for time-base tracking analysis,
+    
     *```RUN::config, ai::tracks, RECHB::Particle, RECHB::Track, RECHB::Traj, HitBasedTrkg::HBTracks, RECHBAI::Particle, RECHBAI::Track, RECHBAI::Traj, HitBasedTrkg::AITracks``` for hit base tracking analysis.
   
   
