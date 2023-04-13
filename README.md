@@ -30,7 +30,7 @@ Run the code with:
 ```
   ./bin/aiTracking
   
-     Usage : aiTracking 
+     Usage : aiTracking file1 file2 ... fileN
 
    Options :
     -banks : tracking level: TB or HB (default = TB)
@@ -71,14 +71,41 @@ Similarly, for denoising validation, input files can be produced as follows:
 * use the yaml file denoise.yaml from the coatjava distribution of your choice (supported starting from coatjava-8.7.1): this will be in the plugins/clas12/config subfolder of the Clara installation;
 * update the services configuration (variation, timestamp, AI neural network) as needed for your data set;
 * setup a custom schema directory for saving the following banks as a minimum ```RUN::config, ai::tracks, aid::tracks, REC::Particle, REC::Track, REC::Traj, TimeBasedTrkg::TBTracks, TimeBasedTrkg::TBHits, RECAI::Particle, RECAI::Track, RECAI::Traj, TimeBasedTrkg::AITracks, TimeBasedTrkg::AIHits```;
-* run reconstruction configuring a workflow with the --denoise” option.
+* run reconstruction configuring a CLAS12 reconstruction workflow with the --denoise” option.
 
 
 The same procedure can be used to produce input files for validation at the Hit-based tracking level. The only difference is in the banks to save:
 * ```RUN::config, ai::tracks, RECHB::Particle, RECHB::Track, RECHB::Traj, HitBasedTrkg::HBTracks, RECHBAI::Particle, RECHBAI::Track, RECHBAI::Traj, HitBasedTrkg::AITracks``` for AI-assisted tracking validation,
 * ```RUN::config, ai::tracks, RECHB::Particle, RECHB::Track, RECHB::Traj, HitBasedTrkg::HBTracksj, HitBasedTrkg::HBHits, RECHBAI::Particle, RECHBAI::Track, RECHBAI::Traj, HitBasedTrkg::AITracks, HitBasedTrkg::AIHits``` for denoising validation.
 
-
+### Command line options
+Several options can be selected from command line:
+* Configuration:
+  * ```-banks```: select whether the analysis is be performed on Hit Based or Time Based banks (default is TB)
+  * ```-match```: matches tracks reconstructed in the same event with different tracking algorithms based on clusters (0=default) or hits (1). The default mode is recommended for AI-assisted tracking validation; in this case two tracks are considered matched if resulting from the exact same clusters. Matching based on hits should instead be selected for denoising validation; in this case, two tracks are considered matched if they share at least 60% of the hits; 
+  * ```-superlayers```: select the number of superlayers a tracks should have to be included in the analysis, 5, 6 or any (0) with default being any
+  * ```-sector```: select the sectors to be included in the analysis; values are 1 to 6 or 0 for all sectors (default)
+  * ```-lumi```: performs a luminosity scan analysis on existing histogram files (see section below)
+* Display:
+  * ```-plot```: open histogram GUI (1) or run in batch mode (0), default is 1
+  * ```-stats```: set the histogram stat option, for example "1111" to show histogram name, entries, mean and RMS or "" to turn off the statistical box
+  * ```-threshold```: minimum number of entries for histogram differences (default = 0), useful to avoid large fluctuations in histogram ratio
+* I/O:
+  * ```-histo```: read existing histogram file (0/1) (default = 0);
+  * ```-n```: maximum number of events to process (default = -1);
+  * ```-o```: output file name prefix (default = ), used for the histogram file name and the missing tracks files that can be saved with the option ```-write```;
+  * ```-write```: save events with missing tracks (0/1) (default = 0)
+* Run-dependent parameters:
+  * ```-target```: target PDG (default = 2212)
+  * ```-energy```: beam energy (default = 10.6)
+* Track selection:
+  * ```-chi2```: max track reduced chi2 (-1 = infinity (default = -1)
+  * ```-edge```: colon-separated DC, FTOF, ECAL edge cuts in cm (e.g. 5:10:5) (default = )
+  * ```-pmin```: minimum momentum (GeV) (default = 0.5)
+  * ```-vertex```: vertex range (min:max) (default = -15:5)
+  * ```-wiremin```: min DC wire (default = 1)
+    
+    
 ### Luminosity scan analysis
 To analyze a luminosity scan:
 * run the code on the data files for each luminosity setting, separately. For denoising validation use the option ```-match 1``` to match tracks at the hit level.
