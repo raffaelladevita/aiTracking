@@ -37,6 +37,7 @@ Run the code with:
      -chi2 : max track reduced chi2 (-1 = infinity (default = -1)
      -edge : colon-separated DC, FTOF, ECAL edge cuts in cm (e.g. 5:10:5) (default = )
    -energy : beam energy (default = 10.6)
+      -fit : display fit parameters in luminosity analyses (0/1) (default = 1)
     -histo : read histogram file (0/1) (default = 0)
      -lumi : (comma-separated) luminosity scan currents, e.g. "5:data,20:data,40:data,40:bg;40:mc" (default = )
     -match : match based on clusters or hits (0/1) (default = 0)
@@ -44,6 +45,8 @@ Run the code with:
         -o : output file name prefix (default = )
      -plot : display histograms (0/1) (default = 1)
      -pmin : minimum momentum (GeV) (default = 0.5)
+    -range : set y-axis range for efficiency and gain plots (default = 0.1)
+    -scale : set luminosity dependence scale factor according to conventional (0) or AI-assisted tracking (1) (default = 1)
    -sector : sector (1-6, 0=any) (default = 0)
     -stats : histogram stat option (default = )
 -superlayers : number of superlayers (5 or 6, 0=any) (default = 0)
@@ -87,7 +90,10 @@ Several options can be selected from command line:
   * ```-sector```: select the sectors to be included in the analysis; values are 1 to 6 or 0 for all sectors (default)
   * ```-lumi```: performs a luminosity scan analysis on existing histogram files (see section below)
 * Display:
+  * ```-fit```: display the luminosity analyses fit results (1) or no t(0)), default is 1
   * ```-plot```: open histogram GUI (1) or run in batch mode (0), default is 1
+  * ```-range```: set the y-axis range to 1 +/- the chosen value
+  * ```-plot```: set the normalization scale factor in the luminosity analyses from conventional (0) or AI-assisted (1) tracking, default is 1
   * ```-stats```: set the histogram stat option, for example "1111" to show histogram name, entries, mean and RMS or "" to turn off the statistical box
   * ```-threshold```: minimum number of entries for histogram differences (default = 0), useful to avoid large fluctuations in histogram ratio
 * I/O:
