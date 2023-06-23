@@ -7,7 +7,6 @@ import org.clas.fiducials.Fiducial;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import javax.swing.JFrame;
 import org.jlab.geom.prim.Line3D;
@@ -55,10 +54,12 @@ public class AImonitor {
       
     private int minentries = 0;
     private String opts = "";
+    private double yRange = 0.1;
     
-    public AImonitor(int nMin, String opts){       
+    public AImonitor(int nMin, String opts, double range){       
         this.minentries = nMin;
         this.opts = opts;
+        this.yRange = range;
         this.createHistos();
     }
     
@@ -150,12 +151,12 @@ public class AImonitor {
             cname = charges[i] + " resolution";
             canvas.addCanvas(cname);
             canvas.getCanvas(cname).draw(resol[i]);
-            this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i],minentries).get("summary"),        0.1, false);
-            this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i],minentries).get("summary"), 0.1, false);
-            this.drawDifferences(canvas, charges[i] + " 2D differences",  ai[i].diff(tr[i],minentries).get("2D"),             0.1, false);
-            this.drawDifferences(canvas, charges[i] + " 2D differences",  trMatched[i].diff(tr[i],minentries).get("2D"),      0.1, false);
-            this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i],minentries).get("6SL"),            0.1, false);
-            this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i],minentries).get("6SL"),     0.1, false);
+            this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i],minentries).get("summary"),        this.yRange, false);
+            this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i],minentries).get("summary"), this.yRange, false);
+            this.drawDifferences(canvas, charges[i] + " 2D differences",  ai[i].diff(tr[i],minentries).get("2D"),             this.yRange, false);
+            this.drawDifferences(canvas, charges[i] + " 2D differences",  trMatched[i].diff(tr[i],minentries).get("2D"),      this.yRange, false);
+            this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i],minentries).get("6SL"),            this.yRange, false);
+            this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i],minentries).get("6SL"),     this.yRange, false);
             this.drawDifferences(canvas, charges[i] + " 5SL differences", ai[i].diff(tr[i],minentries).get("5SL"),            0.8, false);
             this.drawDifferences(canvas, charges[i] + " 5SL differences", trMatched[i].diff(tr[i],minentries).get("5SL"),     0.8, false);
         }
@@ -652,10 +653,13 @@ public class AImonitor {
         // histogram based analysis
         parser.addOption("-histo"      ,"0",    "read histogram file (0/1)");
         parser.addOption("-plot"       ,"1",    "display histograms (0/1)");
+        parser.addOption("-range"      ,"0.1",  "choose y-axis range for efficiency and gain plots");
         parser.addOption("-stats"      ,"",     "histogram stat option");
         parser.addOption("-threshold"  ,"0",    "minimum number of entries for histogram differences");
         // luminosity analysis
         parser.addOption("-lumi"       ,"",     "(comma-separated) luminosity scan currents, e.g. \"5:data,20:data,40:data,40:bg;40:mc\"");
+        parser.addOption("-fit"        ,"1",    "display fit parameters (0/1)");
+        parser.addOption("-scale"      ,"1",    "scale luminosity dependence to conventional (0) or AI-assisted tracking (1)");
         
         parser.parse(args);
         
@@ -710,7 +714,10 @@ public class AImonitor {
         boolean readHistos   = (parser.getOption("-histo").intValue()!=0);            
         boolean openWindow   = (parser.getOption("-plot").intValue()!=0);
         String  optStats     = parser.getOption("-stats").stringValue();        
+        double  yRange       = parser.getOption("-range").doubleValue();        
         int     minCounts    = parser.getOption("-threshold").intValue();
+        boolean lumiFit      = (parser.getOption("-fit").intValue()!=0);
+        boolean lumiScale    = (parser.getOption("-scale").intValue()!=0);
  
         List<Double> lumiCurrent = new ArrayList<>();
         List<String> lumiType    = new ArrayList<>();
@@ -743,7 +750,7 @@ public class AImonitor {
         
         SchemaFactory schema = null;           
         
-        AImonitor analysis = new AImonitor(minCounts,optStats);
+        AImonitor analysis = new AImonitor(minCounts,optStats, yRange);
         
         ArrayList<LumiDatum> lumis = new ArrayList<>();
         
@@ -838,8 +845,8 @@ public class AImonitor {
             JFrame frame = new JFrame(trackingType);
             EmbeddedCanvasTabbed canvas = null;
             if(readHistos && lumis.size()>1) {
-                LumiAnalysis luminosity = new LumiAnalysis(lumis);
-                canvas = luminosity.plotGraphs();
+                LumiAnalysis luminosity = new LumiAnalysis(lumis, lumiScale);
+                canvas = luminosity.plotGraphs(lumiFit);
                 frame.setSize(1000, 600);
             }
             else {
