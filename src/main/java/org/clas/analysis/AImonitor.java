@@ -653,13 +653,13 @@ public class AImonitor {
         // histogram based analysis
         parser.addOption("-histo"      ,"0",    "read histogram file (0/1)");
         parser.addOption("-plot"       ,"1",    "display histograms (0/1)");
-        parser.addOption("-range"      ,"0.1",  "choose y-axis range for efficiency and gain plots");
+        parser.addOption("-range"      ,"0.1",  "set y-axis range for efficiency and gain plots");
         parser.addOption("-stats"      ,"",     "histogram stat option");
         parser.addOption("-threshold"  ,"0",    "minimum number of entries for histogram differences");
         // luminosity analysis
         parser.addOption("-lumi"       ,"",     "(comma-separated) luminosity scan currents, e.g. \"5:data,20:data,40:data,40:bg;40:mc\"");
-        parser.addOption("-fit"        ,"1",    "display fit parameters (0/1)");
-        parser.addOption("-scale"      ,"1",    "scale luminosity dependence to conventional (0) or AI-assisted tracking (1)");
+        parser.addOption("-fit"        ,"1",    "display fit parameters in luminosity analyses (0/1)");
+        parser.addOption("-scale"      ,"1",    "set luminosity dependence scale factor according to conventional (0) or AI-assisted tracking (1)");
         
         parser.parse(args);
         
