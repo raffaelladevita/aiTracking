@@ -60,20 +60,31 @@ Run the code with:
 ### Input data:
 For AI-assisted tracking validation, input files can be produced as follows:
 * use the yaml file data-aicv.yaml from the coatjava distribution of your choice (supported starting from coatjava-7.1.0): this will be in the plugins/clas12/config subfolder of the Clara installation;
-* update the services configuration as needed for your data set; in case of doubts, consult the analysis coordinator of the data run group;
+* add the swap service if needed: this should be inserted in the service chain right after ```magfield``` and the appropriate configuration (timestamps and detector list) added to the configuration section; do not alter the order of the other services unless specifically instructed;
+* update the services configuration as needed for your data set: this typically involves setting the appropriate timestamp and variation; in case of doubts, consult the analysis coordinator of the data run group;
 * in the MLTD service configuration section:
-** update the run number to match the data to be processed; 
-** if using a new network file, choose the run number to match the one used when creating and saving the network to the archive file and add the following setting:
-   ```network: “absolute-path-to-your-network-archive-file”```
-   specifying the path to your network file.
-* run reconstruction saving the following banks as a minimum ```RUN::config, ai::tracks, REC::Particle, REC::Track, REC::Traj, TimeBasedTrkg::TBTracks, RECAI::Particle, RECAI::Track, RECAI::Traj, TimeBasedTrkg::AITracks```;
-* typically a few hipo files are sufficient but ideally a full production run should be processed.
+  * update the run number to match the data to be processed; 
+  * if using a new network file, choose the run number to match the one used when creating and saving the network to the archive file and add the following setting:
+    ```
+    network: “absolute-path-to-your-network-archive-file”
+    ```
+    specifying the path to your network file.
+* run reconstruction saving the following banks as a minimum ```RUN::config, ai::tracks, REC::Particle, REC::Track, REC::Traj, TimeBasedTrkg::TBTracks, RECAI::Particle, RECAI::Track, RECAI::Traj, TimeBasedTrkg::AITracks```; to do that, a custom schema can be created starting from the regular ```dst``` schema as follows:
+  ```
+  cp -rL path-to-dst-schema myschema
+  cp -rL path-to-dst-schema/../full/TimeBasedTrkg::*Hits.json myschema/.
+  cp -rL path-to-dst-schema/../full/TimeBasedTrkg::*Clusters.json myschema/.
+  cp -rL path-to-dst-schema/../full/TimeBasedTrkg::*Tracks.json myschema/.
+  ```
+  where ```myschema``` is the path to the new schema directory that will be created and that should be set in the yaml file;
+* typically a few hipo files are sufficient but ideally, a full production run should be processed. DO NOT include denoising in the data processing workflow.
 
 
 Similarly, for denoising validation, input files can be produced as follows:
 * use the yaml file denoise.yaml from the coatjava distribution of your choice (supported starting from coatjava-8.7.1): this will be in the plugins/clas12/config subfolder of the Clara installation;
+* add the swap service if needed: this should be inserted in the service chain right after ```magfield``` and the appropriate configuration (timestamps and detector list added to the configuration section; do not alter the order of the other services unless specifically instructed;
 * update the services configuration (variation, timestamp, AI neural network) as needed for your data set;
-* setup a custom schema directory for saving the following banks as a minimum ```RUN::config, ai::tracks, aid::tracks, REC::Particle, REC::Track, REC::Traj, TimeBasedTrkg::TBTracks, TimeBasedTrkg::TBHits, RECAI::Particle, RECAI::Track, RECAI::Traj, TimeBasedTrkg::AITracks, TimeBasedTrkg::AIHits```;
+* setup a custom schema directory for saving the following banks as a minimum (see instruction above)```RUN::config, ai::tracks, aid::tracks, REC::Particle, REC::Track, REC::Traj, TimeBasedTrkg::TBTracks, TimeBasedTrkg::TBHits, RECAI::Particle, RECAI::Track, RECAI::Traj, TimeBasedTrkg::AITracks, TimeBasedTrkg::AIHits```;
 * run reconstruction configuring a CLAS12 reconstruction workflow with the --denoise” option.
 
 
