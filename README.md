@@ -75,6 +75,7 @@ For AI-assisted tracking validation, input files can be produced as follows:
   cp -rL path-to-dst-schema/../full/TimeBasedTrkg::*Hits.json myschema/.
   cp -rL path-to-dst-schema/../full/TimeBasedTrkg::*Clusters.json myschema/.
   cp -rL path-to-dst-schema/../full/TimeBasedTrkg::*Tracks.json myschema/.
+  cp -rL path-to-dst-schema/../full/ai::tracks.json myschema/.
   ```
   where ```myschema``` is the path to the new schema directory that will be created and that should be set in the yaml file;
 * typically a few hipo files are sufficient but ideally, a full production run should be processed. DO NOT include denoising in the data processing workflow.
