@@ -69,7 +69,7 @@ For AI-assisted tracking validation, input files can be produced as follows:
     network: “absolute-path-to-your-network-archive-file”
     ```
     specifying the path to your network file.
-* run reconstruction saving the following banks as a minimum ```RUN::config, ai::tracks, REC::Particle, REC::Track, REC::Traj, TimeBasedTrkg::TBTracks, RECAI::Particle, RECAI::Track, RECAI::Traj, TimeBasedTrkg::AITracks```; to do that, a custom schema can be created starting from the regular ```dst``` schema as follows:
+* run reconstruction saving the following banks as a minimum ```RUN::config, ai::tracks, aidn::tracks, REC::Particle, REC::Track, REC::Traj, TimeBasedTrkg::TBClusters, TimeBasedTrkg::TBHits, TimeBasedTrkg::TBTracks, RECAI::Particle, RECAI::Track, RECAI::Traj, TimeBasedTrkg::AIClusters, TimeBasedTrkg::AIHits, TimeBasedTrkg::AITracks```; to do that, a custom schema can be created starting from the regular ```dst``` schema as follows:
   ```
   cp -rL path-to-dst-schema myschema
   cp -rL path-to-dst-schema/../full/TimeBasedTrkg::*Hits.json myschema/.
