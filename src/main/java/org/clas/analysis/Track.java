@@ -498,7 +498,6 @@ public class Track implements Comparable<Track> {
                                                    && Math.abs(this.chi2pid())<3
                                                    && this.theta()<Math.toRadians(40.);
         value = value && this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX
-                      && this.chi2()<Constants.CHI2MAX
                       && this.isInDetector();
         return value;
     }
