@@ -167,9 +167,9 @@ public class LumiAnalysis {
             removeref(normDGs.get("bg").getGraph(charges[i].getName() + "conventional"));
             removeref(normDGs.get("bg").getGraph(charges[i].getName() + "ai"));
             removeref(gainDGs.get("bg").getGraph(charges[i].getName()));
-            normalize(normDGs.get("mc").getGraph(charges[i].getName() + "conventional"));
-            normalize(normDGs.get("mc").getGraph(charges[i].getName() + "ai"));
-            normalize(gainDGs.get("mc").getGraph(charges[i].getName()));
+//            normalize(normDGs.get("mc").getGraph(charges[i].getName() + "conventional"), normDGs.get("mc").getGraph(charges[i].getName() + "ai").getDataY(0));
+//            normalize(normDGs.get("mc").getGraph(charges[i].getName() + "ai"), normDGs.get("mc").getGraph(charges[i].getName() + "ai").getDataY(0));
+////            normalize(gainDGs.get("mc").getGraph(charges[i].getName()));
             if(charges[i]==Charges.NEG) {
                 normalize(normDGs.get("bg").getGraph(charges[i].getName() + "conventional" + "ele"));
                 normalize(normDGs.get("bg").getGraph(charges[i].getName() + "ai" + "ele"));
@@ -336,6 +336,24 @@ public class LumiAnalysis {
             if(i!=i0) {
                 graph.addPoint(x[i]-x[i0], y[i]/y[i0], ex[i], ey[i]/y[i0]);
             }
+        }
+    }
+        
+    private void normalize(GraphErrors graph, double norm) {
+        int n = graph.getDataSize(0);
+        double[] x  = new double[n];
+        double[] y  = new double[n];
+        double[] ex = new double[n];
+        double[] ey = new double[n];
+        for(int i=0; i<n; i++) {
+            x[i]  = graph.getDataX(i);
+            y[i]  = graph.getDataY(i);
+            ex[i] = graph.getDataEX(i);
+            ey[i] = graph.getDataEY(i);
+        }
+        graph.reset();
+        for(int i=0; i<n; i++) {
+            graph.addPoint(x[i], y[i]/norm, ex[i], ey[i]/norm);
         }
     }
     
