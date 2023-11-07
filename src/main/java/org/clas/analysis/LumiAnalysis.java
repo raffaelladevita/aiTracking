@@ -289,13 +289,23 @@ public class LumiAnalysis {
                                                          nconv.getDataY(j),nconv.getDataEY(j),
                                                          nai.getDataY(j),  nai.getDataEY(j),
                                                          gain.getDataY(j),gain.getDataEY(j)));
-                    F1D func = (F1D) nconv.getFunction();
-                    F1D funa = (F1D) nai.getFunction();
-                    F1D fung = (F1D) gain.getFunction();
-                    if(func!=null)
-                        System.out.println(String.format("cv slope = (%.5f \u00b1 %.5f)", func.getParameter(1), func.parameter(1).error()));
-                    if(funa!=null)
-                        System.out.println(String.format("ai slope = (%.5f \u00b1 %.5f)", funa.getParameter(1), funa.parameter(1).error()));
+                    F1D funuc = (F1D) uconv.getFunction();
+                    F1D funua = (F1D) uai.getFunction();
+                    F1D funnc = (F1D) nconv.getFunction();
+                    F1D funna = (F1D) nai.getFunction();
+                    F1D fung  = (F1D) gain.getFunction();
+                    if(funuc!=null)
+                        System.out.println(String.format("unnormalized cv: intercept=(%.5f \u00b1 %.5f) slope=(%.5f \u00b1 %.5f)", 
+                                                          funuc.getParameter(0), funuc.parameter(0).error(),funuc.getParameter(1), funuc.parameter(1).error()));
+                    if(funua!=null)
+                        System.out.println(String.format("unnormalized ai: intercept=(%.5f \u00b1 %.5f) slope=(%.5f \u00b1 %.5f)", 
+                                                          funua.getParameter(0), funua.parameter(0).error(),funua.getParameter(1), funua.parameter(1).error()));
+                    if(funnc!=null)
+                        System.out.println(String.format("normalized cv:   intercept=(%.5f \u00b1 %.5f) slope=(%.5f \u00b1 %.5f)", 
+                                                          funnc.getParameter(0), funnc.parameter(0).error(),funnc.getParameter(1), funnc.parameter(1).error()));
+                    if(funna!=null)
+                        System.out.println(String.format("normalized ai:   intercept=(%.5f \u00b1 %.5f) slope=(%.5f \u00b1 %.5f)", 
+                                                          funna.getParameter(0), funna.parameter(0).error(),funna.getParameter(1), funna.parameter(1).error()));
                 }
             }
         }
