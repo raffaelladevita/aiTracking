@@ -271,20 +271,26 @@ public class LumiAnalysis {
     private void printResults() {
         for(String type : normDGs.keySet()) {
             for(int i=0; i<2; i++) {
-                GraphErrors conv = normDGs.get(type).getGraph(charges[i].getName() + "conventional");
-                GraphErrors ai   = normDGs.get(type).getGraph(charges[i].getName() + "ai");
-                GraphErrors gain = gainDGs.get(type).getGraph(charges[i].getName());
-                if(conv!=null && ai!=null && gain!=null && conv.getDataSize(0)>0 && ai.getDataSize(0)>0) {
+                GraphErrors uconv = lumiDGs.get(type).getGraph(charges[i].getName() + "conventional");
+                GraphErrors uai   = lumiDGs.get(type).getGraph(charges[i].getName() + "ai");
+                GraphErrors nconv = normDGs.get(type).getGraph(charges[i].getName() + "conventional");
+                GraphErrors nai   = normDGs.get(type).getGraph(charges[i].getName() + "ai");
+                GraphErrors gain  = gainDGs.get(type).getGraph(charges[i].getName());
+                if(nconv!=null && nai!=null && gain!=null && nconv.getDataSize(0)>0 && nai.getDataSize(0)>0) {
+                    System.out.println();
                     System.out.println(type + " " + charges[i].getName());
-                    System.out.println("current\tconv\terror\tai\terror\tgain\terror");
-                    for(int j=0; j<conv.getDataSize(0); j++)
-                        System.out.println(String.format("%.0f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f", 
-                                                         conv.getDataX(j),
-                                                         conv.getDataY(j),conv.getDataEY(j),
-                                                         ai.getDataY(j),  ai.getDataEY(j),
+                    System.out.println("       \t      unnormalized values   \t\t      normalized values     \t\t   ratios");
+                    System.out.println("current\tconv\terror\tai\terror\t\tconv\terror\tai\terror\t\tgain\terror");
+                    for(int j=0; j<nconv.getDataSize(0); j++)
+                        System.out.println(String.format("%.0f\t%.4f\t%.4f\t%.4f\t%.4f\t\t%.4f\t%.4f\t%.4f\t%.4f\t\t%.4f\t%.4f", 
+                                                         nconv.getDataX(j),
+                                                         uconv.getDataY(j),uconv.getDataEY(j),
+                                                         uai.getDataY(j),  uai.getDataEY(j),
+                                                         nconv.getDataY(j),nconv.getDataEY(j),
+                                                         nai.getDataY(j),  nai.getDataEY(j),
                                                          gain.getDataY(j),gain.getDataEY(j)));
-                    F1D func = (F1D) conv.getFunction();
-                    F1D funa = (F1D) ai.getFunction();
+                    F1D func = (F1D) nconv.getFunction();
+                    F1D funa = (F1D) nai.getFunction();
                     F1D fung = (F1D) gain.getFunction();
                     if(func!=null)
                         System.out.println(String.format("cv slope = (%.5f \u00b1 %.5f)", func.getParameter(1), func.parameter(1).error()));
