@@ -77,11 +77,11 @@ Similarly, for denoising validation, input files can be produced as follows:
 * use the yaml file denoise.yaml from the coatjava distribution of your choice (supported starting from coatjava-8.7.1): this will be in the plugins/clas12/config subfolder of the Clara installation;
 * add the swap service if needed: this should be inserted in the service chain right after ```magfield``` and the appropriate configuration (timestamps and detector list added to the configuration section; do not alter the order of the other services unless specifically instructed;
 * update the services configuration (variation, timestamp, AI neural network) as needed for your data set;
-* setup a custom schema directory for saving the following banks as a minimum (see instruction above)```RUN::config, ai::tracks, aid::tracks, REC::Particle, REC::Track, REC::Traj, TimeBasedTrkg::TBTracks, TimeBasedTrkg::TBHits, RECAI::Particle, RECAI::Track, RECAI::Traj, TimeBasedTrkg::AITracks, TimeBasedTrkg::AIHits```;
+* set the output bank schema path to point to the ```dcalign``` folder of your clara installation; this will be under plugins/clas12/etc/bankdefs/hipo4;
 * run reconstruction configuring a CLAS12 reconstruction workflow with the --denoise” option.
 
 
-The same procedure can be used to produce input files for validation at the Hit-based tracking level. The only difference is in the banks to save:
+The same procedure can be used to produce input files for validation at the Hit-based tracking level. The only difference is in the banks to save, which will require a custom schema with the following banks:
 * ```RUN::config, ai::tracks, RECHB::Particle, RECHB::Track, RECHB::Traj, HitBasedTrkg::HBTracks, RECHBAI::Particle, RECHBAI::Track, RECHBAI::Traj, HitBasedTrkg::AITracks``` for AI-assisted tracking validation,
 * ```RUN::config, ai::tracks, RECHB::Particle, RECHB::Track, RECHB::Traj, HitBasedTrkg::HBTracksj, HitBasedTrkg::HBHits, RECHBAI::Particle, RECHBAI::Track, RECHBAI::Traj, HitBasedTrkg::AITracks, HitBasedTrkg::AIHits``` for denoising validation.
 
