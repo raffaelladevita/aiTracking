@@ -69,15 +69,7 @@ For AI-assisted tracking validation, input files can be produced as follows:
     network: “absolute-path-to-your-network-archive-file”
     ```
     specifying the path to your network file.
-* run reconstruction saving the following banks as a minimum ```RUN::config, ai::tracks, aidn::tracks, REC::Particle, REC::Track, REC::Traj, TimeBasedTrkg::TBClusters, TimeBasedTrkg::TBHits, TimeBasedTrkg::TBTracks, RECAI::Particle, RECAI::Track, RECAI::Traj, TimeBasedTrkg::AIClusters, TimeBasedTrkg::AIHits, TimeBasedTrkg::AITracks```; to do that, a custom schema can be created starting from the regular ```dst``` schema as follows:
-  ```
-  cp -rL path-to-dst-schema myschema
-  cp -rL path-to-dst-schema/../full/TimeBasedTrkg::*Hits.json myschema/.
-  cp -rL path-to-dst-schema/../full/TimeBasedTrkg::*Clusters.json myschema/.
-  cp -rL path-to-dst-schema/../full/TimeBasedTrkg::*Tracks.json myschema/.
-  cp -rL path-to-dst-schema/../full/ai::tracks.json myschema/.
-  ```
-  where ```myschema``` is the path to the new schema directory that will be created and that should be set in the yaml file;
+* set the output bank schema path to point to the ```dcalign``` folder of your clara installation; this will be under plugins/clas12/etc/bankdefs/hipo4;
 * typically a few hipo files are sufficient but ideally, a full production run should be processed. DO NOT include denoising in the data processing workflow.
 
 
