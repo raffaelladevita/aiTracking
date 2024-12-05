@@ -109,6 +109,8 @@ public class LumiAnalysis {
             this.fit(lumiDGs.get("data").getGraph(charges[i].getName() + "conventional"));
             this.fit(lumiDGs.get("data").getGraph(charges[i].getName() + "ai"));
             
+            this.fit(lumiDGs.get("bg").getGraph(charges[i].getName() + "conventional"));
+            this.fit(lumiDGs.get("bg").getGraph(charges[i].getName() + "ai"));
         }
         for(int j=0; j< this.lumies.size(); j++) {
             LumiDatum lumen = this.lumies.get(j);
@@ -230,6 +232,7 @@ public class LumiAnalysis {
         
         if(lumiDGs.get("data").getGraph("posai").getDataSize(0)>0) {
                 canvas.getCanvas("Lumi").draw(lumiDGs.get("data"));
+                canvas.getCanvas("Lumi").draw(lumiDGs.get("bg"));
         }
         canvas.getCanvas("Lumi").setGridX(false);
         canvas.getCanvas("Lumi").setGridY(false);
