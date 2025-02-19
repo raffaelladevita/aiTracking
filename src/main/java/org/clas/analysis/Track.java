@@ -485,6 +485,7 @@ public class Track implements Comparable<Track> {
         && Math.abs(this.chi2pid())<3
         && this.isInFiducial()
         && this.isInDetector()
+        && ((this.pid()==11 && this.sector()%3!=2) || (this.pid()!=11 && this.sector()%3==2))        
         && (Constants.SECTOR==0 || this.sector()==Constants.SECTOR)
         && this.hasSL()
         ) value=true;
@@ -493,10 +494,11 @@ public class Track implements Comparable<Track> {
 
      public boolean isForLumiScan() {
         boolean value = false;
-        if(this.pid()==11 && this.status()<0) value = this.p()>2.5 && this.p()<5.2;
+        if(this.pid()==11 && this.status()<0) value = this.p()>2.5 && this.p()<5.2 && this.sector()%3!=2;
         else                                  value = this.p()>Constants.PMIN
                                                    && Math.abs(this.chi2pid())<3
-                                                   && this.theta()<Math.toRadians(40.);
+                                                   && this.theta()<Math.toRadians(40.)
+                                                   && this.sector()%3!=2;
         value = value && this.vz()>Constants.ZMIN && this.vz()<Constants.ZMAX
                       && this.isInDetector();
         return value;
