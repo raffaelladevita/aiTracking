@@ -542,11 +542,21 @@ public class Track implements Comparable<Track> {
         return nmatch;
     }
     
-    private int nHits() {
+    public int nHits() {
         int nhits = 0;
         for(int il=0; il<36; il++) {
             for(int iw=0; iw<2; iw++) {
                 if(this.hits()[il][iw]>0) nhits++;
+            }           
+        }
+        return nhits;
+    }
+    
+    public int nHits(int sl) {
+        int nhits = 0;
+        for(int il=0; il<6; il++) {
+            for(int iw=0; iw<2; iw++) {
+                if(this.hits()[il+(sl-1)*6][iw]>0) nhits++;
             }           
         }
         return nhits;

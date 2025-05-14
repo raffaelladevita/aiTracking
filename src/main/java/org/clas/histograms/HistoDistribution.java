@@ -31,6 +31,7 @@ public class HistoDistribution extends Histos {
         this.put("p",        new DataGroup("p",3,2));
         this.put("theta",    new DataGroup("theta",3,2));
         this.put("vz",       new DataGroup("vz",3,2));        
+        this.put("ndf",      new DataGroup("ndf",3,2));        
     }
     
     @Override
@@ -107,7 +108,30 @@ public class HistoDistribution extends Histos {
             hi_vz_sec.setTitleY("Counts");
             hi_vz_sec.setLineColor(col);
             this.get("vz").addDataSet(hi_vz_sec, i);
-        }               
+        }   
+        H1F hi_ndf0 = new H1F("ndf0_" + name, "ndf0", 40, 0.0, 40.0);   
+        hi_ndf0.setTitleX("NDF0");
+        hi_ndf0.setTitleY("Counts");
+        hi_ndf0.setLineColor(col);
+        H1F hi_ndf = new H1F("ndf_" + name, "ndf", 40, 0.0, 40.0);   
+        hi_ndf.setTitleX("NDF");
+        hi_ndf.setTitleY("Counts");
+        hi_ndf.setLineColor(col);
+        H1F hi_nsl = new H1F("nsl_" + name, "nsl", 8, 0.0, 8.0);   
+        hi_nsl.setTitleX("NSL");
+        hi_nsl.setTitleY("Counts");
+        hi_nsl.setLineColor(col);
+        this.get("ndf").addDataSet(hi_ndf0, 0);
+        this.get("ndf").addDataSet(hi_ndf,  1);
+        this.get("ndf").addDataSet(hi_nsl,  2);
+        for(int i=0; i<3; i++) {
+            int region = i+1;
+            H1F hi_nhit = new H1F("nhit" + region + "_" + name, "nhit", 12, 0.0, 12.0);   
+            hi_nhit.setTitleX("Cluster size - region" + region);
+            hi_nhit.setTitleY("Counts");
+            hi_nhit.setLineColor(col);
+            this.get("ndf").addDataSet(hi_nhit, 2+region);
+        }
     }
     
     @Override
@@ -117,6 +141,7 @@ public class HistoDistribution extends Histos {
         else if(track.SL()==5) this.fillSummaries(track, "5SL");
         this.fill2D(track);
         this.fillSectors(track);
+        this.fillNDF(track);
     }  
     
     private void fillSummaries(Track track, String dg) {
@@ -154,6 +179,18 @@ public class HistoDistribution extends Histos {
             this.get("theta").getH1F("thetasec" + sector + "_" + this.getName()).fill(Math.toDegrees(track.theta()));
         }
         if(track.isValid(false)) this.get("vz").getH1F("vzsec"    + sector + "_" +  this.getName()).fill(track.vz());       
+    }
+    
+    private void fillNDF(Track track) {
+        if(track.isValid()) {
+            this.get("ndf").getH1F("ndf" + "_" + this.getName()).fill(track.NDF());
+            this.get("ndf").getH1F("ndf0" + "_" + this.getName()).fill(track.nHits());
+            this.get("ndf").getH1F("nsl" + "_" + this.getName()).fill(track.SL());
+            for(int isl=0; isl<6; isl++) {
+                int region = isl/2+1;
+                this.get("ndf").getH1F("nhit" + region + "_" + this.getName()).fill(track.nHits(isl+1));
+            }
+        }
     }
     
     @Override
