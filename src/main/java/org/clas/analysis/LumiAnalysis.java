@@ -108,17 +108,21 @@ public class LumiAnalysis {
 
             this.fit(lumiDGs.get("data").getGraph(charges[i].getName() + "conventional"));
             this.fit(lumiDGs.get("data").getGraph(charges[i].getName() + "ai"));
-            
+
             this.fit(lumiDGs.get("bg").getGraph(charges[i].getName() + "conventional"));
             this.fit(lumiDGs.get("bg").getGraph(charges[i].getName() + "ai"));
+
+            this.fit(lumiDGs.get("mc").getGraph(charges[i].getName() + "conventional"));
+            this.fit(lumiDGs.get("mc").getGraph(charges[i].getName() + "ai"));
         }
         for(int j=0; j< this.lumies.size(); j++) {
             LumiDatum lumen = this.lumies.get(j);
             for(int i=0; i<2; i++) {
-                if(!lumen.getRun().equals("mc")) {
-                    lumen.setNorm(charges[i], Type.CONVENTIONAL, lumiDGs.get("data").getGraph(charges[i].getName() + "conventional").getFunction().getParameter(0));
-                    lumen.setNorm(charges[i], Type.AI,           lumiDGs.get("data").getGraph(charges[i].getName() + "ai").getFunction().getParameter(0));
-                }
+		String norm = lumen.getRun().equals("mc") ? "mc" : "data";
+//                if(!lumen.getRun().equals("mc")) {
+                    lumen.setNorm(charges[i], Type.CONVENTIONAL, lumiDGs.get(norm).getGraph(charges[i].getName() + "conventional").getFunction().getParameter(0));
+                    lumen.setNorm(charges[i], Type.AI,           lumiDGs.get(norm).getGraph(charges[i].getName() + "ai").getFunction().getParameter(0));
+//                }
                 Type primary   = Type.AI;
                 Type secondary = Type.CONVENTIONAL;
                 if(!this.scale) {
@@ -171,7 +175,7 @@ public class LumiAnalysis {
             removeref(gainDGs.get("bg").getGraph(charges[i].getName()));
 //            normalize(normDGs.get("mc").getGraph(charges[i].getName() + "conventional"), normDGs.get("mc").getGraph(charges[i].getName() + "ai").getDataY(0));
 //            normalize(normDGs.get("mc").getGraph(charges[i].getName() + "ai"), normDGs.get("mc").getGraph(charges[i].getName() + "ai").getDataY(0));
-////            normalize(gainDGs.get("mc").getGraph(charges[i].getName()));
+//            normalize(gainDGs.get("mc").getGraph(charges[i].getName()));
             if(charges[i]==Charges.NEG) {
                 normalize(normDGs.get("bg").getGraph(charges[i].getName() + "conventional" + "ele"));
                 normalize(normDGs.get("bg").getGraph(charges[i].getName() + "ai" + "ele"));
