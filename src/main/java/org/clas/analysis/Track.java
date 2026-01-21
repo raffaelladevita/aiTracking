@@ -542,6 +542,27 @@ public class Track implements Comparable<Track> {
         return nmatch;
     }
     
+    private int matchedSuperlayers(Track t) {
+        int nmatch = 0;
+        for(int isl=0; isl<6; isl++) {
+            int nlayers = 0;
+            for(int il=0; il<6; il++) {
+                int nhits = 0;
+                for(int iw1=0; iw1<2; iw1++) {
+                for(int iw2=0; iw2<2; iw2++) {
+                    if(this.hits()[isl*6+il][iw1]>0 &&
+                       this.hits()[isl*6+il][iw2]>0 &&
+                       this.hits()[isl*6+il][iw1]==t.hits()[isl*6+il][iw2]) {
+                        nhits++;
+                    }
+                }}
+                if(nhits>0) nlayers++;
+            }
+            if(nlayers>=4) nmatch++;
+        }
+        return nmatch;
+    }
+    
     public int nHits() {
         int nhits = 0;
         for(int il=0; il<36; il++) {
@@ -615,7 +636,8 @@ public class Track implements Comparable<Track> {
         
     public boolean equals(Track o) {
         if(Constants.HITMATCH)
-            return this.matchedHits(o)>0.6*this.nHits();
+//            return this.matchedHits(o)>0.6*this.nHits();
+            return this.matchedSuperlayers(o)>=4;
         else
             return this.matchedClusters(o)==6;
     }

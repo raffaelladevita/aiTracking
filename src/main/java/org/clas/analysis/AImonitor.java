@@ -47,6 +47,7 @@ public class AImonitor {
     private HistoEvent          aiEvent     = null;
     private HistoEvent          trEventM    = null;
     private HistoEvent          trEventN    = null;
+    private HistoEvent          aiEventN    = null;
      
     private Banks banks = null;
     
@@ -88,16 +89,17 @@ public class AImonitor {
             tr[i] = new HistoDistribution("tr"+charges[i],Type.CONVENTIONAL,1);
             ai[i] = new HistoDistribution("ai"+charges[i],Type.AI,2);
             trMatched[i] = new HistoDistribution("tr"+charges[i]+"M",Type.MATCHED,4);
-            aiMatched[i] = new HistoDistribution("ai"+charges[i]+"M",Type.MATCHED,4);
+            aiMatched[i] = new HistoDistribution("ai"+charges[i]+"M",Type.MATCHED,7);
             trUnmatched[i] = new HistoDistribution("tr"+charges[i]+"N",Type.UNMATCHED,3);
-            aiUnmatched[i] = new HistoDistribution("ai"+charges[i]+"N",Type.UNMATCHED,3);
-            trCands[i]     = new HistoDistribution("tr"+charges[i]+"C",Type.CANDIDATES,5);
+            aiUnmatched[i] = new HistoDistribution("ai"+charges[i]+"N",Type.UNMATCHED,5);
+            trCands[i]     = new HistoDistribution("tr"+charges[i]+"C",Type.CANDIDATES,6);
             resol[i] = new HistoResolution(charges[i]+"Res",i+1);   
         }
         trEvent  = new HistoEvent("tr", Type.CONVENTIONAL, 1);
         aiEvent  = new HistoEvent("ai", Type.AI, 2);        
         trEventM = new HistoEvent("trM", Type.MATCHED, 4);
         trEventN = new HistoEvent("trN", Type.UNMATCHED, 3);
+        aiEventN = new HistoEvent("aiN", Type.UNMATCHED, 5);
     }
     
     private void setHistoStats(String opts) {
@@ -115,6 +117,7 @@ public class AImonitor {
         aiEvent.setStats(opts);
         trEventM.setStats(opts);
         trEventN.setStats(opts);
+        aiEventN.setStats(opts);
     }
     
     public LumiDatum loadStatistics(String run, double current) {
@@ -141,6 +144,8 @@ public class AImonitor {
                 canvas.getCanvas(cname).draw(ai[i].get(key));
                 canvas.getCanvas(cname).draw(trMatched[i].get(key));
                 canvas.getCanvas(cname).draw(trUnmatched[i].get(key));
+//                canvas.getCanvas(cname).draw(aiMatched[i].get(key));
+                canvas.getCanvas(cname).draw(aiUnmatched[i].get(key));
                 for(EmbeddedPad pad : canvas.getCanvas(cname).getCanvasPads())
                     if(pad.getDatasetPlotters().get(0).getDataSet() instanceof H2F) {
                         H2F h2 = (H2F) pad.getDatasetPlotters().get(0).getDataSet();
@@ -152,8 +157,10 @@ public class AImonitor {
             canvas.addCanvas(cname);
             canvas.getCanvas(cname).draw(resol[i]);
             this.drawDifferences(canvas, charges[i] + " differences",     ai[i].diff(tr[i],minentries).get("summary"),        this.yRange, false);
+            this.drawDifferences(canvas, charges[i] + " differences",     aiMatched[i].diff(ai[i],minentries).get("summary"), this.yRange, false);
             this.drawDifferences(canvas, charges[i] + " differences",     trMatched[i].diff(tr[i],minentries).get("summary"), this.yRange, false);
             this.drawDifferences(canvas, charges[i] + " 2D differences",  ai[i].diff(tr[i],minentries).get("2D"),             this.yRange, false);
+            this.drawDifferences(canvas, charges[i] + " 2D differences",  aiMatched[i].diff(ai[i],minentries).get("2D"),      this.yRange, false);
             this.drawDifferences(canvas, charges[i] + " 2D differences",  trMatched[i].diff(tr[i],minentries).get("2D"),      this.yRange, false);
             this.drawDifferences(canvas, charges[i] + " 6SL differences", ai[i].diff(tr[i],minentries).get("6SL"),            this.yRange, false);
             this.drawDifferences(canvas, charges[i] + " 6SL differences", trMatched[i].diff(tr[i],minentries).get("6SL"),     this.yRange, false);
@@ -166,6 +173,7 @@ public class AImonitor {
         canvas.getCanvas(cname).draw(aiEvent.get("2pi"));                    
 //        canvas.getCanvas(cname).draw(trEventM.get("2pi"));
         canvas.getCanvas(cname).draw(trEventN.get("2pi"));
+        canvas.getCanvas(cname).draw(aiEventN.get("2pi"));
         this.drawDifferences(canvas, "2pidifferences", aiEvent.diff(trEvent,minentries).get("2pi"), 0.7, true);
         cname = "1pi";
         canvas.addCanvas(cname);
@@ -173,6 +181,7 @@ public class AImonitor {
         canvas.getCanvas(cname).draw(aiEvent.get("1pi"));                    
 //        canvas.getCanvas(cname).draw(trEventM.get("1pi"));
         canvas.getCanvas(cname).draw(trEventN.get("1pi"));
+        canvas.getCanvas(cname).draw(aiEventN.get("1pi"));
         this.drawDifferences(canvas, "1pidifferences", aiEvent.diff(trEvent,minentries).get("1pi"), 0.4, true);
         cname = "eh+/-";
         canvas.addCanvas(cname);
@@ -329,6 +338,7 @@ public class AImonitor {
                 }
             }
             aiEvent.fill(aiTracks);
+            aiEventN.fill(aiTracks);
         }
         return status;
     }
