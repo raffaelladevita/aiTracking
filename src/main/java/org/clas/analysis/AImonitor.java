@@ -524,6 +524,7 @@ public class AImonitor {
             trMatched[i].readDataGroup(dir);
             trUnmatched[i].readDataGroup(dir);
             aiMatched[i].readDataGroup(dir);
+            aiUnmatched[i].readDataGroup(dir);
             trCands[i].readDataGroup(dir);
             resol[i]=resol[i].readDataGroup(dir);
         }
@@ -531,6 +532,7 @@ public class AImonitor {
         aiEvent.readDataGroup(dir);
         trEventM.readDataGroup(dir);
         trEventN.readDataGroup(dir);
+        aiEventN.readDataGroup(dir);
     }
 
     public void saveHistos(String fileName) {
@@ -541,6 +543,7 @@ public class AImonitor {
             trMatched[i].writeDataGroup(dir);
             trUnmatched[i].writeDataGroup(dir);
             aiMatched[i].writeDataGroup(dir);
+            aiUnmatched[i].writeDataGroup(dir);
             trCands[i].writeDataGroup(dir);
             resol[i].writeDataGroup(dir);
         }
@@ -548,6 +551,7 @@ public class AImonitor {
         aiEvent.writeDataGroup(dir);
         trEventM.writeDataGroup(dir);
         trEventN.writeDataGroup(dir);
+        aiEventN.writeDataGroup(dir);
         System.out.println("Saving histograms to file " + fileName);
         dir.writeFile(fileName);
     }    
