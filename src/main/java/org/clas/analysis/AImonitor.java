@@ -167,6 +167,20 @@ public class AImonitor {
             this.drawDifferences(canvas, charges[i] + " 5SL differences", ai[i].diff(tr[i],minentries).get("5SL"),            0.8, false);
             this.drawDifferences(canvas, charges[i] + " 5SL differences", trMatched[i].diff(tr[i],minentries).get("5SL"),     0.8, false);
         }
+        this.drawSelected(canvas, "ptheta differences", canvas.getCanvas(charges[0] + " differences").getPad(3).getDatasetPlotters().get(0)
+                                                      , canvas.getCanvas(charges[0] + " differences").getPad(3).getDatasetPlotters().get(1)
+                                                      , canvas.getCanvas(charges[0] + " differences").getPad(3).getDatasetPlotters().get(2)
+                                                      , canvas.getCanvas(charges[1] + " differences").getPad(3).getDatasetPlotters().get(0)
+                                                      , canvas.getCanvas(charges[1] + " differences").getPad(3).getDatasetPlotters().get(1)
+                                                      , canvas.getCanvas(charges[1] + " differences").getPad(3).getDatasetPlotters().get(2));
+        for(int ir=0; ir<3; ir++) {
+            this.drawSelected(canvas, "R" + (ir+1) + " differences", canvas.getCanvas(charges[0] + " 2D differences").getPad(ir).getDatasetPlotters().get(0)
+                                                                   , canvas.getCanvas(charges[0] + " 2D differences").getPad(ir).getDatasetPlotters().get(1)
+                                                                   , canvas.getCanvas(charges[0] + " 2D differences").getPad(ir).getDatasetPlotters().get(2)
+                                                                   , canvas.getCanvas(charges[1] + " 2D differences").getPad(ir).getDatasetPlotters().get(0)
+                                                                   , canvas.getCanvas(charges[1] + " 2D differences").getPad(ir).getDatasetPlotters().get(1)
+                                                                   , canvas.getCanvas(charges[1] + " 2D differences").getPad(ir).getDatasetPlotters().get(2));            
+        }
         cname = "2pi";
         canvas.addCanvas(cname);
         canvas.getCanvas(cname).draw(trEvent.get("2pi"));
@@ -191,9 +205,20 @@ public class AImonitor {
         return canvas;
     }
 
+    private void drawSelected(EmbeddedCanvasTabbed canvas, String cname, IDataSetPlotter... plotter) {
+        if(canvas.getCanvas(cname)==null) canvas.addCanvas(cname);
+        canvas.getCanvas(cname).divide(plotter.length/2, 2);
+        for(int i=0; i<plotter.length-(plotter.length%2); i++) {
+            canvas.getCanvas(cname).cd(i);
+            canvas.getCanvas(cname).draw(plotter[i].getDataSet());
+        }
+//        this.drawLines(canvas.getCanvas(cname));
+//        this.setRange(canvas.getCanvas(cname), range);
+    }
+    
     private void drawDifferences(EmbeddedCanvasTabbed canvas, String cname, DataGroup dg, double range, boolean errors) {
         if(canvas.getCanvas(cname)==null) canvas.addCanvas(cname);
-        canvas.getCanvas(cname).draw(dg);
+//        canvas.getCanvas(cname).draw(dg);
         canvas.getCanvas(cname).draw(dg);
         if(errors) this.plotErrors(canvas.getCanvas(cname));
         this.drawLines(canvas.getCanvas(cname));
