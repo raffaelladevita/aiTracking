@@ -523,6 +523,31 @@ public class AImonitor {
         trEventN.readDataGroup(dir);
     }
 
+    public void compareHistos(String file1, String file2) {
+        // TXT table summary FILE //
+        System.out.println("Opening file: " + file1);
+        TDirectory dir = new TDirectory();
+        dir.readFile(file1);
+        dir.cd();
+        dir.pwd();
+        for(int i=0; i<charges.length; i++) {
+            tr[i].readDataGroup(dir);
+        }
+        trEvent.readDataGroup(dir);
+        System.out.println("Opening file: " + file2);
+        dir.clear();
+        dir = new TDirectory();
+        dir.readFile(file2);
+        dir.cd();
+        dir.pwd();
+        for(int i=0; i<charges.length; i++) {
+            ai[i] = new HistoDistribution("tr"+charges[i],Type.AI,2);
+            ai[i].readDataGroup(dir);
+        }
+        aiEvent  = new HistoEvent("tr", Type.AI, 2);        
+        aiEvent.readDataGroup(dir);
+    }
+
     public void saveHistos(String fileName) {
         TDirectory dir = new TDirectory();
         for(int i=0; i<charges.length; i++) {
@@ -660,6 +685,8 @@ public class AImonitor {
         parser.addOption("-lumi"       ,"",     "(comma-separated) luminosity scan currents, e.g. \"5:data,20:data,40:data,40:bg;40:mc\"");
         parser.addOption("-fit"        ,"1",    "display fit parameters in luminosity analyses (0/1)");
         parser.addOption("-scale"      ,"1",    "set luminosity dependence scale factor according to conventional (0) or AI-assisted tracking (1)");
+        //comparison
+        parser.addOption("-compare"    ,"1",    "display histograms (0/1)");
         
         parser.parse(args);
         
@@ -782,6 +809,10 @@ public class AImonitor {
                     analysis.loadStatistics("0",0);
                 }
             }  
+        }
+        else if(!parser.getOption("-compare").stringValue().isEmpty() && inputList.size()==2) {
+            analysis.compareHistos(inputList.get(0), inputList.get(1));
+            analysis.loadStatistics("0", 0);
         }
         else{
 

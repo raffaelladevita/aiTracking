@@ -176,7 +176,10 @@ public class Histos extends LinkedHashMap<String,DataGroup> {
                 for(IDataSet ds : dsList){
 //                    System.out.println("\t --> " + ds.getName());
                     if(dir.getObject(subfolder, ds.getName())!=null) {
-                        newGroup.addDataSet(dir.getObject(subfolder, ds.getName()),i);
+                        IDataSet dsn = dir.getObject(subfolder, ds.getName());
+                        if(dsn instanceof H1F)
+                            ((H1F) dsn).setLineColor(((H1F) ds).getLineColor());
+                        newGroup.addDataSet(dsn,i);
                     }
                     else {
                         replace = false;
