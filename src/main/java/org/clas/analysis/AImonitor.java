@@ -207,13 +207,17 @@ public class AImonitor {
 
     private void drawSelected(EmbeddedCanvasTabbed canvas, String cname, IDataSetPlotter... plotter) {
         if(canvas.getCanvas(cname)==null) canvas.addCanvas(cname);
-        canvas.getCanvas(cname).divide(plotter.length/2, 2);
-        for(int i=0; i<plotter.length-(plotter.length%2); i++) {
+        int ncol = plotter.length/2;
+        canvas.getCanvas(cname).divide(ncol, 2);
+        for(int i=0; i<ncol*2; i++) {
             canvas.getCanvas(cname).cd(i);
             canvas.getCanvas(cname).draw(plotter[i].getDataSet());
+            if(i%ncol==0)
+                canvas.getCanvas(cname).getPad(i).getAxisZ().setRange(1-yRange, 1+yRange);
+            else
+                canvas.getCanvas(cname).getPad(i).getAxisZ().setRange(1-yRange, 1);
         }
-//        this.drawLines(canvas.getCanvas(cname));
-//        this.setRange(canvas.getCanvas(cname), range);
+        this.drawLines(canvas.getCanvas(cname));
     }
     
     private void drawDifferences(EmbeddedCanvasTabbed canvas, String cname, DataGroup dg, double range, boolean errors) {
@@ -673,7 +677,7 @@ public class AImonitor {
     public static void main(String[] args){
 
         OptionParser parser = new OptionParser("aiTracking");
-        parser.setRequiresInputList(false);
+        parser.setRequiresInputList(true);
         // valid options for event-base analysis
         parser.addOption("-o"          ,"",     "output file name prefix");
         parser.addOption("-n"          ,"-1",   "maximum number of events to process");
@@ -800,11 +804,6 @@ public class AImonitor {
         HipoWriterSorted writer5 = new HipoWriterSorted();
 
         List<String> inputList = parser.getInputList();
-        if(inputList.isEmpty()==true){
-            parser.printUsage();
-            System.out.println("\n >>>> error: no input file is specified....\n");
-            System.exit(0);
-        }
 
         if(readHistos) {
             if(lumiCurrent.size()!=0 && lumiCurrent.size()!=inputList.size()) {
@@ -881,7 +880,7 @@ public class AImonitor {
         }
 
         if(openWindow) {
-            JFrame frame = new JFrame(trackingType);
+            JFrame frame = new JFrame(inputList.get(0));
             EmbeddedCanvasTabbed canvas = null;
             if(readHistos && lumis.size()>1) {
                 LumiAnalysis luminosity = new LumiAnalysis(lumis, lumiScale);
